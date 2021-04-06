@@ -35,7 +35,7 @@ MySql 本身针对性能，还有一个 MVCC(多版本控制) 控制, 本文不�
 ---
 
 在一个事务里面，分为加锁 (lock) 阶段和解锁 (unlock) 阶段, 也即所有的 lock 操作都在 unlock 操作之前, 如下图所示:  
-![](https://oscimg.oschina.net/oscnet/e758840f-0f4b-4319-b6cb-403a1e2692fc.png)
+![](http://imgstore.top/img/20210406215717.png)
 
 **为什么需要两阶段加锁**
 
@@ -59,7 +59,7 @@ MySql 本身针对性能，还有一个 MVCC(多版本控制) 控制, 本文不�
 **在事务中只有提交 (commit) 或者回滚 (rollback) 时才是解锁阶段， 其余时间为加锁阶段。**
 
 如下图所示:  
-![](https://oscimg.oschina.net/oscnet/9283d5f0-ed97-4f68-8f9e-411e4faf4950.png)  
+![](http://imgstore.top/img/20210406215726.png)  
 这样的话，在实际的数据库中就很容易实现了。
 
 **两阶段加锁对性能的影响**
@@ -70,12 +70,12 @@ MySql 本身针对性能，还有一个 MVCC(多版本控制) 控制, 本文不�
 
 上面很好的解释了两阶段加锁，现在我们分析下其对性能的影响。考虑下面两种不同的扣减库存的方案:
 
-![](https://oscimg.oschina.net/oscnet/fb481daf-8d99-493e-ad5d-cbfeb05680b0.png)
+![](http://imgstore.top/img/20210406215741.png)
 
-![](https://oscimg.oschina.net/oscnet/f653eecc-4fc0-4b34-95fa-9e4cae85c15b.png)
+![](http://imgstore.top/img/20210406215758.png)
 
 由于在同一个事务之内，这几条对数据库的操作应该是等价的。但在两阶段加锁下的性能确是有比较大的差距。两者方案的时序如下图所示:  
-![](https://oscimg.oschina.net/oscnet/24f99099-449e-419d-b7ed-21c9c2dbce95.png)
+![](http://imgstore.top/img/20210406215814.png)
 
 **由于库存往往是最重要的热点，是整个系统的瓶颈。那么如果采用第二种方案的话, tps 应该理论上能够提升 3rt/rt=3 倍。这还仅仅是业务就只有三条 SQL 的情况下，多一条 sql 就多一次 rt, 就多一倍的时间。**
 
@@ -84,7 +84,7 @@ MySql 本身针对性能，还有一个 MVCC(多版本控制) 控制, 本文不�
 **在更新到数据库的那个时间点才算锁成功，提交到数据库的时候才算解锁成功，这两个 round_trip 的前半段是不会计算在内的。**
 
 如下图所示:  
-![](https://oscimg.oschina.net/oscnet/c6f1c49b-8f45-4c07-8c07-6db1edcfb03e.png)  
+![](http://imgstore.top/img/20210406215821.png)  
 当前只考虑网络时延，不考虑数据库和应用本身的时间消耗。
 
 **依据 S2PL 的性能优化**
@@ -93,13 +93,13 @@ MySql 本身针对性能，还有一个 MVCC(多版本控制) 控制, 本文不�
 
 笔者认为，先后顺序如下图:
 
-![](https://oscimg.oschina.net/oscnet/01db2ea7-f00b-47b5-9b71-0f9c5104950f.png)
+![](http://imgstore.top/img/20210406215847.png)
 
  
 
 **避免死锁**
 
-这也是任何 SQL 加锁不可避免的。上文提到了按照记录 Key 的热度在事务中倒序排列。那么写代码的时候任何可能并发的 SQL 都必须按照这种顺序来处理，不然会造成死锁。如下图所示: ![](https://oscimg.oschina.net/oscnet/bb50c9f2-4d04-481b-881d-e41a190943a7.png)
+这也是任何 SQL 加锁不可避免的。上文提到了按照记录 Key 的热度在事务中倒序排列。那么写代码的时候任何可能并发的 SQL 都必须按照这种顺序来处理，不然会造成死锁。如下图所示: ![](http://imgstore.top/img/20210406215854.png)
 
  
 
@@ -108,15 +108,15 @@ MySql 本身针对性能，还有一个 MVCC(多版本控制) 控制, 本文不�
 我们可以直接将一些简单的判断逻辑写到 update 的谓词里面，以减少加锁时间，考虑下面两种方案:  
 **方案 1:**
 
-![](https://oscimg.oschina.net/oscnet/08bf9efd-6687-437c-b044-03f002cc4860.png)  
+![](http://imgstore.top/img/20210406215906.png)  
 
 **方案 2:**
 
-![](https://oscimg.oschina.net/oscnet/7188f89c-8ac2-4047-b321-dbd6cc20cfa8.png)
+![](http://imgstore.top/img/20210406215912.png)
 
 如图所示:
 
- ![](https://oscimg.oschina.net/oscnet/af43187d-7f2f-4a0e-a654-65813c84f659.png)  
+ ![](http://imgstore.top/img/20210406215926.png)  
 可以看到，通过在 update 中加谓词计算，少了 1rt 的时间。
 
 **由于 update 在执行过程中对符合谓词条件的记录加的是和 select for update 一致的排它锁 (具体的锁类型较为复杂，不在这里描述), 所以两者效果一样。**

@@ -98,7 +98,7 @@ if (total_ha_2pc > 1 || (1 == total_ha_2pc && opt_bin_log))
 
 这三者是`TC_LOG`的子类，关系如下图所示：
 
-![](http://mysql.taobao.org/monthly/pic/2015-12-01/1.png)
+![](http://imgstore.top/img/20210406220511.png)
 
 TC LOG
 
@@ -135,7 +135,7 @@ tc.log 以 PAGE 来进行划分，每个 PAGE 大小为 8K，至少需要 3 个 
 
 下图描述了 tc.log 的文件结构：
 
-![](http://mysql.taobao.org/monthly/pic/2015-12-01/2.png)
+![](http://imgstore.top/img/20210406220517.png)
 
 tc.log 文件结构
 
@@ -199,7 +199,7 @@ SavePoint 管理
 
 如下图所示：
 
-![](http://mysql.taobao.org/monthly/pic/2015-12-01/3.png)
+![](http://imgstore.top/img/20210406220524.png)
 
 savepoint 链表
 
@@ -285,7 +285,7 @@ mysql> Killed
 
 总的来说，事务管理模块的架构图，如下图所示：
 
-![](http://mysql.taobao.org/monthly/pic/2015-12-01/4.png)
+![](http://imgstore.top/img/20210406220536.png)
 
 InnoDB 事务管理
 
@@ -443,7 +443,7 @@ typedef Pool<trx_t, TrxFactory, TrxPoolLock> trx_pool_t;
 
 相关类的关系如下图所示：
 
-![](http://mysql.taobao.org/monthly/pic/2015-12-01/5.png)
+![](http://imgstore.top/img/20210406220550.png)
 
 事务池相关类
 
