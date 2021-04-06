@@ -3,6 +3,7 @@
 - 布隆过滤器
 - 两个事务，第一个事务数据删除后第二个事务看不到数据了
 - 为何未通过索引去查找数据不阻塞，通过索引去查找数据就阻塞了:[[MySQL · 引擎特性 · InnoDB 事务子系统介绍#InnoDB MVCC 实现#一个有趣的可见性问题]]
+- 数据库邻键锁
 
 ### 学习计划
 #### 四月学习计划
@@ -14,10 +15,16 @@
 	- [ ] sql优化
 ### 每日清单
 - 2021-04-05
-	-  [x] 数据库MVCC与LBCC关系梳理
-	-  [ ]   
+	-  [x] 数据库MVCC与LBCC关系梳理:[参考博客](https://www.codenong.com/cs110441924/)
+	-  [x] 聚簇索引,非聚簇索引区别:[参考博客](https://www.cnblogs.com/jiawen010/p/11805241.html)
 - 2021-04-06
 	- [x] 配合前端优化老资源数据判定
+	- [x] foundation单测补充,包结构调整(BaseEntity,consistents等类移到dto/consistent包下)
 	- [x] Obsidian采用git作为数据同步工具
 	- [ ] 资管状态数据拉取接口问题 
 		/open/pdm/unit/syncInterface/fileStatus，多个调改材料ID只查出一条数据，但是在资管页面可以看到多条数据
+-  2021-04-07
+	- [ ] Mysql的半一致性读
+		- [基于源码角度解析MySQL半一致性读原理](https://www.yisu.com/zixun/30489.html)
+		- [MySQL介于普通读和加锁读之间的读取方式：semi-consistent read](https://juejin.cn/post/6844904022499917838)
+	
