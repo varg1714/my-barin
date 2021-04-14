@@ -420,13 +420,13 @@ MySQL5.7 实现了一种高优先级的事务调度方式。当事务处于高�
 
 事务池对应的全局变量为`trx_pools`，初始化为：
 
-```
+```C
 trx_pools = UT_NEW_NOKEY(trx_pools_t(MAX_TRX_BLOCK_SIZE));
 ```
 
 `trx_pools`是操作 trx pool 的接口，类型为`trx_pools_t`，其定义如下：
 
-```
+```C
 typedef Pool<trx_t, TrxFactory, TrxPoolLock> trx_pool_t;
      typedef PoolManager<trx_pool_t, TrxPoolManagerLock > trx_pools_t;
 ```
