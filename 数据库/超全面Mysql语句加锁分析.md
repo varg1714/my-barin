@@ -164,7 +164,7 @@ INSERT INTO hero VALUES (1, 'l刘备', '蜀'),
     
     我们平时所说的 “DELETE 表中的一条记录” 其实意味着对聚簇索引和所有的二级索引中对应的记录做`DELETE`操作，本例子中就是要先把`number`值为`8`的聚簇索引记录执行`DELETE`操作，然后把对应的`idx_name`二级索引记录删除，所以加锁的步骤和上边更新带有二级索引列的`UPDATE`语句一致，就不画图了。
 	
-	<font style = "color:orange">在mysql8.17版本中，update和delete语句仅会对聚簇索引进行加锁，不会对二级索引进行加锁。</font>
+	<font style = "color:orange">对于上述涉及到修改二级索引的情况，虽然会对二级索引加锁，不过却是一种延迟加锁策略，即[[数据库的锁#锁#锁分类#乐观锁（Optimistic Lock）#隐式锁|隐式锁]]。后续对二级索引字段的更新而导致的加锁也都会存在隐式锁，故不再一一指出。</font>
     
 
 #### 对于使用主键进行范围查询的情况
@@ -206,13 +206,15 @@ INSERT INTO hero VALUES (1, 'l刘备', '蜀'),
 这个过程有意思的一点就是，如果你先在事务`T1`中执行：
 
 ```sql
-# 事务T1BEGIN;SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
+# 事务T1BEGIN;
+SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
 ```
 
 然后再到事务`T2`中执行：
 
 ```sql
-# 事务T2BEGIN;SELECT * FROM hero WHERE number = 15 FOR UPDATE;
+# 事务T2BEGIN;
+SELECT * FROM hero WHERE number = 15 FOR UPDATE;
 ```
 
 是没有问题的，因为在`T2`执行时，事务`T1`已经释放掉了`number`值为`15`的记录的锁，但是如果你先执行`T2`，再执行`T1`，由于`T2`已经持有了`number`值为`15`的记录的锁，事务`T1`将因为获取不到这个锁而等待。
@@ -288,8 +290,6 @@ UPDATE hero SET namey = '汉' WHERE number <= 8;
     ```
     
     这两个语句的加锁情况和更新带有二级索引列的`UPDATE`语句一致，就不画图了。
-	
-	<font style = "color:orange">在mysql8.17版本中，update和delete语句仅会对聚簇索引进行加锁，不会对二级索引进行加锁。</font>
     
 
 #### 对于使用二级索引进行等值查询的情况
@@ -437,7 +437,7 @@ SELECT * FROM hero WHERE country  = '魏' LOCK IN SHARE MODE;
 
 *   如果该聚簇索引记录不满足条件，直接把该记录上的锁释放掉。
     
-*   如果该聚簇索引记录满足条件，则会对相应的二级索引记录加上`X型正经记录锁`（<font style = "color:red">DELETE语句会对所有二级索引列加锁，UPDATE语句只会为更新的二级索引列对应的二级索引记录加锁（这个加锁指的是如果update语句更新的值涉及到二姐索引列，则会对二级索引进行加锁，否则仅对聚簇索引加锁。）</font>）。
+*   如果该聚簇索引记录满足条件，则会对相应的二级索引记录加上`X型正经记录锁`（<font style = "color:orange">DELETE语句会对所有二级索引列加锁，UPDATE语句只会为更新的二级索引列对应的二级索引记录加锁（这个加锁指的是如果update语句更新的值涉及到二级索引列，则会对二级索引进行加锁，否则仅对聚簇索引加锁。）</font>）。
 
 
 ### REPEATABLE READ 隔离级别下
@@ -507,7 +507,7 @@ SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
 > 小贴士： 很显然这么粗暴的做法导致的一个后果就是别的事务竟然不允许插入 number 值在 (8, 15] 这个区间中的新记录，甚至不允许别的事务再获取 number 值为 15 的记录上的锁，而理论上只需要禁止别的事务插入 number 值在 (-∞, 8] 之间的新记录就好。
 
 
-<font style = "color:orange">上述情况在mysql8.17版本中未出现，在8.17版本中执行上述语句后，会在`(-∞, 1]`、`(1, 3]`、`(3, 8]`加上next-key锁，但是在`(8,15)`之间则并未加锁。若是执行以下sql的话，则情况会有所不同:</font>
+<font style = "color:orange">上述情况在mysql8.17版本中未出现，在8.20版本中执行上述语句后，会在`(-∞, 1]`、`(1, 3]`、`(3, 8]`加上next-key锁，但是在`(8,15)`之间则并未加锁。若是执行以下sql的话，则情况会有所不同:</font>
 
 ```sql
 SELECT * FROM hero WHERE number <= 9 LOCK IN SHARE MODE;
@@ -517,7 +517,7 @@ SELECT * FROM hero WHERE number <= 9 LOCK IN SHARE MODE;
 
 同时，像Read Committed情况下，对[[超全面Mysql语句加锁分析#语句加锁分析#锁定读的语句#READ UNCOMMITTED READ COMMITTED 隔离级别下#对于使用主键进行范围查询的情况|数据15先加锁再解锁]]的操作并不存在。若先在事务1中执行下列语句：
 ```sql
-SELECT * FROM hero WHERE number = 15 LOCK FOR UPDATE;
+SELECT * FROM hero WHERE number = 15 FOR UPDATE;
 ```
 同时在事务2中执行下列语句，事务2并不会被事务1所阻塞:
 ```sql
@@ -554,7 +554,7 @@ SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
     UPDATE hero SET name = 'cao曹操' WHERE number <= 8;
     ```
     
-    则会对`number`值为`1`、`3`、`8`、`15`的聚簇索引记录加`X型next-key`，其中`number`值为`15`的聚簇索引记录不满足`number <= 8`的边界条件，虽然在`REPEATABLE READ`隔离级别下不会将它的锁释放掉<font style = "color:red">(在mysql8.17版本中是不会对记录15加锁的,[[超全面Mysql语句加锁分析#锁定读的语句#REPEATABLE READ 隔离级别下#对于使用主键进行范围查询的情况|原理同上]])</font>，但是也并不会对这条聚簇索引记录对应的二级索引记录加锁，也就是说只会为`number`值为`1`、`3`、`8`的聚簇索引记录对应的`idx_name`二级索引记录加`X型正经记录锁`，加锁示意图如下所示：
+    则会对`number`值为`1`、`3`、`8`、`15`的聚簇索引记录加`X型next-key`，其中`number`值为`15`的聚簇索引记录不满足`number <= 8`的边界条件，虽然在`REPEATABLE READ`隔离级别下不会将它的锁释放掉<font style = "color:orange">(在mysql8.17版本中是不会对记录15加锁的,[[超全面Mysql语句加锁分析#锁定读的语句#REPEATABLE READ 隔离级别下#对于使用主键进行范围查询的情况|原理同上]])</font>，但是也并不会对这条聚簇索引记录对应的二级索引记录加锁，也就是说只会为`number`值为`1`、`3`、`8`的聚簇索引记录对应的`idx_name`二级索引记录加`X型正经记录锁`，加锁示意图如下所示：
     
     ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185000.jpeg)
 *   使用`DELETE ...`来为记录加锁，比方说：
@@ -571,8 +571,6 @@ SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
     
     这两个语句的加锁情况和更新带有二级索引列的`UPDATE`语句一致，就不画图了。
     
-
-<font style = "color:orange">在mysql8.17版本中，update和delete语句仅会对聚簇索引进行加锁，不会对二级索引进行加锁。</font>
 
 #### 对于使用唯一二级索引进行等值查询的情况
 
@@ -617,10 +615,8 @@ ALTER TABLE hero DROP INDEX idx_name, ADD UNIQUE KEY uk_name (name);
 *   使用`DELETE ...`来为记录加锁，比方说：
     
     与`SELECT ... FOR UPDATE`的加锁情况类似，不过如果表中还有别的二级索引列的话，这些对应的二级索引记录也会被加`X型正经记录锁`。
-	
-	<font style = "color:orange">在mysql8.17版本中，update和delete语句仅会对条件中二级索引进行加锁，不会对其它二级索引进行加锁。</font>
-    
 
+    
 #### 对于使用唯一二级索引进行范围查询的情况
 
 *   使用`SELECT ... LOCK IN SHARE MODE`语句来为记录加锁，比方说：
@@ -760,7 +756,7 @@ SELECT * FROM hero WHERE country  = '魏' LOCK IN SHARE MODE;
 
 ### 遇到重复键（duplicate key）
 
-在插入一条新记录时，首先要做的事情其实是定位到这条新记录应该插入到`B+树`的哪个位置。如果定位位置时发现了有已存在记录的主键或者唯一二级索引列与待插入记录的主键或者唯一二级索引列相同（不过可以有多条记录的唯一二级索引列的值同时为`NULL`），那么此时此时是会报错的。比方说我们插入新记录，该记录的主键值已经被包含在`hero`表中了：
+在插入一条新记录时，首先要做的事情其实是定位到这条新记录应该插入到`B+树`的哪个位置。如果定位位置时发现了有已存在记录的主键或者唯一二级索引列与待插入记录的主键或者唯一二级索引列相同（不过可以有多条记录的唯一二级索引列的值同时为`NULL`），那么此时是会报错的。比方说我们插入新记录，该记录的主键值已经被包含在`hero`表中了：
 
 ```sql
 mysql> BEGIN;Query OK, 0 rows affected (0.01 sec)
