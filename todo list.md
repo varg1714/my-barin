@@ -1,9 +1,6 @@
 ### 待办
-- Mysql Binlog格式 mixed/statement/row
 - 布隆过滤器
-- 两个事务，第一个事务数据删除后第二个事务看不到数据了
 - 为何未通过索引去查找数据不阻塞，通过索引去查找数据就阻塞了:[[MySQL · 引擎特性 · InnoDB 事务子系统介绍#InnoDB MVCC 实现#一个有趣的可见性问题]]
-- 数据库邻键锁
 - Spring Cloud Gateway 请求没走filter直接走了controller
 
 ### 学习计划
@@ -16,6 +13,8 @@
 	- [ ] sql优化
 	- [ ] 索引条件下推
 	- [ ] 数据库伪记录
+	- [ ] Mysql Binlog格式 mixed/statement/row
+	
 ### 每日清单
 
 - 2021-04-05
@@ -40,5 +39,11 @@
 	-  [x] 字段类型不一致会导致数据库的索引失效,如当数据库字段类型定义为varchar,where条件为 field = value 而非 'value'时，就会导致索引失效
 
 - 2021-04-14
-	- [ ] [超全面sql语句加锁分析中](https://mp.weixin.qq.com/s/wSlNZcQkax-2KZCNEHOYLA)
+	- [x] [超全面sql语句加锁分析中](https://mp.weixin.qq.com/s/wSlNZcQkax-2KZCNEHOYLA)
 	- [x] 全表查询删除数据时会对[[超全面Mysql语句加锁分析#全表扫描的情况|所有二级索引加锁]]情况复现
+
+- 2021-05-04
+	- [x] [超全面sql语句加锁分析下](https://mp.weixin.qq.com/s/9WWBXLNoUcTkS4DJnM5ViA)
+	- [x] sql加锁分析区分为Mysql8.0及Mysql5.7实验
+- 2021-05-05
+	- [x] 历史数据库笔记复习

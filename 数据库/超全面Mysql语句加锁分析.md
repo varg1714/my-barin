@@ -768,7 +768,7 @@ ERROR 1062 (23000): Duplicate entry '20' for key 'PRIMARY'
 
 *   在`READ UNCOMMITTED/READ COMMITTED`隔离级别下，加的是`S型正经记录锁`。
     
-*   在`REPEATABLE READ/SERIALIZABLE`隔离级别下，加的是`S型next-key锁`。在mysql8.17版本中假的也是`S型正经记录锁`。
+*   在`REPEATABLE READ/SERIALIZABLE`隔离级别下，加的是`S型next-key锁`。在mysql8.17版本中加的也是`S型正经记录锁`。
     
 
 如果是唯一二级索引列值重复，比方说我们再把普通二级索引`idx_name`改为唯一二级索引`uk_name`：
