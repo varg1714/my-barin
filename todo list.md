@@ -2,9 +2,11 @@
 - 布隆过滤器
 - 为何未通过索引去查找数据不阻塞，通过索引去查找数据就阻塞了:[[MySQL · 引擎特性 · InnoDB 事务子系统介绍#InnoDB MVCC 实现#一个有趣的可见性问题]]
 - Spring Cloud Gateway 请求没走filter直接走了controller
+- r2dbc
+- 泛型Class.\<O>的写法含义,CollectionUtils.<O\>getCardinalityMap(a)
 
 ### 学习计划
-#### 四月学习计划
+#### 学习计划
 - 数据库知识
 	- [ ] sql 语句执行过程
 	- [ ] 索引
@@ -14,6 +16,7 @@
 	- [ ] 索引条件下推
 	- [ ] 数据库伪记录
 	- [ ] Mysql Binlog格式 mixed/statement/row
+	- [ ] 前缀树
 	
 ### 每日清单
 
