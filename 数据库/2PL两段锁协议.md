@@ -128,5 +128,5 @@ MySql 采用两阶段加锁协议实现隔离性和一致性，我们只有深�
 ![](https://oscimg.oschina.net/oscnet/167a74a2-ca57-45ee-9c87-a0ebfaceca26.jpg)
 
 本文分享自微信公众号 - 业余草（yyucao）。  
-如有侵权，请联系 support@oschina. Cn 删除。  
+如有侵权，请联系 support@oschina.cn 删除.  
 本文参与 “[OSC 源创计划](https://www.oschina.net/sharing-plan)”，欢迎正在阅读的你也加入，一起分享。
