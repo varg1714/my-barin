@@ -1,0 +1,20 @@
+{
+  "obsidianCss": false,
+  "promptDelete": false,
+  "spellcheck": false,
+  "showLineNumber": true,
+  "alwaysUpdateLinks": true,
+  "useMarkdownLinks": false,
+  "pdfExportSettings": {
+    "pageSize": "A4",
+    "landscape": false,
+    "margin": "0",
+    "downscalePercent": 100
+  },
+  "newFileLocation": "root",
+  "foldHeading": true,
+  "foldIndent": true,
+  "smartIndentList": true,
+  "useTab": true,
+  "legacyEditor": false
+}

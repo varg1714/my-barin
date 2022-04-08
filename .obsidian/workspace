@@ -1,0 +1,139 @@
+{
+  "main": {
+    "id": "e2cbd99fdb63ec3f",
+    "type": "split",
+    "children": [
+      {
+        "id": "a6eae3087b82f3ff",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "基础知识/设计模式.md",
+            "mode": "source",
+            "backlinks": false,
+            "source": false
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "3d7880359303c393",
+    "type": "split",
+    "children": [
+      {
+        "id": "e7a8aa421c89327e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6f5b0a18d1b31b9e",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "558d251b5890bc23",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 332,
+    "collapsed": true
+  },
+  "right": {
+    "id": "fc992aa851a65504",
+    "type": "split",
+    "children": [
+      {
+        "id": "eab0428ee40c7ff4",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f2690ee38990ab63",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "基础知识/设计模式.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": false
+              }
+            }
+          },
+          {
+            "id": "3962de39fb13e132",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "基础知识/设计模式.md"
+              }
+            }
+          },
+          {
+            "id": "f87948bf51bbb2ed",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": false
+              }
+            }
+          },
+          {
+            "id": "fb305161897c8970",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "基础知识/设计模式.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ],
+        "currentTab": 3
+      }
+    ],
+    "direction": "horizontal",
+    "width": 215,
+    "collapsed": true
+  },
+  "active": "a6eae3087b82f3ff",
+  "lastOpenFiles": [
+    "基础知识/设计模式.md",
+    "数据密集系统设计/附件资料.md",
+    "框架学习/Spring/Spring引入.md",
+    "Pasted image 20220407230704.png",
+    "工具锦籍/MySoftWare.md",
+    "工具锦籍/笔记.md",
+    "view/1351.html.md",
+    "消息队列/xx01-消息队列的推模式与拉模式.md",
+    "消息队列/01-消息队列入门.md",
+    "基础知识/软件开发七大原则.md"
+  ]
+}
