@@ -7,13 +7,8 @@
         "id": "a6eae3087b82f3ff",
         "type": "leaf",
         "state": {
-          "type": "markdown",
-          "state": {
-            "file": "基础知识/设计模式.md",
-            "mode": "source",
-            "backlinks": false,
-            "source": false
-          }
+          "type": "empty",
+          "state": {}
         }
       }
     ],
@@ -54,8 +49,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 332,
-    "collapsed": true
+    "width": 332
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -71,7 +65,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "基础知识/设计模式.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,9 +80,7 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {
-                "file": "基础知识/设计模式.md"
-              }
+              "state": {}
             }
           },
           {
@@ -109,31 +100,37 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "基础知识/设计模式.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
             }
+          },
+          {
+            "id": "92f3e16f222e7e9c",
+            "type": "leaf",
+            "state": {
+              "type": "advanced-tables-toolbar",
+              "state": {}
+            }
           }
         ],
-        "currentTab": 3
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
-    "width": 215,
-    "collapsed": true
+    "width": 215
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
+    "Pasted image 20220410200203.png",
+    "Pasted image 20220410200121.png",
+    "Pasted image 20220410200118.png",
+    "框架学习/Spring/Spring引入.md",
     "基础知识/设计模式.md",
     "数据密集系统设计/附件资料.md",
-    "框架学习/Spring/Spring引入.md",
     "Pasted image 20220407230704.png",
     "工具锦籍/MySoftWare.md",
     "工具锦籍/笔记.md",
-    "view/1351.html.md",
-    "消息队列/xx01-消息队列的推模式与拉模式.md",
-    "消息队列/01-消息队列入门.md",
-    "基础知识/软件开发七大原则.md"
+    "view/1351.html.md"
   ]
 }
