@@ -7,8 +7,13 @@
         "id": "a6eae3087b82f3ff",
         "type": "leaf",
         "state": {
-          "type": "empty",
-          "state": {}
+          "type": "markdown",
+          "state": {
+            "file": "框架学习/Spring/Spring引入.md",
+            "mode": "source",
+            "backlinks": false,
+            "source": false
+          }
         }
       }
     ],
@@ -49,7 +54,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 332
+    "width": 332,
+    "collapsed": true
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -65,6 +71,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "框架学习/Spring/Spring引入.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -80,7 +87,9 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "框架学习/Spring/Spring引入.md"
+              }
             }
           },
           {
@@ -100,6 +109,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "框架学习/Spring/Spring引入.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -118,19 +128,20 @@
       }
     ],
     "direction": "horizontal",
-    "width": 215
+    "width": 215,
+    "collapsed": true
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
+    "框架学习/Spring/Spring引入.md",
+    "数据密集系统设计/数据密集型系统设计引入.md",
+    "数据密集系统设计/数据密集系统设计之复制与分区.md",
+    "数据密集系统设计/附件资料.md",
+    "数据结构/B+树.md",
     "Pasted image 20220410200203.png",
     "Pasted image 20220410200121.png",
     "Pasted image 20220410200118.png",
-    "框架学习/Spring/Spring引入.md",
     "基础知识/设计模式.md",
-    "数据密集系统设计/附件资料.md",
-    "Pasted image 20220407230704.png",
-    "工具锦籍/MySoftWare.md",
-    "工具锦籍/笔记.md",
-    "view/1351.html.md"
+    "Pasted image 20220407230704.png"
   ]
 }
