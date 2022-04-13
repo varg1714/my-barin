@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "框架学习/Spring/Spring引入.md",
-            "mode": "source",
+            "file": "工作常用/迭代资料/开发笔记.md",
+            "mode": "preview",
             "backlinks": false,
             "source": false
           }
@@ -54,8 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 332,
-    "collapsed": true
+    "width": 332
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -71,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "框架学习/Spring/Spring引入.md",
+                "file": "工作常用/迭代资料/开发笔记.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "框架学习/Spring/Spring引入.md"
+                "file": "工作常用/迭代资料/开发笔记.md"
               }
             }
           },
@@ -109,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "框架学习/Spring/Spring引入.md",
+                "file": "工作常用/迭代资料/开发笔记.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -124,24 +123,23 @@
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
-    "width": 215,
-    "collapsed": true
+    "width": 215
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
+    "工作常用/迭代资料/开发笔记.md",
+    "工作常用/配置文件/数据配置.md",
+    "工作常用/迭代资料/V3-Sprint03 智慧仓POC.md",
+    "工作常用/配置文件/脚本文件.md",
     "框架学习/Spring/Spring引入.md",
     "数据密集系统设计/数据密集型系统设计引入.md",
     "数据密集系统设计/数据密集系统设计之复制与分区.md",
     "数据密集系统设计/附件资料.md",
     "数据结构/B+树.md",
-    "Pasted image 20220410200203.png",
-    "Pasted image 20220410200121.png",
-    "Pasted image 20220410200118.png",
-    "基础知识/设计模式.md",
-    "Pasted image 20220407230704.png"
+    "Pasted image 20220410200203.png"
   ]
 }
