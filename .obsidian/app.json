@@ -16,5 +16,8 @@
   "foldIndent": true,
   "smartIndentList": true,
   "useTab": true,
-  "legacyEditor": false
+  "legacyEditor": false,
+  "lineWrap": true,
+  "readableLineLength": true,
+  "strictLineBreaks": false
 }

@@ -4,13 +4,13 @@
     "type": "split",
     "children": [
       {
-        "id": "a6eae3087b82f3ff",
+        "id": "bb944aca81345c66",
         "type": "leaf",
         "state": {
           "type": "markdown",
           "state": {
-            "file": "工作常用/迭代资料/开发笔记.md",
-            "mode": "preview",
+            "file": "工具锦籍/常用命令.md",
+            "mode": "source",
             "backlinks": false,
             "source": false
           }
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "工作常用/迭代资料/开发笔记.md",
+                "file": "工具锦籍/常用命令.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "工作常用/迭代资料/开发笔记.md"
+                "file": "工具锦籍/常用命令.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "工作常用/迭代资料/开发笔记.md",
+                "file": "工具锦籍/常用命令.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -127,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 215
+    "width": 298
   },
-  "active": "a6eae3087b82f3ff",
+  "active": "bb944aca81345c66",
   "lastOpenFiles": [
+    "工具锦籍/常用命令.md",
+    "基础知识/设计模式.md",
+    "基础知识/软件开发七大原则.md",
     "工作常用/迭代资料/开发笔记.md",
-    "工作常用/配置文件/数据配置.md",
+    "工作常用/标准化开发.md",
+    "工作常用/开发目录.md",
+    "工作常用/迭代资料/CodeReview.md",
     "工作常用/迭代资料/V3-Sprint03 智慧仓POC.md",
-    "工作常用/配置文件/脚本文件.md",
-    "框架学习/Spring/Spring引入.md",
-    "数据密集系统设计/数据密集型系统设计引入.md",
-    "数据密集系统设计/数据密集系统设计之复制与分区.md",
-    "数据密集系统设计/附件资料.md",
-    "数据结构/B+树.md",
-    "Pasted image 20220410200203.png"
+    "工作常用/配置文件/数据配置.md",
+    "工作常用/配置文件/脚本文件.md"
   ]
 }
