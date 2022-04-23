@@ -2,5 +2,6 @@
   "theme": "moonstone",
   "baseFontSize": 16,
   "cssTheme": "Yin and Yang",
-  "translucency": false
+  "translucency": false,
+  "textFontFamily": "Microsoft YaHei"
 }

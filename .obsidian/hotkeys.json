@@ -10,14 +10,7 @@
   ],
   "app:open-help": [],
   "editor:follow-link": [],
-  "editor:toggle-code": [
-    {
-      "modifiers": [
-        "Alt"
-      ],
-      "key": "Enter"
-    }
-  ],
+  "editor:toggle-code": [],
   "easy-typing-obsidian:easy-typing-format-line": [
     {
       "modifiers": [
@@ -43,6 +36,22 @@
         "Ctrl"
       ],
       "key": "L"
+    }
+  ],
+  "editor:insert-link": [
+    {
+      "modifiers": [
+        "Alt"
+      ],
+      "key": "K"
+    }
+  ],
+  "editor:toggle-checklist-status": [
+    {
+      "modifiers": [
+        "Alt"
+      ],
+      "key": "Enter"
     }
   ]
 }
