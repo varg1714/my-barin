@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "多线程/多线程的引入.md",
+            "file": "基础知识/软件开发七大原则.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -71,7 +71,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "多线程/多线程的引入.md",
+                "file": "基础知识/软件开发七大原则.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,7 +88,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "多线程/多线程的引入.md"
+                "file": "基础知识/软件开发七大原则.md"
               }
             }
           },
@@ -109,7 +109,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "多线程/多线程的引入.md",
+                "file": "基础知识/软件开发七大原则.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -128,19 +128,20 @@
       }
     ],
     "direction": "horizontal",
-    "width": 215
+    "width": 215,
+    "collapsed": true
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
-    "多线程/多线程的引入.md",
     "基础知识/软件开发七大原则.md",
     "基础知识/设计模式.md",
+    "工作常用/迭代资料/V3-Sprint04动态数据查询.md",
+    "多线程/多线程的引入.md",
     "工具锦籍/Alibaba-Canal接入记录.md",
     "工具锦籍/一次Git拉取代码错误记录.md",
     "工具锦籍/常用命令.md",
     "数据库/超全面Mysql语句加锁分析.md",
     "数据库/事务隔离级别与锁的关系.md",
-    "数据库/数据库隔离级别.md",
-    "框架学习/Spring/Spring引入.md"
+    "数据库/数据库隔离级别.md"
   ]
 }

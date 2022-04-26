@@ -1,7 +1,7 @@
 {
-  "theme": "moonstone",
+  "theme": "obsidian",
   "baseFontSize": 16,
   "cssTheme": "Yin and Yang",
-  "translucency": false,
+  "translucency": true,
   "textFontFamily": "Microsoft YaHei"
 }
