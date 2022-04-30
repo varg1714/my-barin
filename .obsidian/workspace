@@ -7,13 +7,8 @@
         "id": "a6eae3087b82f3ff",
         "type": "leaf",
         "state": {
-          "type": "markdown",
-          "state": {
-            "file": "数据库/数据库的锁.md",
-            "mode": "source",
-            "backlinks": false,
-            "source": false
-          }
+          "type": "empty",
+          "state": {}
         }
       }
     ],
@@ -54,7 +49,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 291
+    "width": 232
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -70,7 +65,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/数据库的锁.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -86,9 +80,7 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {
-                "file": "数据库/数据库的锁.md"
-              }
+              "state": {}
             }
           },
           {
@@ -108,7 +100,6 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/数据库的锁.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -123,23 +114,24 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
-    "width": 296
+    "width": 205.40000915527344,
+    "collapsed": true
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
-    "数据库/数据库的锁.md",
+    "数据库/目录大纲.md",
+    "数据库/半一致性读.md",
+    "工具锦籍/常用命令.md",
     "数据库/超全面Mysql语句加锁分析.md",
-    "多线程/ThreadLocal流程分析.md",
-    "多线程/多线程的引入.md",
-    "基础知识/JVM.md",
-    "数据结构/B+树.md",
-    "基础知识/设计模式.md",
-    "基础知识/软件开发七大原则.md",
-    "工作常用/迭代资料/V3-Sprint04动态数据查询.md",
-    "工具锦籍/Alibaba-Canal接入记录.md"
+    "工具锦籍/ElasticSearchѧϰ.md",
+    "数据库/2PL两段锁协议.md",
+    "数据库/事务隔离级别与锁的关系.md",
+    "数据库/数据库的锁.md",
+    "数据库/数据库隔离级别.md",
+    "数据库/MySQL · 引擎特性 · InnoDB 事务子系统介绍.md"
   ]
 }
