@@ -3,7 +3,7 @@
 # SpringBoot 大纲
 
 - 在 SpringBoot 应用启动时运行特定代码
-	1. 实现 ApplicaitonRUnner 接口
+	1. 实现 ApplicaitonRunner 接口
 	2. 实现 CommandLineRunner 接口
 - SpringBoot 实现热部署
 	1. Spring Loaded

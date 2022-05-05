@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "学习计划.md",
+            "file": "计算机原理/Linux大纲.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "学习计划.md",
+                "file": "计算机原理/Linux大纲.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "学习计划.md"
+                "file": "计算机原理/Linux大纲.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "学习计划.md",
+                "file": "计算机原理/Linux大纲.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -132,15 +132,15 @@
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
-    "学习计划.md",
+    "计算机原理/Linux大纲.md",
+    "消息队列/消息队列大纲.md",
     "数据库/Mysql大纲.md",
-    "数据库/事务隔离级别与锁的关系.md",
+    "消息队列/01-消息队列入门.md",
+    "消息队列/RabbitMq相关知识.md",
     "框架学习/Spring/SpringBoot.md",
     "框架学习/Mybatis/Mybatis大纲.md",
     "框架学习/Spring/Spring大纲.md",
-    "框架学习/Spring/Spring引入.md",
-    "数据库/数据库隔离级别.md",
-    "多线程/多线程的引入.md",
-    "多线程/CountDownLatch流程分析.md"
+    "学习计划.md",
+    "数据库/事务隔离级别与锁的关系.md"
   ]
 }
