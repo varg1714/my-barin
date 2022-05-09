@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "数据库/Mysql45讲.md",
+            "file": "数据库/Mysql大纲.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -41,7 +41,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#知识大纲",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/Mysql45讲.md",
+                "file": "数据库/Mysql大纲.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "数据库/Mysql45讲.md"
+                "file": "数据库/Mysql大纲.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/Mysql45讲.md",
+                "file": "数据库/Mysql大纲.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -127,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 400
+    "width": 216
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
-    "数据库/Mysql45讲.md",
+    "数据库/Mysql大纲.md",
+    "数据库/ReadView.md",
     "数据库/超全面Mysql语句加锁分析.md",
-    "学习计划.md",
-    "分布式/问题.md",
-    "多线程/CountDownLatch流程分析.md",
-    "多线程/FutureTask流程分析.md",
-    "多线程/Condition流程分析.md",
-    "多线程/ThreadLocal流程分析.md",
-    "多线程/ReentrantLock流程分析.md",
-    "多线程/多线程的引入.md"
+    "数据库/数据库的锁.md",
+    "数据库/Mysql45讲.md",
+    "数据库/事务隔离级别与锁的关系.md",
+    "数据密集系统设计/数据密集型系统设计引入.md",
+    "数据密集系统设计/数据密集系统设计之复制与分区.md",
+    "数据库/半一致性读.md",
+    "数据库/2PL两段锁协议.md"
   ]
 }

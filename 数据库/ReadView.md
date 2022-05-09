@@ -1,9 +1,6 @@
 #数据库 
 
-> 本文由 [简悦 SimpRead](http://ksria.com/simpread/) 转码， 原文地址 [blog.csdn.net](https://blog.csdn.net/u014274324/article/details/107881756)
-
 ## 1: 数据库的隔离级别
-----------
 
 数据库的隔离级分类分为四类 READ_UNCOMMITTED，READ_COMMITTED，REPEATABLE_READ，SERIALIZABLE。
 
