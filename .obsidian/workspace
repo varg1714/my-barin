@@ -127,15 +127,15 @@
       }
     ],
     "direction": "horizontal",
-    "width": 216
+    "width": 242
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
     "数据库/Mysql大纲.md",
-    "数据库/ReadView.md",
-    "数据库/超全面Mysql语句加锁分析.md",
-    "数据库/数据库的锁.md",
     "数据库/Mysql45讲.md",
+    "数据库/超全面Mysql语句加锁分析.md",
+    "数据库/ReadView.md",
+    "数据库/数据库的锁.md",
     "数据库/事务隔离级别与锁的关系.md",
     "数据密集系统设计/数据密集型系统设计引入.md",
     "数据密集系统设计/数据密集系统设计之复制与分区.md",
