@@ -653,7 +653,7 @@ ALTER TABLE hero DROP INDEX idx_name, ADD UNIQUE KEY uk_name (name);
     UPDATE hero SET country = '汉' WHERE name <= 'c曹操';
     ```
     
-    我们前边说的 `索引条件下推` 这个特性只适用于 `SELECT` 语句，也就是说 `UPDATE` 语句中无法使用，无法使用 `索引条件下推` 这个特性时需要先进行回表操作，那么这个语句就会为 `name` 值为 `'c曹操'` 和 `'l刘备'` 的二级索引记录加 `X型next-key锁`，对它们对应的聚簇索引记录进行加 `X型正经记录锁`。不过之后在判断边界条件时，虽然 `name` 值为 `'l刘备'` 的二级索引记录不符合 `name <= 'c曹操'` 的边界条件，但是在 REPEATABLE READ 隔离级别下并不会释放该记录上加的锁，整个过程的加锁示意图就是：
+    我们前边说的 `索引条件下推` 这个特性只适用于 `SELECT` 语句，也就是说 `UPDATE` 语句中无法使用，无法使用 `索引条件下推` 这个特性时需要先进行回表操作，那么这个语句就会为 `name` 值为 `'c曹操'` 和 `'l刘备'` 的二级索引记录加 `X型next-key锁`，对它们对应的聚簇索引记录进行加 `X型正经记录锁`。不过之后在判断边界条件时，虽然 `name` 值为 `'l刘备'` 的二级索引记录不符合 `name <= 'c曹操'` 的边界条件，但是在 REPEATABLE READ 隔离级别下并不会释放该记录上加的锁 (8.20 版本已不会对刘备列进行加锁了)，整个过程的加锁示意图就是：
     
     ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185020.jpeg)
 *   使用 `DELETE ...` 来为记录加锁，比方说：

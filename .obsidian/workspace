@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "数据库/Mysql大纲.md",
-            "mode": "source",
+            "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md",
+            "mode": "preview",
             "backlinks": false,
             "source": false
           }
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "数据库/Mysql大纲.md"
+                "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -127,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 242
+    "width": 216
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
+    "工作常用/迭代资料/V3-Sprint03开发笔记.md",
+    "工作常用/迭代资料/开发目录.md",
+    "工作常用/配置文件/数据配置.md",
+    "工作常用/配置文件/配置记录.md",
+    "工作常用/迭代资料/发版记录.md",
     "数据库/Mysql大纲.md",
-    "数据库/Mysql45讲.md",
-    "数据库/超全面Mysql语句加锁分析.md",
     "数据库/ReadView.md",
+    "数据库/超全面Mysql语句加锁分析.md",
     "数据库/数据库的锁.md",
-    "数据库/事务隔离级别与锁的关系.md",
-    "数据密集系统设计/数据密集型系统设计引入.md",
-    "数据密集系统设计/数据密集系统设计之复制与分区.md",
-    "数据库/半一致性读.md",
-    "数据库/2PL两段锁协议.md"
+    "数据库/Mysql45讲.md"
   ]
 }
