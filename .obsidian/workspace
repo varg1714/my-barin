@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "数据库/Mysql大纲.md",
+            "file": "学习计划.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "学习计划.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "数据库/Mysql大纲.md"
+                "file": "学习计划.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "学习计划.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -131,12 +131,12 @@
   },
   "active": "5cad9cef52e557ed",
   "lastOpenFiles": [
+    "学习计划.md",
     "数据库/Mysql大纲.md",
     "数据库/Mysql45讲.md",
     "分布式/分布式大纲.md",
     "数据库/Redis大纲.md",
     "未命名思维导图.md",
-    "学习计划.md",
     "todo list.md",
     "数据库/半一致性读.md",
     "多线程/ReentrantLock流程分析.md",
