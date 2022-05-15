@@ -3,7 +3,7 @@
   "FormattingWhenLineEnd": true,
   "ChineseEnglishSpace": true,
   "ChineseNoSpace": true,
-  "Capitalization": true,
+  "Capitalization": false,
   "PunctuationSpace": true,
   "EnglishSpace": false,
   "BraceSpace": true,
