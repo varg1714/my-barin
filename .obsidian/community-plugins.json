@@ -5,8 +5,6 @@
   "dataview",
   "obsidian-excel-to-markdown-table",
   "obsidian-image-auto-upload-plugin",
-  "obsidian-title-index",
   "obsidian-codemirror-options",
-  "cm-chs-patch",
-  "obsidian-enhancing-mindmap"
+  "obsidian-title-index"
 ]

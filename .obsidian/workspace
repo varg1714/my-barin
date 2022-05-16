@@ -4,7 +4,7 @@
     "type": "split",
     "children": [
       {
-        "id": "5cad9cef52e557ed",
+        "id": "a6eae3087b82f3ff",
         "type": "leaf",
         "state": {
           "type": "markdown",
@@ -54,7 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 279
+    "width": 261
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -127,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 266
+    "width": 305
   },
-  "active": "5cad9cef52e557ed",
+  "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
     "数据库/Mysql大纲.md",
-    "学习计划.md",
-    "数据库/Mysql45讲.md",
+    "计算机原理/Linux大纲.md",
+    "基础知识/JVM.md",
+    "数据库/数据库隔离级别.md",
     "数据库/MySQL · 引擎特性 · InnoDB 事务子系统介绍.md",
+    "数据库/Mysql45讲.md",
     "数据库/Redis大纲.md",
-    "数据库/ReadView.md",
-    "分布式/分布式大纲.md",
-    "未命名思维导图.md",
-    "todo list.md",
-    "数据库/半一致性读.md"
+    "基础知识/计算机网络.md",
+    "数据密集系统设计/数据密集型系统设计引入.md",
+    "学习计划.md"
   ]
 }
