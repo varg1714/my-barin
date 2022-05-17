@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "数据库/Mysql大纲.md",
+            "file": "数据库/Redis大纲.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "数据库/Redis大纲.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "数据库/Mysql大纲.md"
+                "file": "数据库/Redis大纲.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "数据库/Redis大纲.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -131,15 +131,15 @@
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
+    "数据库/Redis大纲.md",
+    "数据库/ReadView.md",
+    "学习计划.md",
     "数据库/Mysql大纲.md",
     "计算机原理/Linux大纲.md",
     "基础知识/JVM.md",
     "数据库/数据库隔离级别.md",
     "数据库/MySQL · 引擎特性 · InnoDB 事务子系统介绍.md",
     "数据库/Mysql45讲.md",
-    "数据库/Redis大纲.md",
-    "基础知识/计算机网络.md",
-    "数据密集系统设计/数据密集型系统设计引入.md",
-    "学习计划.md"
+    "基础知识/计算机网络.md"
   ]
 }
