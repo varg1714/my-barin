@@ -4,7 +4,7 @@
     "type": "split",
     "children": [
       {
-        "id": "a6eae3087b82f3ff",
+        "id": "dad49a7386b57e5a",
         "type": "leaf",
         "state": {
           "type": "markdown",
@@ -54,7 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 261
+    "width": 257
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -127,11 +127,12 @@
       }
     ],
     "direction": "horizontal",
-    "width": 305
+    "width": 356
   },
-  "active": "a6eae3087b82f3ff",
+  "active": "dad49a7386b57e5a",
   "lastOpenFiles": [
     "数据库/Redis大纲.md",
+    "未命名.md",
     "数据库/ReadView.md",
     "学习计划.md",
     "数据库/Mysql大纲.md",
@@ -139,7 +140,6 @@
     "基础知识/JVM.md",
     "数据库/数据库隔离级别.md",
     "数据库/MySQL · 引擎特性 · InnoDB 事务子系统介绍.md",
-    "数据库/Mysql45讲.md",
-    "基础知识/计算机网络.md"
+    "数据库/Mysql45讲.md"
   ]
 }
