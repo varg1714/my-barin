@@ -21,13 +21,13 @@
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220513230808.png)
 
-系统给 binlog cache 分配了一片内存，每个线程一个，但是共用同一份 binlog 文件。参数 `binlog_cache_size` 控制单个线程内 binlog cache 所占内存的大小。若超过该参数值，就要暂存到磁盘。事务提交时，执行器把 binlog cache 里的完整事务写入 binlog，并清空binlog cache。
+系统给 binlog cache 分配了一片内存，每个线程一个，但是共用同一份 binlog 文件。参数 `binlog_cache_size` 控制单个线程内 binlog cache 所占内存的大小。若超过该参数值，就要暂存到磁盘的临时文件 (不是最终的 binlog 文件)。事务提交时，执行器把 binlog cache 里的完整事务写入 binlog，并清空 binlog cache。所以如果经常有大事物的化可以考虑增大这个值来减少刷盘的次数。
 
-Binlog 写盘状态 ：
+binlog 写盘状态 ：
 - 内存中
-- Write
+- write
 	把日志写入到文件系统的page cache，并没有把数据持久化到磁盘，所以速度较快
-- Fsync
+- fsync
     将数据持久化到磁盘。一般认为 fsync 才占磁盘的 IOPS
 
 write 和fsync的时机，由参数`sync_binlog`控制：
@@ -39,10 +39,10 @@ write 和fsync的时机，由参数`sync_binlog`控制：
 
 但将 `sync_binlog` 设置为 N，对应的风险是：若主机发生异常重启，会丢失最近 N 个事务的 binlog 日志。
 
-Binlog 日志的格式：
-- Statement 格式
+binlog 日志的格式：
+- statement 格式
 	语句级的格式，使用的是原始 SQL 存储。这就会存在问题，binlog 日志是按提交顺序存储的，如果提交顺序与执行顺序有差别，就会导致数据更新出问题。或者主备之间索引选择不一致，同样会导致数据更新出错。
-- Row 格式
+- row 格式
 	基于原始数据存储，数据是什么样子就存储成什么样子。
 	可以通过命令 `show binlog events;` 查看当前 binlog 日志文件：
 	
@@ -51,9 +51,9 @@ Binlog 日志的格式：
 	binlog日志文件在row格式下如上所示，如果需要查看更为详细的信息通过解析binlog日志查看，可以执行以下命令：`/var/lib/mysql# mysqlbinlog -vv binlog.000001 --start-position=3103917;`
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514145948.png)
-	Binlog_row_image 的默认配置是 FULL，因此 Delete_event 里面，包含了删掉的行的所有字段的值。如果把 binlog_row_image 设置为 MINIMAL，则只会记录必要的信息。
+	binlog_row_image 的默认配置是 FULL，因此 Delete_event 里面，包含了删掉的行的所有字段的值。如果把 binlog_row_image 设置为 MINIMAL，则只会记录必要的信息。
 
-- Mixed 格式
+- mixed 格式
 	- 因为有些 statement 格式的 binlog 可能会导致主备不一致，所以要使用 row 格式。
 	- 但 row 格式的缺点是，很占空间。比如你用一个 delete 语句删掉 10 万行数据，用 statement 的话就是一个 SQL 语句被记录到 binlog 中，占用几十个字节的空间。但如果用 row 格式的 binlog，就要把这 10 万条记录都写到 binlog 中。这样做，不仅会占用更大的空间，同时写 binlog 也要耗费 IO 资源，影响执行速度。
 	- 所以，MySQL 就取了个折中方案，也就是有了 mixed 格式的 binlog。Mixed 格式的意思是，MySQL 自己会判断这条 SQL 语句是否可能引起主备不一致，如果有可能，就用 row 格式，否则就用 statement 格式。也就是说，mixed 格式可以利用 statment 格式的优点，同时又避免了数据不一致的风险。
@@ -63,8 +63,7 @@ Binlog 日志的格式：
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220513230832.png)
 
 - 作用
-    防止在发生故障的时间点，尚有[脏页](https://links.jianshu.com/go?to=https%3A%2F%2Fbaike.baidu.com%2Fitem%2F%25E8%2584%258F%25E9%25A1%25B5%2F5437502) 
-    未写入磁盘（事务提交之后，数据写入磁盘之前宕机），在重启 mysql 服务的时候，根据 redolog 进行重做，从而达到事务的持久性这一特性。
+    防止在发生故障的时间点，尚有[脏页](https://links.jianshu.com/go?to=https%3A%2F%2Fbaike.baidu.com%2Fitem%2F%25E8%2584%258F%25E9%25A1%25B5%2F5437502) 未写入磁盘（事务提交之后，数据写入磁盘之前宕机），在重启 mysql 服务的时候，根据 redolog 进行重做，从而达到事务的持久性这一特性。
 - 内容：  
     物理格式的日志，记录的是物理数据页面的修改信息，其 redolog 是顺序写入 redolog file 的物理文件中去的。
 - 生成时机：  
@@ -72,12 +71,12 @@ Binlog 日志的格式：
 - 释放时机：  
     当对应事务的脏页写入到磁盘之后，redolog 的使命也就完成了，重做日志占用的空间就可以重用（被覆盖）。
 
-Innodb 通过 Redo Log 和 Undo Log 可以保证以上两点。为了保证严格的 CrashSafe，必须要在每个事务提交的时候，将 Redo Log 写入硬件存储。这样做会牺牲一些性能，但是可靠性最好。为了平衡两者，InnoDB 提供了一个 `innodb_flush_log_at_trx_commit` 系统变量，用户可以根据应用的需求自行调整：
+Innodb 通过 redo Log 和 undo Log 可以保证以上两点。为了保证严格的 CrashSafe，必须要在每个事务提交的时候，将 redo log 写入硬件存储。这样做会牺牲一些性能，但是可靠性最好。为了平衡两者，InnoDB 提供了一个 `innodb_flush_log_at_trx_commit` 系统变量，用户可以根据应用的需求自行调整：
 
 可配置刷入的时机：
 - 0：每 N 秒将 redo log buffer 的记录写入 redo log 文件，并且将文件刷入硬件存储 1 次。N 由 `innodb_flush_log_at_timeout` 控制。
-- 1：每个事务提交时，将记录从 redo log buffer 写入 RedoLog 文件，并且将文件刷入磁盘。
-- 2：每个事务提交时，仅将记录从 redo log buffer 写入 redo log 文件。Redo log 何时刷入硬件存储由操作系统和 `innodb_flush_log_at_timeout` 决定。这个选项可以保证在 MySQL 宕机，而操作系统正常工作时，数据的完整性。
+- 1：每个事务提交时，将记录从 redo log buffer 写入 redo log 文件，并且将文件刷入磁盘。
+- 2：每个事务提交时，仅将记录从 redo log buffer 写入 redo log 文件。redo log 何时刷入硬件存储由操作系统和 `innodb_flush_log_at_timeout` 决定。这个选项可以保证在 MySQL 宕机，而操作系统正常工作时，数据的完整性。
 
 Mysql 后台同步的时机：
 重做日志有一个缓存区 Innodb_log_buffer，Innodb_log_buffer 的默认大小为 16Mb，Innodb 存储引擎先将重做日志写入 Innodb_log_buffer 中，然后会通过以下三种方式Innodb 日志缓冲区的日志刷新到磁盘：
@@ -85,7 +84,7 @@ Mysql 后台同步的时机：
 2. 并行的事务提交时，顺带将该事务的 redo log buffer 持久化到磁盘。
 	假设一个事务A执行到一半，已经写了一些redo log到buffer，这时另外一个线程的事务B提交，若`innodb_flush_log_at_trx_commit`是1，则事务B要把redo log buffer里的日志全部持久化到磁盘。这时，就会带上事务A在redo log buffer里的日志一起持久化到磁盘。
 3. 当重做日志缓存可用空间少于 `innodb_log_buffer_size` 的一半时，重做日志缓存被刷新到重做日志文件。
-	redolog buffer 占用的空间即将达到 innodb_log_buffer_size 的一半，后台线程会主动写盘由于这个事务并未提交，所以这个写盘动作只是 write，没有调用 fsync，即只留在文件系统的 page cache。
+	redolog buffer 占用的空间即将达到 innodb_log_buffer_size 的一半，后台线程会主动写盘。由于这个事务并未提交，所以这个写盘动作只是 write，没有调用 fsync，即只留在文件系统的 page cache。
 
 通过redo日志将所有已经在存储引擎内部提交的事务应用redo log恢复，所有已经prepare但是没有commit的transactions将会应用undo log做rollback。然后客户端连接时就能看到已经提交的数据存在数据库内，未提交被回滚地数据需要重新执行。
 

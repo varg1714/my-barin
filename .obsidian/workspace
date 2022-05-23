@@ -133,13 +133,13 @@
   "lastOpenFiles": [
     "数据库/Redis大纲.md",
     "数据库/Mysql大纲.md",
-    "未命名.md",
-    "数据库/ReadView.md",
+    "数据库/Mysql45讲.md",
     "学习计划.md",
-    "计算机原理/Linux大纲.md",
-    "基础知识/JVM.md",
-    "数据库/数据库隔离级别.md",
-    "数据库/MySQL · 引擎特性 · InnoDB 事务子系统介绍.md",
-    "数据库/Mysql45讲.md"
+    "数据库/ReadView.md",
+    "数据库/超全面Mysql语句加锁分析.md",
+    "数据库/事务隔离级别与锁的关系.md",
+    "数据库/数据库的锁.md",
+    "未命名.md",
+    "计算机原理/Linux大纲.md"
   ]
 }
