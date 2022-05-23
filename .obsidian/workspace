@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "数据库/Redis大纲.md",
-            "mode": "source",
+            "file": "框架学习/Spring/Spring大纲.md",
+            "mode": "preview",
             "backlinks": false,
             "source": false
           }
@@ -41,7 +41,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "tag:#知识大纲",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -50,11 +50,12 @@
               }
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
-    "width": 257
+    "width": 388
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -70,7 +71,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/Redis大纲.md",
+                "file": "框架学习/Spring/Spring大纲.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +88,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "数据库/Redis大纲.md"
+                "file": "框架学习/Spring/Spring大纲.md"
               }
             }
           },
@@ -108,7 +109,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/Redis大纲.md",
+                "file": "框架学习/Spring/Spring大纲.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -127,19 +128,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 356
+    "width": 455
   },
   "active": "dad49a7386b57e5a",
   "lastOpenFiles": [
-    "数据库/Redis大纲.md",
+    "框架学习/Spring/Spring大纲.md",
+    "框架学习/Mybatis/Mybatis大纲.md",
+    "基础知识/计算机网络.md",
+    "分布式/分布式大纲.md",
     "数据库/Mysql大纲.md",
+    "数据库/Redis大纲.md",
     "数据库/Mysql45讲.md",
     "学习计划.md",
     "数据库/ReadView.md",
-    "数据库/超全面Mysql语句加锁分析.md",
-    "数据库/事务隔离级别与锁的关系.md",
-    "数据库/数据库的锁.md",
-    "未命名.md",
-    "计算机原理/Linux大纲.md"
+    "数据库/超全面Mysql语句加锁分析.md"
   ]
 }
