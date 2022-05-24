@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "框架学习/Spring/Spring大纲.md",
+            "file": "消息队列/01-消息队列入门.md",
             "mode": "preview",
             "backlinks": false,
             "source": false
@@ -50,12 +50,11 @@
               }
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
-    "width": 388
+    "width": 274
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -71,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "框架学习/Spring/Spring大纲.md",
+                "file": "消息队列/01-消息队列入门.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "框架学习/Spring/Spring大纲.md"
+                "file": "消息队列/01-消息队列入门.md"
               }
             }
           },
@@ -109,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "框架学习/Spring/Spring大纲.md",
+                "file": "消息队列/01-消息队列入门.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -128,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 455
+    "width": 335
   },
   "active": "dad49a7386b57e5a",
   "lastOpenFiles": [
-    "框架学习/Spring/Spring大纲.md",
-    "框架学习/Mybatis/Mybatis大纲.md",
-    "基础知识/计算机网络.md",
-    "分布式/分布式大纲.md",
-    "数据库/Mysql大纲.md",
-    "数据库/Redis大纲.md",
-    "数据库/Mysql45讲.md",
-    "学习计划.md",
-    "数据库/ReadView.md",
-    "数据库/超全面Mysql语句加锁分析.md"
+    "消息队列/01-消息队列入门.md",
+    "消息队列/消息队列大纲.md",
+    "消息队列/xx01-消息队列的推模式与拉模式.md",
+    "消息队列/RabbitMq相关知识.md",
+    "多线程/FutureTask流程分析.md",
+    "多线程/CountDownLatch流程分析.md",
+    "多线程/Condition流程分析.md",
+    "多线程/ThreadLocal流程分析.md",
+    "多线程/ReentrantLock流程分析.md",
+    "多线程/多线程的引入.md"
   ]
 }

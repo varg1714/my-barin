@@ -141,7 +141,7 @@ static final class Node {
 
 ```
 
-在 Node 节点中的值，waitStatus 用来看跟踪当前线程的状态，初始创建是为默认值 0。在 AQS 中当该线程被取消后变为 CANCELLED，位于阻塞队列中等待唤醒时为 SIGNAL。CONDITION 和 PROPAGATE 分别用于 Condition 类控制中使用。
+在 Node 节点中的值，waitStatus 用来跟踪当前线程的状态，初始创建时为默认值 0。在 AQS 中当该线程被取消后变为 CANCELLED，位于阻塞队列中等待唤醒时为 SIGNAL。CONDITION 和 PROPAGATE 分别用于 Condition 类控制中使用。
 
 ## 为什么 AQS 要使用双向链表来保存线程节点信息？
 
