@@ -4,13 +4,13 @@
     "type": "split",
     "children": [
       {
-        "id": "dad49a7386b57e5a",
+        "id": "a6eae3087b82f3ff",
         "type": "leaf",
         "state": {
           "type": "markdown",
           "state": {
-            "file": "消息队列/01-消息队列入门.md",
-            "mode": "preview",
+            "file": "消息队列/消息队列大纲.md",
+            "mode": "source",
             "backlinks": false,
             "source": false
           }
@@ -41,7 +41,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#知识大纲",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -54,7 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 274
+    "width": 261
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "消息队列/01-消息队列入门.md",
+                "file": "消息队列/消息队列大纲.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "消息队列/01-消息队列入门.md"
+                "file": "消息队列/消息队列大纲.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "消息队列/01-消息队列入门.md",
+                "file": "消息队列/消息队列大纲.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -127,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 335
+    "width": 216
   },
-  "active": "dad49a7386b57e5a",
+  "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
-    "消息队列/01-消息队列入门.md",
     "消息队列/消息队列大纲.md",
-    "消息队列/xx01-消息队列的推模式与拉模式.md",
-    "消息队列/RabbitMq相关知识.md",
-    "多线程/FutureTask流程分析.md",
-    "多线程/CountDownLatch流程分析.md",
-    "多线程/Condition流程分析.md",
     "多线程/ThreadLocal流程分析.md",
-    "多线程/ReentrantLock流程分析.md",
-    "多线程/多线程的引入.md"
+    "基础知识/计算机网络.md",
+    "消息队列/01-消息队列入门.md",
+    "消息队列/RabbitMq相关知识.md",
+    "消息队列/xx01-消息队列的推模式与拉模式.md",
+    "数据库/Mysql45讲.md",
+    "工作常用/配置文件/数据配置.md",
+    "工作常用/迭代资料/V3-Sprint03开发笔记.md",
+    "工作常用/迭代资料/V3-Sprint04动态数据查询.md"
   ]
 }
