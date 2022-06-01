@@ -4,12 +4,12 @@
     "type": "split",
     "children": [
       {
-        "id": "a6eae3087b82f3ff",
+        "id": "5bb95cdc8fa81fa4",
         "type": "leaf",
         "state": {
           "type": "markdown",
           "state": {
-            "file": "工作常用/配置文件/脚本文件.md",
+            "file": "分布式/分布式大纲.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -54,7 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 261
+    "width": 279
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "工作常用/配置文件/脚本文件.md",
+                "file": "分布式/分布式大纲.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "工作常用/配置文件/脚本文件.md"
+                "file": "分布式/分布式大纲.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "工作常用/配置文件/脚本文件.md",
+                "file": "分布式/分布式大纲.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -127,19 +127,20 @@
       }
     ],
     "direction": "horizontal",
-    "width": 401
+    "width": 266,
+    "collapsed": true
   },
-  "active": "a6eae3087b82f3ff",
+  "active": "5bb95cdc8fa81fa4",
   "lastOpenFiles": [
-    "工作常用/配置文件/脚本文件.md",
-    "工作常用/迭代资料/V3-Sprint03开发笔记.md",
-    "工作常用/迭代资料/V3-Sprint02开发笔记.md",
-    "工作常用/迭代资料/V3-Sprint04动态数据查询.md",
-    "工作常用/迭代资料/V3-Sprint05开发笔记.md",
-    "工作常用/迭代资料/V3-Sprint01开发笔记.md",
-    "消息队列/消息队列大纲.md",
-    "多线程/ThreadLocal流程分析.md",
-    "基础知识/计算机网络.md",
-    "消息队列/01-消息队列入门.md"
+    "分布式/分布式大纲.md",
+    "学习计划.md",
+    "数据库/Mysql大纲.md",
+    "数据库/Mysql45讲.md",
+    "数据库/MySQL · 引擎特性 · InnoDB 事务子系统介绍.md",
+    "数据库/Redis大纲.md",
+    "数据库/ReadView.md",
+    "未命名思维导图.md",
+    "todo list.md",
+    "数据库/半一致性读.md"
   ]
 }
