@@ -4,7 +4,7 @@
     "type": "split",
     "children": [
       {
-        "id": "5bb95cdc8fa81fa4",
+        "id": "a6eae3087b82f3ff",
         "type": "leaf",
         "state": {
           "type": "markdown",
@@ -54,7 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 279
+    "width": 195
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -127,20 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 266,
-    "collapsed": true
+    "width": 274
   },
-  "active": "5bb95cdc8fa81fa4",
+  "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
     "分布式/分布式大纲.md",
-    "学习计划.md",
-    "数据库/Mysql大纲.md",
+    "未命名.md",
     "数据库/Mysql45讲.md",
-    "数据库/MySQL · 引擎特性 · InnoDB 事务子系统介绍.md",
-    "数据库/Redis大纲.md",
-    "数据库/ReadView.md",
-    "未命名思维导图.md",
-    "todo list.md",
-    "数据库/半一致性读.md"
+    "消息队列/xx01-消息队列的推模式与拉模式.md",
+    "消息队列/01-消息队列入门.md",
+    "消息队列/消息队列大纲.md",
+    "多线程/ThreadLocal流程分析.md",
+    "基础知识/计算机网络.md",
+    "消息队列/RabbitMq相关知识.md",
+    "工作常用/配置文件/数据配置.md"
   ]
 }
