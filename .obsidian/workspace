@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md",
-            "mode": "preview",
+            "file": "工作常用/配置文件/脚本文件.md",
+            "mode": "source",
             "backlinks": false,
             "source": false
           }
@@ -41,7 +41,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "113.23",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -50,8 +50,7 @@
               }
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -71,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md",
+                "file": "工作常用/配置文件/脚本文件.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md"
+                "file": "工作常用/配置文件/脚本文件.md"
               }
             }
           },
@@ -109,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "工作常用/迭代资料/V3-Sprint03开发笔记.md",
+                "file": "工作常用/配置文件/脚本文件.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -128,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 216
+    "width": 401
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
+    "工作常用/配置文件/脚本文件.md",
     "工作常用/迭代资料/V3-Sprint03开发笔记.md",
-    "工作常用/迭代资料/V3-Sprint04动态数据查询.md",
     "工作常用/迭代资料/V3-Sprint02开发笔记.md",
-    "工作常用/迭代资料/V3-Sprint01开发笔记.md",
+    "工作常用/迭代资料/V3-Sprint04动态数据查询.md",
     "工作常用/迭代资料/V3-Sprint05开发笔记.md",
+    "工作常用/迭代资料/V3-Sprint01开发笔记.md",
     "消息队列/消息队列大纲.md",
     "多线程/ThreadLocal流程分析.md",
     "基础知识/计算机网络.md",
-    "消息队列/01-消息队列入门.md",
-    "消息队列/RabbitMq相关知识.md"
+    "消息队列/01-消息队列入门.md"
   ]
 }
