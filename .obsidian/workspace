@@ -4,12 +4,12 @@
     "type": "split",
     "children": [
       {
-        "id": "a6eae3087b82f3ff",
+        "id": "2d438985fb1f79e9",
         "type": "leaf",
         "state": {
           "type": "markdown",
           "state": {
-            "file": "数据库/Mysql大纲.md",
+            "file": "基础知识/设计模式.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -54,8 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 195,
-    "collapsed": true
+    "width": 195
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -71,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "基础知识/设计模式.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "数据库/Mysql大纲.md"
+                "file": "基础知识/设计模式.md"
               }
             }
           },
@@ -109,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/Mysql大纲.md",
+                "file": "基础知识/设计模式.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -130,17 +129,17 @@
     "direction": "horizontal",
     "width": 355
   },
-  "active": "a6eae3087b82f3ff",
+  "active": "2d438985fb1f79e9",
   "lastOpenFiles": [
-    "数据库/Mysql大纲.md",
-    "分布式/分布式大纲.md",
-    "未命名.md",
-    "数据库/Mysql45讲.md",
-    "消息队列/xx01-消息队列的推模式与拉模式.md",
-    "消息队列/01-消息队列入门.md",
-    "消息队列/消息队列大纲.md",
-    "多线程/ThreadLocal流程分析.md",
+    "基础知识/设计模式.md",
     "基础知识/计算机网络.md",
-    "消息队列/RabbitMq相关知识.md"
+    "消息队列/消息队列大纲.md",
+    "学习计划.md",
+    "分布式/二阶段协议.md",
+    "分布式/分布式大纲.md",
+    "数据库/Redis大纲.md",
+    "数据库/Mysql大纲.md",
+    "数据库/Mysql45讲.md",
+    "数据库/ReadView.md"
   ]
 }
