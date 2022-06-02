@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "分布式/分布式大纲.md",
+            "file": "数据库/Mysql大纲.md",
             "mode": "source",
             "backlinks": false,
             "source": false
@@ -54,7 +54,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 195
+    "width": 195,
+    "collapsed": true
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -70,7 +71,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "分布式/分布式大纲.md",
+                "file": "数据库/Mysql大纲.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +88,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "分布式/分布式大纲.md"
+                "file": "数据库/Mysql大纲.md"
               }
             }
           },
@@ -108,7 +109,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "分布式/分布式大纲.md",
+                "file": "数据库/Mysql大纲.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -127,10 +128,11 @@
       }
     ],
     "direction": "horizontal",
-    "width": 274
+    "width": 355
   },
   "active": "a6eae3087b82f3ff",
   "lastOpenFiles": [
+    "数据库/Mysql大纲.md",
     "分布式/分布式大纲.md",
     "未命名.md",
     "数据库/Mysql45讲.md",
@@ -139,7 +141,6 @@
     "消息队列/消息队列大纲.md",
     "多线程/ThreadLocal流程分析.md",
     "基础知识/计算机网络.md",
-    "消息队列/RabbitMq相关知识.md",
-    "工作常用/配置文件/数据配置.md"
+    "消息队列/RabbitMq相关知识.md"
   ]
 }

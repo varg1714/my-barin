@@ -71,5 +71,14 @@
       ],
       "key": "="
     }
+  ],
+  "obsidian-title-index:add-markdown-index": [
+    {
+      "modifiers": [
+        "Alt",
+        "Mod"
+      ],
+      "key": "`"
+    }
   ]
 }
