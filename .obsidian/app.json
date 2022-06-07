@@ -19,5 +19,8 @@
   "legacyEditor": false,
   "lineWrap": true,
   "readableLineLength": true,
-  "strictLineBreaks": false
+  "strictLineBreaks": false,
+  "attachmentFolderPath": "引用文件",
+  "newLinkFormat": "absolute",
+  "showUnsupportedFiles": true
 }
