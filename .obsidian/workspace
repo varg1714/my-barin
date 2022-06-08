@@ -4,7 +4,7 @@
     "type": "split",
     "children": [
       {
-        "id": "486721876e9c1534",
+        "id": "2d438985fb1f79e9",
         "type": "leaf",
         "state": {
           "type": "markdown",
@@ -50,11 +50,12 @@
               }
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
-    "width": 261
+    "width": 217
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -127,19 +128,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 401
+    "width": 355
   },
-  "active": "486721876e9c1534",
+  "active": "2d438985fb1f79e9",
   "lastOpenFiles": [
     "消息队列/消息队列大纲.md",
-    "计算机原理/计算机网络.md",
     "分布式/分布式大纲.md",
     "数据库/Redis大纲.md",
-    "工作常用/迭代资料/V3-Sprint06开发笔记.md",
-    "工作常用/迭代资料/开发目录.md",
-    "工作常用/迭代资料/V3-Sprint05开发笔记.md",
-    "工作常用/迭代资料/V3-Sprint04动态数据查询.md",
-    "工作常用/迭代资料/V3-Sprint03开发笔记.md",
-    "工作常用/迭代资料/V3-Sprint00开发笔记.md"
+    "数据库/Mysql45讲.md",
+    "数据库/Mysql大纲.md",
+    "数据库/2PL两段锁协议.md",
+    "数据库/超全面Mysql语句加锁分析.md",
+    "数据库/数据库的锁.md",
+    "基础知识/软件开发七大原则.md",
+    "学习计划.md"
   ]
 }
