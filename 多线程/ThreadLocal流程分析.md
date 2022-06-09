@@ -26,7 +26,7 @@ static class Entry extends WeakReference<ThreadLocal<?>> {
 
 ## ThreadLocal 赋值流程
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220429175229.png)
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220609172537.svg)
 
 # ThreadLocal 的疑问记录
 

@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "消息队列/消息队列大纲.md",
-            "mode": "preview",
+            "file": "计算机原理/计算机组成原理.md",
+            "mode": "source",
             "backlinks": false,
             "source": false
           }
@@ -50,8 +50,7 @@
               }
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -71,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "消息队列/消息队列大纲.md",
+                "file": "计算机原理/计算机组成原理.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -88,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "消息队列/消息队列大纲.md"
+                "file": "计算机原理/计算机组成原理.md"
               }
             }
           },
@@ -109,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "消息队列/消息队列大纲.md",
+                "file": "计算机原理/计算机组成原理.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -132,15 +131,15 @@
   },
   "active": "2d438985fb1f79e9",
   "lastOpenFiles": [
-    "消息队列/消息队列大纲.md",
-    "分布式/分布式大纲.md",
+    "计算机原理/计算机组成原理.md",
+    "计算机原理/计算机网络.md",
+    "多线程/ThreadLocal流程分析.md",
+    "多线程/ReentrantLock流程分析.md",
+    "多线程/FutureTask流程分析.md",
+    "多线程/CountDownLatch流程分析.md",
+    "多线程/Condition流程分析.md",
+    "多线程/多线程的引入.md",
     "数据库/Redis大纲.md",
-    "数据库/Mysql45讲.md",
-    "数据库/Mysql大纲.md",
-    "数据库/2PL两段锁协议.md",
-    "数据库/超全面Mysql语句加锁分析.md",
-    "数据库/数据库的锁.md",
-    "基础知识/软件开发七大原则.md",
-    "学习计划.md"
+    "数据库/Mysql大纲.md"
   ]
 }

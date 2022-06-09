@@ -12,7 +12,7 @@ Condition 对象有 await，signal 等方法。Object 有 wait，notify 等方�
 
 # Condition 的流程分析
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220501154420.png)
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220609172252.svg)
 
 # Condition 疑问记录
 

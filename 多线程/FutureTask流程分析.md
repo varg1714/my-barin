@@ -6,7 +6,7 @@
 
 # FutureTask 流程分析
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220502221450.png)
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220609172432.svg)
 
 # FutureTask 疑问记录
 
