@@ -4,7 +4,7 @@
     "type": "split",
     "children": [
       {
-        "id": "2d438985fb1f79e9",
+        "id": "486721876e9c1534",
         "type": "leaf",
         "state": {
           "type": "markdown",
@@ -41,7 +41,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#知识大纲",
+                "query": "tag:#数据库",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -54,7 +54,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 217
+    "width": 361
   },
   "right": {
     "id": "fc992aa851a65504",
@@ -127,19 +127,19 @@
       }
     ],
     "direction": "horizontal",
-    "width": 355
+    "width": 540
   },
-  "active": "2d438985fb1f79e9",
+  "active": "486721876e9c1534",
   "lastOpenFiles": [
     "数据密集系统设计/数据密集系统设计之复制与分区.md",
-    "多线程/ReentrantLock流程分析.md",
-    "多线程/Condition流程分析.md",
-    "多线程/FutureTask流程分析.md",
-    "计算机原理/计算机组成原理.md",
+    "数据密集系统设计/数据密集型系统设计引入.md",
+    "分布式/分布式大纲.md",
     "计算机原理/计算机网络.md",
+    "计算机原理/计算机组成原理.md",
     "多线程/ThreadLocal流程分析.md",
+    "多线程/FutureTask流程分析.md",
     "多线程/CountDownLatch流程分析.md",
-    "多线程/多线程的引入.md",
-    "数据库/Redis大纲.md"
+    "多线程/Condition流程分析.md",
+    "多线程/ReentrantLock流程分析.md"
   ]
 }
