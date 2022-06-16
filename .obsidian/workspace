@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "数据库/Redis大纲.md",
-            "mode": "preview",
+            "file": "数据密集系统设计/数据密集型系统涉及之事务.md",
+            "mode": "source",
             "backlinks": false,
             "source": false
           }
@@ -70,7 +70,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "数据库/Redis大纲.md",
+                "file": "数据密集系统设计/数据密集型系统涉及之事务.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,7 +87,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "数据库/Redis大纲.md"
+                "file": "数据密集系统设计/数据密集型系统涉及之事务.md"
               }
             }
           },
@@ -108,7 +108,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "数据库/Redis大纲.md",
+                "file": "数据密集系统设计/数据密集型系统涉及之事务.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -131,15 +131,15 @@
   },
   "active": "486721876e9c1534",
   "lastOpenFiles": [
-    "数据库/Redis大纲.md",
-    "数据密集系统设计/数据密集系统设计之复制与分区.md",
+    "数据密集系统设计/数据密集型系统涉及之事务.md",
     "数据密集系统设计/数据密集型系统设计引入.md",
+    "数据密集系统设计/数据密集系统设计之复制与分区.md",
+    "数据库/Redis大纲.md",
     "数据库/Mysql大纲.md",
     "分布式/分布式大纲.md",
     "计算机原理/计算机网络.md",
     "计算机原理/计算机组成原理.md",
     "多线程/ThreadLocal流程分析.md",
-    "多线程/FutureTask流程分析.md",
-    "多线程/CountDownLatch流程分析.md"
+    "多线程/FutureTask流程分析.md"
   ]
 }
