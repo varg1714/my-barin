@@ -15,7 +15,7 @@
   "FullWidthCharacterEnhance": true,
   "UserDefinedRegExp": ":\\w*:\n{{.*?}}",
   "UserDefinedRegSwitch": true,
-  "UserPartSpace": true,
+  "UserPartSpace": false,
   "Debug": false,
   "FullWidthCharacterEnhence": true
 }
