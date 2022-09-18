@@ -497,20 +497,20 @@ Query OK, 0 rows affected (0.03 sec)
 
 `Page Header` 是专门针对 `数据页` 记录的各种状态信息，比方说页里头有多少个记录，有多少个槽。我们现在描述的 `File Header` 针对各种类型的页都通用，也就是说不同类型的页都会以 `File Header` 作为第一个组成部分，它描述了一些针对各种页都通用的一些信息，比方说这个页的编号是多少，它的上一个页、下一个页是谁。这个部分占用固定的 `38` 个字节，是由下边这些内容组成的：
 
-<table> <thead> <tr> <th> 名称 </th> <th> 占用空间大小 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> FIL_PAGE_SPACE_OR_CHKSUM </code> </td> <td> <code> 4 </code> 字节 </td> <td> 页的校验和（checksum 值）</td> </tr> <tr> <td> <code> FIL_PAGE_OFFSET </code> </td> <td> <code> 4 </code> 字节 </td> <td> 页号 </td> </tr> <tr> <td> <code> FIL_PAGE_PREV </code> </td> <td> <code> 4 </code> 字节 </td> <td> 上一个页的页号 </td> </tr> <tr> <td> <code> FIL_PAGE_NEXT </code> </td> <td> <code> 4 </code> 字节 </td> <td> 下一个页的页号 </td> </tr> <tr> <td> <code> FIL_PAGE_LSN </code> </td> <td> <code> 8 </code> 字节 </td> <td> 页面被最后修改时对应的日志序列位置（英文名是：Log Sequence Number）</td> </tr> <tr> <td> <code> FIL_PAGE_TYPE </code> </td> <td> <code> 2 </code> 字节 </td> <td> 该页的类型 </td> </tr> <tr> <td> <code> FIL_PAGE_FILE_FLUSH_LSN </code> </td> <td> <code> 8 </code> 字节 </td> <td> 仅在系统表空间的一个页中定义，代表文件至少被刷新到了对应的 LSN 值 </td> </tr> <tr> <td> <code> FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID </code> </td> <td> <code> 4 </code> 字节 </td> <td> 页属于哪个表空间 </td> </tr> </tbody> </table>
+<table> <thead> <tr> <th> 名称 </th> <th> 占用空间大小 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> FIL_PAGE_SPACE_OR_CHKSUM </code> </td> <td> <code> 4 </code> 字节 </td> <td> 页的校验和（checksum 值）</td> </tr> <tr> <td> <code> FIL_PAGE_OFFSET </code> </td> <td> <code> 4 </code> 字节 </td> <td> 页号 </td> </tr> <tr> <td> <code> FIL_PAGE_PREV </code> </td> <td> <code> 4 </code> 字节 </td> <td> 上一个页的页号 </td> </tr> <tr> <td> <code> FIL_PAGE_NEXT </code> </td> <td> <code> 4 </code> 字节 </td> <td> 下一个页的页号 </td> </tr> <tr> <td> <code> FIL_PAGE_LSN </code> </td> <td> <code> 8 </code> 字节 </td> <td> 页面被最后修改时对应的日志序列位置（英文名是：Log Sequence Number）</td> </tr> <tr> <td> <code> FIL_PAGE_TYPE </code> </td> <td> <code> 2 </code> 字节 </td> <td> 该页的类型 </td> </tr> <tr> <td> <code> FIL_PAGE_FILE_FLUSH_LSN </code> </td> <td> <code> 8 </code> 字节 </td> <td> 仅在系统表空间的一个页中定义，代表文件至少被刷新到了磁盘对应的 LSN 值 </td> </tr> <tr> <td> <code> FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID </code> </td> <td> <code> 4 </code> 字节 </td> <td> 页属于哪个表空间 </td> </tr> </tbody> </table>
 
 对照着这个表格，我们看几个目前比较重要的部分：
 
 - FIL_PAGE_SPACE_OR_CHKSUM
-    
+
     这个代表当前页面的校验和（checksum）。
-    
--   FIL_PAGE_OFFSET
-    
+
+- FIL_PAGE_OFFSET
+
     每一个 `页` 都有一个单独的页号，就跟你的身份证号码一样，`InnoDB` 通过页号来可以唯一定位一个 `页`。
-    
--   FIL_PAGE_TYPE
-    
+
+- FIL_PAGE_TYPE
+
     这个代表当前 `页` 的类型，我们前边说过，`InnoDB` 为了不同的目的而把页分为不同的类型，我们上边介绍的其实都是存储记录的 `数据页`，其实还有很多别的类型的页，具体如下表：
 
 	<table> <thead> <tr> <th> 类型名称 </th> <th> 十六进制 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> FIL_PAGE_TYPE_ALLOCATED </code> </td> <td> 0x0000 </td> <td> 最新分配，还没使用 </td> </tr> <tr> <td> <code> FIL_PAGE_UNDO_LOG </code> </td> <td> 0x0002 </td> <td> Undo 日志页 </td> </tr> <tr> <td> <code> FIL_PAGE_INODE </code> </td> <td> 0x0003 </td> <td> 段信息节点 </td> </tr> <tr> <td> <code> FIL_PAGE_IBUF_FREE_LIST </code> </td> <td> 0x0004 </td> <td> Insert Buffer 空闲列表 </td> </tr> <tr> <td> <code> FIL_PAGE_IBUF_BITMAP </code> </td> <td> 0x0005 </td> <td> Insert Buffer 位图 </td> </tr> <tr> <td> <code> FIL_PAGE_TYPE_SYS </code> </td> <td> 0x0006 </td> <td> 系统页 </td> </tr> <tr> <td> <code> FIL_PAGE_TYPE_TRX_SYS </code> </td> <td> 0x0007 </td> <td> 事务系统数据 </td> </tr> <tr> <td> <code> FIL_PAGE_TYPE_FSP_HDR </code> </td> <td> 0x0008 </td> <td> 表空间头部信息 </td> </tr> <tr> <td> <code> FIL_PAGE_TYPE_XDES </code> </td> <td> 0x0009 </td> <td> 扩展描述页 </td> </tr> <tr> <td> <code> FIL_PAGE_TYPE_BLOB </code> </td> <td> 0x000A </td> <td> 溢出页 </td> </tr> <tr> <td> <code> FIL_PAGE_INDEX </code> </td> <td> 0x45BF </td> <td> 索引页，也就是我们所说的 <code> 数据页 </code> </td> </tr> </tbody> </table>
@@ -522,6 +522,10 @@ Query OK, 0 rows affected (0.03 sec)
 需要注意的是，并不是所有类型的页都有上一个和下一个页的属性，不过 `数据页`（也就是类型为 `FIL_PAGE_INDEX` 的页）是有这两个属性的，所以所有的数据页其实是一个双链表，就像这样：
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209050009280.png)
+
+- FIL_PAGE_LSN
+
+	用于记录页面被[[Mysql的一致性保证#1 5 Log Sequence Number|刷新到磁盘时的LSN值]]。
 
 ## 3.6. File Trailer（文件尾部）
 
@@ -1259,3 +1263,180 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 ```
 
 在 `information_schema` 数据库中的这些以 `INNODB_SYS` 开头的表并不是真正的内部系统表（内部系统表就是我们上边唠叨的以 `SYS` 开头的那些表），而是在存储引擎启动时读取这些以 `SYS` 开头的系统表，然后填充到这些以 `INNODB_SYS` 开头的表中。以 `INNODB_SYS` 开头的表和以 `SYS` 开头的表中的字段并不完全一样，但供大家参考已经足矣。
+
+# 6. Mysql 的缓冲区（Buffer Pool）
+
+
+为了处理磁盘与内存及 CPU 之间的速度差异，Mysql 会建立一个缓冲区，称之为 `Buffer Pool`。当需要访问某个页的数据时，就会把完整的页的数据全部加载到内存中，然后就可以进行读写访问了，在进行完读写访问之后并不着急把该页对应的内存空间释放掉，而是将其 `缓存` 起来，这样将来有请求再次访问该页面时，就可以省去磁盘 `IO` 的开销了。
+
+`Buffer Pool` 在 Mysql 启动的时候就会申请建立，其默认大小为 128M，可以通过 `innodb_buffer_pool_size` 进行配置。
+
+## 6.1. Buffer Pool 的组织结构
+
+`Buffer Pool` 中默认的缓存页大小和在磁盘上默认的页大小是一样的，都是 `16KB`。为了更好的管理这些在 `Buffer Pool` 中的缓存页，Mysql 为每一个缓存页都创建了一些所谓的 `控制信息`，这些控制信息包括该页所属的表空间编号、页号、缓存页在 `Buffer Pool` 中的地址、链表节点信息、一些锁信息以及 `LSN` 信息等。
+
+每个缓存页对应的控制信息占用的内存大小是相同的，称为 `控制块`，控制块和缓存页是一一对应的，它们都被存放到 Buffer Pool 中，其中控制块被存放到 Buffer Pool 的前边，缓存页被存放到 Buffer Pool 后边，所以整个 `Buffer Pool` 对应的内存空间看起来就是这样的：
+
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182249282.png)
+
+控制块与缓存页分配后，剩余不足的空间会变成碎片。当然，如果 `Buffer Pool` 的大小设置的刚刚好的话，也可能不会产生 `碎片`。
+
+每个控制块大约占用缓存页大小的 5%，而我们设置的 innodb_buffer_pool_size 并不包含这部分控制块占用的内存空间大小，也就是说 InnoDB 在为 Buffer Pool 向操作系统申请连续的内存空间时，这片连续的内存空间一般会比 innodb_buffer_pool_size 的值大 5%左右。
+
+### 6.1.1. free 链表的管理
+
+为了区分 `Buffer Pool` 中哪些缓存页是空闲的，哪些已经被使用了的，即为了记录 Buffer Pool 中哪些缓存页是可用的，我们可以把所有空闲的缓存页对应的控制块作为一个节点放到一个链表中，这个链表也可以被称作 `free链表`（或者说空闲链表）。
+
+刚刚完成初始化的 `Buffer Pool` 中所有的缓存页都是空闲的，所以每一个缓存页对应的控制块都会被加入到 `free链表` 中，假设该 `Buffer Pool` 中可容纳的缓存页数量为 `n`，那增加了 `free链表` 的效果图就是这样的：
+
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182253199.png)
+
+为了管理好这个 `free链表`，特意为这个链表定义了一个 `基节点`，里边儿包含着链表的头节点地址，尾节点地址，以及当前链表中节点的数量等信息。这里需要注意的是，链表的基节点占用的内存空间并不包含在为 `Buffer Pool` 申请的一大片连续内存空间之内，而是单独申请的一块内存空间。
+
+此后每当需要从磁盘中加载一个页到 `Buffer Pool` 中时，就从 `free链表` 中取一个空闲的缓存页，并且把该缓存页对应的 `控制块` 的信息填上（就是该页所在的表空间、页号之类的信息），然后把该缓存页对应的 `free链表` 节点从链表中移除，表示该缓存页已经被使用了。
+
+### 6.1.2. 缓存页的哈希处理
+
+为了判断某个页面是否被加入到了缓冲区，我们可以用 `表空间号 + 页号` 作为 `key`，`缓存页` 作为 `value` 创建一个哈希表。在需要访问某个页的数据时，先从哈希表中根据 `表空间号 + 页号` 看看有没有对应的缓存页：如果有，直接使用该缓存页就好；如果没有，那就从 `free链表` 中选一个空闲的缓存页，然后把磁盘中对应的页加载到该缓存页的位置。
+
+### 6.1.3. flush 链表的管理
+
+修改了 `Buffer Pool` 中某个缓存页的数据后它就和磁盘上的页变得不一致了，这样的缓存页也被称为脏页（dirty page）。因为磁盘的交互速度太慢了，所以脏页并不会立马刷新到磁盘上，而是在未来的某个时间点进行同步。
+
+为了记录这些被修改过而未刷新到磁盘上的脏页，Mysql 设计了一个 `flush链表`，链表的构造和 `free链表` 差不多，假设某个时间点 `Buffer Pool` 中的脏页数量为 `n`，那么对应的 `flush链表` 就长这样：
+
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182312152.png)
+
+### 6.1.4. LRU 链表的管理
+
+缓冲区的空间总是有限的，为了提高缓存命中率，所以我们不得不将一些缓存页移出缓冲区。为了实现这一功能，Mysql 使用了 LRU 链表。
+
+#### 6.1.4.1. 划分区域的 LRU 链表
+
+传统的 LRU 链表将新读取的页面放到链表的头部，淘汰时淘汰链表的尾部，这对于 Mysql 来说存在一些问题：
+
+- Mysql 的预读
+
+	`InnoDB` 提供了一个看起来比较贴心的服务—— `预读`（英文名：`read ahead`）。所谓 `预读`，就是 `InnoDB` 认为执行当前的请求可能之后会读取某些页面，就预先把它们加载到 `Buffer Pool` 中。根据触发方式的不同，`预读` 又可以细分为下边两种：
+	
+	- 线性预读
+
+		设计 `InnoDB` 的大叔提供了一个系统变量 `innodb_read_ahead_threshold`，如果顺序访问了某个[[Mysql的存储结构#5 2 1 1 区（exient）的概述|区]]（`extent`）的页面超过这个系统变量的值，就会触发一次 `异步` 读取下一个区中全部的页面到 `Buffer Pool` 的请求，注意 `异步` 读取意味着从磁盘中加载这些被预读的页面并不会影响到当前工作线程的正常执行。
+
+	- 随机预读
+
+		如果 `Buffer Pool` 中已经缓存了某个[[Mysql的存储结构#5 2 1 1 区（exient）的概述|区]]的 13 个连续的页面（这 13 个页面需要在 [[Mysql的存储结构#LRU 链表的进一步优化|LRU链表的前1/4页面]]），不论这些页面是不是顺序读取的，都会触发一次 `异步` 读取本区中所有其的页面到 `Buffer Pool` 的请求。该功能由 `innodb_random_read_ahead` 系统变量控制，它的默认值为 `OFF`。
+
+	`预读` 本来是个好事儿，如果预读到 `Buffer Pool` 中的页成功的被使用到，那就可以极大的提高语句执行的效率。可是如果用不到呢？这些预读的页都会放到 `LRU` 链表的头部，但是如果此时 `Buffer Pool` 的容量不太大而且很多预读的页面都没有用到的话，这就会导致处在 `LRU链表` 尾部的一些缓存页会很快的被淘汰掉，也就是所谓的 `劣币驱逐良币`，会大大降低缓存命中率。
+	
+- Mysql 的大批量读取
+
+	有时候我们会进行大量数据的查询，如某些表的全表扫描。这意味着将访问到该表所在的所有页！假设这个表中记录非常多的话，那该表会占用特别多的 `页`，当需要访问这些页时，会把它们统统都加载到 `Buffer Pool` 中，所以原缓冲区中的页将被置换。
+
+为了避免上述情况，Mysql 把这个 `LRU链表` 按照一定比例分成两截，分别是：
+
+- 一部分存储使用频率非常高的缓存页，所以这一部分链表也叫做 `热数据`，或者称 `young区域`。
+
+- 一部分存储使用频率不是很高的缓存页，所以这一部分链表也叫做 `冷数据`，或者称 `old区域`。
+
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182321578.png)
+
+默认情况下，`old` 区域在 `LRU链表` 中所占的比例是 `37%`，也就是说 `old` 区域大约占 `LRU链表` 的 `3/8`。这个比例我们是可以设置的，我们可以在启动时修改 `innodb_old_blocks_pct` 参数来控制 `old` 区域在 `LRU链表` 中所占的比例。
+
+有了这个被划分成 `young` 和 `old` 区域的 `LRU` 链表之后，Mysql 就可以针对我们上边提到的两种可能降低缓存命中率的情况进行优化了：
+
+- 针对预读的页面可能不进行后续访问情况的优化
+    
+    当磁盘上的某个页面在初次加载到 Buffer Pool 中的某个缓存页时，该缓存页对应的控制块会被放到 old 区域的头部。这样针对预读到 `Buffer Pool` 却不进行后续访问的页面就会被逐渐从 `old` 区域逐出，而不会影响 `young` 区域中被使用比较频繁的缓存页。
+    
+- 针对全表扫描时，短时间内访问大量使用频率非常低的页面情况的优化
+    
+    全表扫描有一个特点，那就是它的执行频率非常低，而且在执行全表扫描的过程中，即使某个页面中有很多条记录，也就是去多次访问这个页面所花费的时间也是非常少的。所以 Mysql 规定，在对某个处在 `old` 区域的缓存页进行第一次访问时就在它对应的控制块中记录下来这个访问时间，如果后续的访问时间与第一次访问的时间在某个时间间隔内，那么该页面就不会被从 old 区域移动到 young 区域的头部，否则将它移动到 young 区域的头部。上述的这个[[Redis大纲#6 2 2 Redis-LRU 算法的实现|时间控制]]由系统变量 `innodb_old_blocks_time` 控制。
+
+综上所述，正是因为将 `LRU` 链表划分为 `young` 和 `old` 区域这两个部分，又添加了 `innodb_old_blocks_time` 这个系统变量，才使得预读机制和全表扫描造成的缓存命中率降低的问题得到了遏制，因为用不到的预读页面以及全表扫描的页面都只会被放到 `old` 区域，而不影响 `young` 区域中的缓存页。
+
+#### 6.1.4.2. LRU 链表的进一步优化
+
+对于 `young` 区域的缓存页来说，我们每次访问一个缓存页就要把它移动到 `LRU链表` 的头部，这样开销会显得很大，毕竟在 `young` 区域的缓存页都是热点数据，也就是可能被经常访问的。
+
+为了解决这个问题其实我们还可以提出一些优化策略，比如只有被访问的缓存页位于 `young` 区域的 `1/4` 的后边，才会被移动到 `LRU链表` 头部，这样就可以降低调整 `LRU链表` 的频率，从而提升性能（也就是说如果某个缓存页对应的节点在 `young` 区域的 `1/4` 中，再次访问该缓存页时也不会将其移动到 `LRU` 链表头部）。
+
+当然除此之外 Mysql 进行了非常多的优化，此处就不再介绍了。
+
+### 6.1.5. 刷新脏页到磁盘
+
+后台有专门的线程每隔一段时间负责把脏页刷新到磁盘，这样可以不影响用户线程处理正常的请求。主要有两种刷新路径：
+
+- 从 `LRU链表` 的冷数据中刷新一部分页面到磁盘。
+    
+    后台线程会定时从 `LRU链表` 尾部开始扫描一些页面，扫描的页面数量可以通过系统变量 `innodb_lru_scan_depth` 来指定，如果从里边儿发现脏页，会把它们刷新到磁盘。这种刷新页面的方式被称之为 `BUF_FLUSH_LRU`。
+    
+- 从 `flush链表` 中刷新一部分页面到磁盘。
+    
+    后台线程也会定时从 `flush链表` 中刷新一部分页面到磁盘，刷新的速率取决于当时系统是不是很繁忙。这种刷新页面的方式被称之为 `BUF_FLUSH_LIST`。
+    
+
+有时候后台线程刷新脏页的进度比较慢，导致用户线程在准备加载一个磁盘页到 `Buffer Pool` 时没有可用的缓存页，这时就会尝试看看 `LRU链表` 尾部有没有可以直接释放掉的未修改页面，如果没有的话会不得不将 `LRU链表` 尾部的一个脏页同步刷新到磁盘（和磁盘交互是很慢的，这会降低处理用户请求的速度）。这种刷新单个页面到磁盘中的刷新方式被称之为 `BUF_FLUSH_SINGLE_PAGE`。
+
+当然，有时候系统特别繁忙时，也可能出现用户线程批量的从 `flush链表` 中刷新脏页的情况，很显然在处理用户请求过程中去刷新脏页是一种严重降低处理速度的行为（毕竟磁盘的速度慢的要死），这属于一种迫不得已的情况。
+
+## 6.2. Buffer Pool 的配置
+
+### 6.2.1. 多个 Buffer Pool 实例
+
+`Buffer Pool` 本质是 `InnoDB` 向操作系统申请的一块连续的内存空间，在多线程环境下，访问 `Buffer Pool` 中的各种链表都需要加锁处理等操作，在 `Buffer Pool` 特别大而且多线程并发访问特别高的情况下，单一的 `Buffer Pool` 可能会影响请求的处理速度。
+
+所以在 `Buffer Pool` 特别大的时候，我们可以把它们拆分成若干个小的 `Buffer Pool`，每个 `Buffer Pool` 都称为一个 `实例`，它们都是独立的，独立的去申请内存空间，独立的管理各种链表，所以在多线程并发访问时并不会相互影响，从而提高并发处理能力。我们可以在服务器启动的时候通过设置 `innodb_buffer_pool_instances` 的值来修改 `Buffer Pool` 实例的个数，如以下的配置：
+
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182338137.png)
+
+### 6.2.2. innodb_buffer_pool_chunk_size
+
+在 `MySQL 5.7.5` 之前，`Buffer Pool` 的大小只能在服务器启动时通过配置 `innodb_buffer_pool_size` 启动参数来调整大小，在服务器运行过程中是不允许调整该值的。
+
+`MySQL` 的在 `5.7.5` 以及之后的版本中支持了在服务器运行过程中调整 `Buffer Pool` 大小的功能，但是有一个问题，就是每次当我们要重新调整 `Buffer Pool` 大小时，都需要重新向操作系统申请一块连续的内存空间，然后将旧的 `Buffer Pool` 中的内容复制到这一块新空间，这是极其耗时的。所以 `MySQL` 决定不再一次性为某个 `Buffer Pool` 实例向操作系统申请一大片连续的内存空间，而是以一个所谓的 `chunk` 为单位向操作系统申请空间。也就是说一个 `Buffer Pool` 实例其实是由若干个 `chunk` 组成的，一个 `chunk` 就代表一片连续的内存空间，里边儿包含了若干缓存页与其对应的控制块：
+
+![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182339908.png)
+
+上图代表的 `Buffer Pool` 就是由 2 个实例组成的，每个实例中又包含 2 个 `chunk`。
+
+正是因为发明了这个 `chunk` 的概念，我们在服务器运行期间调整 `Buffer Pool` 的大小时就是以 `chunk` 为单位增加或者删除内存空间，而不需要重新向操作系统申请一片大的内存，然后进行缓存页的复制。`chunk` 的大小是我们在启动操作 `MySQL` 服务器时通过 `innodb_buffer_pool_chunk_size` 启动参数指定的，它的默认值是 `134217728`，也就是 `128M`。不过需要注意的是，innodb_buffer_pool_chunk_size 的值只能在服务器启动时指定，在服务器运行过程中是不可以修改的。
+
+需要注意的是，`innodb_buffer_pool_size` 必须是 `innodb_buffer_pool_chunk_size × innodb_buffer_pool_instances` 的倍数（这主要是想保证每一个 `Buffer Pool` 实例中包含的 `chunk` 数量相同）。
+
+## 6.3. Buffer Pool 信息的查看
+
+我们可以通过 `SHOW ENGINE INNODB STATUS` 语句来查看关于 `InnoDB` 存储引擎运行过程中的一些状态信息，其中就包括 `Buffer Pool` 的一些信息：
+
+```sql
+
+mysql> SHOW ENGINE INNODB STATUS\G
+
+(...省略前边的许多状态)
+----------------------
+BUFFER POOL AND MEMORY
+----------------------
+Total memory allocated 13218349056;
+Dictionary memory allocated 4014231
+Buffer pool size   786432
+Free buffers       8174
+Database pages     710576
+Old database pages 262143
+Modified db pages  124941
+Pending reads 0
+Pending writes: LRU 0, flush list 0, single page 0
+Pages made young 6195930012, not young 78247510485
+108.18 youngs/s, 226.15 non-youngs/s
+Pages read 2748866728, created 29217873, written 4845680877
+160.77 reads/s, 3.80 creates/s, 190.16 writes/s
+Buffer pool hit rate 956 / 1000, young-making rate 30 / 1000 not 605 / 1000
+Pages read ahead 0.00/s, evicted without access 0.00/s, Random read ahead 0.00/s
+LRU len: 710576, unzip_LRU len: 118
+I/O sum[134264]:cur[144], unzip sum[16]:cur[0]
+--------------
+(...省略后边的许多状态)
+
+mysql>
+
+```
+
