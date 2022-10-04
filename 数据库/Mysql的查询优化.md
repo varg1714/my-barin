@@ -1412,7 +1412,7 @@ SELECT * FROM  (
 
 ### 4.1.6. `possible_keys` 和 `key`
 
-`possible_keys` 列表示在某个查询语句中，对某个表执行单表查询时可能用到的索引有哪些，`key` 列表示实际用到的索引有哪些（有哪些而不是有哪个，因为可能使用[[Mysql大纲#3 8 索引合并|索引合并]]从而使用到多个索引）。
+`possible_keys` 列表示在某个查询语句中，对某个表执行单表查询时可能用到的索引有哪些，`key` 列表示实际用到的索引有哪些（有哪些而不是有哪个，因为可能使用[[Mysql大纲#3 7 索引合并|索引合并]]从而使用到多个索引）。
 
 另外需要注意的一点是，possible_keys 列中的值并不是越多越好，可能使用的索引越多，查询优化器计算查询成本时就得花费更长时间，所以如果可以的话，尽量删除那些用不到的索引。
 
@@ -1501,7 +1501,7 @@ mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key1 WHERE s1.comm
 
 #### 4.1.11.5. Using index condition
 
-如果在查询语句的执行过程中将要使用[[Mysql大纲#3 3 2 索引下推|索引条件下推]]这个特性，在 `Extra` 列中将会显示 `Using index condition`。
+如果在查询语句的执行过程中将要使用[[Mysql大纲#3 2 2 索引下推|索引条件下推]]这个特性，在 `Extra` 列中将会显示 `Using index condition`。
 
 #### 4.1.11.6. `Using where`
 
@@ -1536,7 +1536,7 @@ mysql> EXPLAIN SELECT * FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.id IS
 
 #### 4.1.11.9. `Using intersect(...)`、`Using union(...)` 和 `Using sort_union(...)`
 
-如果执行计划的 `Extra` 列出现了 `Using intersect(...)` 提示，说明准备使用 `Intersect` [[Mysql大纲#3 8 索引合并|索引合并]]的方式执行查询，括号中的 `...` 表示需要进行索引合并的索引名称；如果出现了 `Using union(...)` 提示，说明准备使用 `Union` 索引合并的方式执行查询；出现了 `Using sort_union(...)` 提示，说明准备使用 `Sort-Union` 索引合并的方式执行查询。
+如果执行计划的 `Extra` 列出现了 `Using intersect(...)` 提示，说明准备使用 `Intersect` [[Mysql大纲#3 7 索引合并|索引合并]]的方式执行查询，括号中的 `...` 表示需要进行索引合并的索引名称；如果出现了 `Using union(...)` 提示，说明准备使用 `Union` 索引合并的方式执行查询；出现了 `Using sort_union(...)` 提示，说明准备使用 `Sort-Union` 索引合并的方式执行查询。
 
 #### 4.1.11.10. `Zero limit`
 
