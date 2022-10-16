@@ -312,7 +312,7 @@ Mysql 为了解决磁盘速度过慢的问题而引入了 `Buffer Pool`。同理
 
 	各个属性的具体释义如下：
 
-	<table> <thead> <tr> <th> 属性名 </th> <th> 长度（单位：字节）</th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> LOG_HEADER_FORMAT </code> </td> <td> <code> 4 </code> </td> <td> <code> redo </code> 日志的版本，在 <code> MySQL 5.7.21 </code> 中该值永远为 1 </td> </tr> <tr> <td> <code> LOG_HEADER_PAD1 </code> </td> <td> <code> 4 </code> </td> <td> 做字节填充用的，没什么实际意义，忽略～ </td> </tr> <tr> <td> <code> LOG_HEADER_START_LSN </code> </td> <td> <code> 8 </code> </td> <td> 标记本 <code> redo </code> 日志文件开始的 LSN 值，也就是文件偏移量为 2048 字节初对应的 LSN 值）。</td> </tr> <tr> <td> <code> LOG_HEADER_CREATOR </code> </td> <td> <code> 32 </code> </td> <td> 一个字符串，标记本 <code> redo </code> 日志文件的创建者是谁。正常运行时该值为 <code> MySQL </code> 的版本号，比如：<code> "MySQL 5.7.21" </code>，使用 <code> mysqlbackup </code> 命令创建的 <code> redo </code> 日志文件的该值为 <code> "ibbackup" </code> 和创建时间。</td> </tr> <tr> <td> <code> LOG_BLOCK_CHECKSUM </code> </td> <td> <code> 4 </code> </td> <td> 本 block 的校验值，所有 block 都有，我们不关心 </td> </tr> </tbody> </table>
+	<table> <thead> <tr> <th> 属性名 </th> <th> 长度（单位：字节）</th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> LOG_HEADER_FORMAT </code> </td> <td> <code> 4 </code> </td> <td> <code> redo </code> 日志的版本，在 <code> MySQL 5.7.21 </code> 中该值永远为 1 </td> </tr> <tr> <td> <code> LOG_HEADER_PAD1 </code> </td> <td> <code> 4 </code> </td> <td> 做字节填充用的，没什么实际意义，忽略～ </td> </tr> <tr> <td> <code> LOG_HEADER_START_LSN </code> </td> <td> <code> 8 </code> </td> <td> 标记本 <code> redo </code> 日志文件开始的 LSN 值，也就是文件偏移量为 2048 字节处对应的 LSN 值）。</td> </tr> <tr> <td> <code> LOG_HEADER_CREATOR </code> </td> <td> <code> 32 </code> </td> <td> 一个字符串，标记本 <code> redo </code> 日志文件的创建者是谁。正常运行时该值为 <code> MySQL </code> 的版本号，比如：<code> "MySQL 5.7.21" </code>，使用 <code> mysqlbackup </code> 命令创建的 <code> redo </code> 日志文件的该值为 <code> "ibbackup" </code> 和创建时间。</td> </tr> <tr> <td> <code> LOG_BLOCK_CHECKSUM </code> </td> <td> <code> 4 </code> </td> <td> 本 block 的校验值，所有 block 都有，我们不关心 </td> </tr> </tbody> </table>
 
 - `checkpoint1` ：记录关于 `checkpoint` 的一些属性。
 
@@ -519,48 +519,49 @@ Update 语句过程中在写完第一个日志后，第二个日志还没有写�
 
 ## 3.2. 崩溃时的处理策略
 
-- 在 redolog 写入磁盘后崩溃
+- 在 redo log 写入磁盘后崩溃
 
-	此时 redolog 是 prepare 阶段，binlog 尚未写入。因此对于这种情况可以直接丢弃 redolog 日志。
+	此时 redo log 是 prepare 阶段，binlog 尚未写入。因此对于这种情况可以直接丢弃 redo log 日志。
 	
 - binlog 写入后崩溃
 
-	此时 binlog 已经写入，准备将 redolog 更新为 commit 的时候崩溃。当崩溃恢复后，进行以下的处理：
+	此时 binlog 已经写入，准备将 redo log 更新为 commit 的时候崩溃。当崩溃恢复后，进行以下的处理：
 	
-	1. 判断恢复的 redolog 日志中是否有 commit 标识，如果有，认为事务已经提交，使用 redolog 日志更新内存中的数据。
-	
+	1. 判断恢复的 redo log 日志中是否有 commit 标识，如果有，认为事务已经提交，使用 redolog 日志更新内存中的数据。
+
 		这么处理的原因是为了保持主从数据的一致性。当主库 binlog 日志产生后会同步到从库，从库就更新了数据。若主库恢复后数据不更新，那么就会造成数据的不一致。
+		
 		另一方面，binlog 日志已经写入磁盘就代表着事务已经提交，那么执行该事务也是合理的。
 		
 	2. 没有 commit 标识，进行 binlog 日志的判断
 	
 		1. binlog 日志不完整，回滚事务。
 		
-		2. binlog 日志完整，进行 redolog 日志的提交。
+		2. binlog 日志完整，进行 redo log 日志的提交。
 		
 		一个事务的 binlog 是有完整格式的：
 		
-		- Statement 格式的 binlog，最后会有 COMMIT。
+		- Statement 格式的 binlog，最后会有 `COMMIT`。
 		
-		- Row 格式的 binlog，最后会有一个 XID event。
+		- Row 格式的 binlog，最后会有一个 `XID event`。
 		
-	3. redolog 与 binlog 通过事务 id 进行关联
+	3. redo log 与 binlog 通过事务 id 进行关联
 
 ## 3.3. Redolog 与 binlog 同时使用的原因
 
-1. Redolog 是为了数据崩溃恢复使用的，binlog 是为了记录数据操作使用的。Redolog 记录了数据页发生的变化，方便在崩溃时恢复。而 binlog 记录了 sql 的执行操作，用于备份。
+1. redo log 是为了数据崩溃恢复使用的，binlog 是为了记录数据操作使用的。redo log 记录了数据页发生的变化，方便在崩溃时恢复。而 binlog 记录了 sql 的执行操作，用于备份。
 
-2. Redolog 记录是循环写的，比如 4G 的 redolog 日志空间，写到尾部后会回到头部继续写。而 binlog 是追加的。
+2. redo log 记录是循环写的，比如 4G 的 redo log 日志空间，写到尾部后会回到头部继续写。而 binlog 是追加的。
 
-3. 两阶段提交的原因是为了让 redolog 有办法处理 binlog 存储失败后的问题。当 binlog 存储失败后，redolog 可以不提交。而如果不采用两阶段提交，那么当 binlog 日志出现问题的时候 redolog 就回滚不了了。
+3. 两阶段提交的原因是为了让 redo log 有办法处理 binlog 存储失败后的问题。当 binlog 存储失败后，redo log 可以不提交。而如果不采用两阶段提交，那么当 binlog 日志出现问题的时候 redo log 就回滚不了了。
 
 ## 3.4. 组提交策略
 
-通过上面的分析我们可以知道，redolog 与 binlog 在事务提交时会发生两次写盘，为了优化这一阶段，我们可以采取组提交策略。对于 redolog 与 binlog 的操作争取一次写盘完成。
+通过上面的分析我们可以知道，redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一阶段，我们可以采取组提交策略。对于 redo log 与 binlog 的操作争取一次写盘完成。
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220513231453.png)
 
-在将 redolog 写入到磁盘时，刷盘动作延迟到 `binlog write` 到 `page cache` 之后，这样 binlog 与 redolog 就有机会一同写入到磁盘中了。不过通常情况下第 3 步执行得会很快，所以 binlog 的 write 和 fsync 间的间隔时间短，导致能集合到一起持久化的 binlog 比较少，因此 binlog 的组提交的效果通常不如 redo log 的效果那么好。
+在将 redo log 写入到磁盘时，刷盘动作延迟到 `binlog write` 到 `page cache` 之后，这样 binlog 与 redo log 就有机会一同写入到磁盘中了。不过通常情况下第 3 步执行得会很快，所以 binlog 的 write 和 fsync 间的间隔时间短，导致能集合到一起持久化的 binlog 比较少，因此 binlog 的组提交的效果通常不如 redo log 的效果那么好。
 
 如果你想提升 binlog 组提交的效果，可以通过设置 `binlog_group_commit_sync_delay` 和 `binlog_group_commit_sync_no_delay_count` 来实现：
 
@@ -572,7 +573,7 @@ Update 语句过程中在写完第一个日志后，第二个日志还没有写�
 
 组提交策略原理：
 
-- redolog 与 binlog 都是顺序写，磁盘的顺序写比随机写要快。
+- redo log 与 binlog 都是顺序写，磁盘的顺序写比随机写要快。
 
 - 组提交策略，大幅度降低磁盘的 IOPS 消耗。
 
@@ -818,7 +819,7 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo�
 
 - `TRX_UNDO_TRX_ID` ：生成本组 `undo日志` 的事务 `id`。
 
-- `TRX_UNDO_TRX_NO` ：事务提交后生成的一个需要序号，使用此序号来标记事务的提交顺序（先提交的此序号小，后提交的此序号大）。
+- `TRX_UNDO_TRX_NO` ：事务提交后生成的一个序号，使用此序号来标记事务的提交顺序（先提交的此序号小，后提交的此序号大）。
 
 - `TRX_UNDO_DEL_MARKS` ：标记本组 `undo` 日志中是否包含由于 `Delete mark` 操作产生的 `undo日志`。
 
@@ -940,7 +941,7 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo�
 
 如图所示，每个 8 字节的格子其实由两部分组成：
 
--4 字节大小的 `Space ID`，代表一个表空间的 ID。
+- 4 字节大小的 `Space ID`，代表一个表空间的 ID。
 
 - 4 字节大小的 `Page number`，代表一个页号。
 
