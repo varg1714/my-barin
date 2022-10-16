@@ -1423,7 +1423,7 @@ SELECT * FROM  (
 
 ### 4.1.8. `ref`
 
-当使用索引列等值匹配的条件去执行查询时，也就是在访问方法是 `const`、`eq_ref`、`ref`、`ref_or_null`、`unique_subquery`、`index_subquery` 其中之一时，`ref` 列展示的就是与索引列作等值匹配的东东是个啥，比如只是一个常数或者是某个列。
+当使用索引列等值匹配的条件去执行查询时，也就是在[[Mysql大纲#3 5 索引的访问类型|访问类型]]是 `const`、`eq_ref`、`ref`、`ref_or_null`、`unique_subquery`、`index_subquery` 其中之一时，`ref` 列展示的就是与索引列作等值匹配的东东是个啥，比如只是一个常数或者是某个列。
 
 ### 4.1.9. `rows`
 
@@ -1496,13 +1496,13 @@ mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key1 WHERE s1.comm
 
 #### 4.1.11.6. `Using where`
 
-当某个搜索条件需要在 `server层` 进行判断时，在 `Extra` 列中会提示 `Using where`。
+当某个搜索条件**需要在 server 层进行判断时**，在 `Extra` 列中会提示 `Using where`。
 
 对于聚簇索引来说，是用不到 `索引条件下推` 特性的（索引下推是为了减少回表），所以所有的搜索条件都得在 `server层` 进行处理。
 
 #### 4.1.11.7. `Using join buffer (Block Nested Loop)`
 
-在连接查询执行过程中，当被驱动表不能有效的利用索引加快访问速度，`MySQL` 一般会为其分配一块名叫 `join buffer` 的内存块来加快查询速度，也就是我们所讲的 [[Mysql大纲#2 3 2 被驱动表无索引的情况|基于块的嵌套循环算法]]。
+在连接查询执行过程中，当被驱动表不能有效的利用索引加快访问速度，`MySQL` 一般会为其分配一块名叫 `join buffer` 的内存块来加快查询速度，也就是我们所讲的 [[Mysql大纲#2 2 2 2 被驱动表无索引的情况|基于块的嵌套循环算法]]。
 
 #### 4.1.11.8. `Not exists`
 

@@ -2,7 +2,7 @@
 
 # 1. redo 日志
 
-在 [[Mysql的存储结构#6 Mysql 的缓冲区（Buffer Pool）|Buffer Pool 缓冲区]]中，对数据的 [[Mysql的存储结构#6 1 3 flush 链表的管理|修改体现在缓冲区]]，那么如何保证 `持久性` 呢？一个很简单的做法就是在事务提交完成之前把该事务所修改的所有页面都刷新到磁盘，但是这个简单粗暴的做法有些问题：
+在 [[Mysql的存储结构#6 Mysql 的缓冲区（Buffer Pool）|Buffer Pool 缓冲区]]中，对数据的 [[Mysql的存储结构#6 1 3 flush 链表的管理|修改体现在缓冲区]] a，那么如何保证 `持久性` 呢？一个很简单的做法就是在事务提交完成之前把该事务所修改的所有页面都刷新到磁盘，但是这个简单粗暴的做法有些问题：
 
 - 刷新一个完整的数据页太浪费了
 
@@ -62,7 +62,7 @@
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190003543.png)
 
-PS：只要将 MLOG_WRITE_STRING 类型的 redo 日志的 len 字段填充上 1、2、4、8 这些数字，就可以分别替代 MLOG_1BYTE、MLOG_2BYTE、MLOG_4BYTE、MLOG_8BYTE 这些类型的 redo 日志。
+PS：只要将 `MLOG_WRITE_STRING` 类型的 redo 日志的 len 字段填充上 1、2、4、8 这些数字，就可以分别替代 `MLOG_1BYTE`、`MLOG_2BYTE`、`MLOG_4BYTE`、`MLOG_8BYTE` 这些类型的 redo 日志。
 
 ### 1.1.2. 复杂的 redo 日志
 
@@ -98,7 +98,7 @@ PS：只要将 MLOG_WRITE_STRING 类型的 redo 日志的 len 字段填充上 1�
 
 - `MLOG_REC_INSERT`（对应的十进制数字为 `9`）：表示插入一条使用非紧凑行格式的记录时的 `redo` 日志类型。
 
-- `MLOG_COMP_REC_INSERT`（对应的十进制数字为 `38`）：表示插入一条使用 [[Mysql的存储结构#2 1 COMPACT 格式|紧凑行格式]]的记录时的 `redo` 日志类型。
+- `MLOG_COMP_REC_INSERT`（对应的十进制数字为 `38`）：表示插入一条使用 [[Mysql的存储结构#2 1 COMPACT 格式|紧凑行格式]] 的记录时的 `redo` 日志类型。
 
 - `MLOG_COMP_PAGE_CREATE`（`type` 字段对应的十进制数字为 `58`）：表示创建一个存储紧凑行格式记录的页面的 `redo` 日志类型。
 
