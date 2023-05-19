@@ -1,6 +1,6 @@
 #多线程 #源码阅读 
 
-# ReentrantLock 类图
+# 1. ReentrantLock 类图
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220430224029.png)
 
@@ -8,16 +8,15 @@ ReentrantLock 实现有两种，分为公平锁与非公平锁。两者的却别
 
 公平锁 FairSync 与非公平锁 NoFairSync 都依赖了 AbstractQueuedSynchronized 这个类，也就是我们常说的 AQS。
 
-# ReentrantLock 执行流程分析
+# 2. ReentrantLock 执行流程分析
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220609170512.svg)
 
-# ReentrartLock 疑问记录
+# 3. ReentrartLock 疑问记录
 
-## ReentrartLock 中使用的 Node 节点各个状态值作用
+## 3.1. ReentrartLock 中使用的 Node 节点各个状态值作用
 
 ```java
-
 static final class Node {
 	/** Marker to indicate a node is waiting in shared mode */
 	static final Node SHARED = new Node();
@@ -138,21 +137,19 @@ static final class Node {
 		this.thread = thread;
 	}
 }
-
 ```
 
 在 Node 节点中的值，waitStatus 用来跟踪当前线程的状态，初始创建时为默认值 0。在 AQS 中当该线程被取消后变为 CANCELLED，位于阻塞队列中等待唤醒时为 SIGNAL。CONDITION 和 PROPAGATE 分别用于 Condition 类控制中使用。
 
-## 为什么 AQS 要使用双向链表来保存线程节点信息？
+## 3.2. 为什么 AQS 要使用双向链表来保存线程节点信息？
 
 1. 在线程自旋过程中，需要判断前驱节点是否为头节点，若为头节点则自身无需阻塞而直接抢占锁，所以需要 pre 引用指向前节点。
 
-## 为什么要使用 SIGNAL 来表示阻塞队列中的线程状态？
+## 3.3. 为什么要使用 SIGNAL 来表示阻塞队列中的线程状态？
 
 SIGNAL 标记的节点表示该节点正在等待一个资源，所以如果当前节点发现前驱节点是 SIGNAL 状态的话，那么自身就可以挂起了。如果不挂起的话由于唤醒会优先唤醒前驱节点，自己在队列中排队空占 CPU 是耗费资源的。因此在 AQS 中当前节点会将前驱节点状态改为 SIGNAL，表示前驱节点优先抢占锁，而自身需要等待直到被唤醒。
 
 ```java
-
 private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
 	int ws = pred.waitStatus;
 	if (ws == Node.SIGNAL)
@@ -180,6 +177,5 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
 	}
 	return false;
 }
-
 ```
 
