@@ -1,6 +1,6 @@
 #知识大纲 #Mybatis
 
-# Mybatis 大纲
+# 1. Mybatis 大纲
 
 - Mybatis 分页
 	1. Mybatis 基于 RowBounds 分页，是内存分页

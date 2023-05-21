@@ -1,6 +1,6 @@
 #知识大纲 #Spring
 
-# Spring 大纲
+# 1. Spring 大纲
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220504152622.png)
 
@@ -69,4 +69,3 @@
 	1. 执行侧：数据源
 	2. 管理侧：事务管理器
 	3. 配置侧：事务应用与属性配置
-

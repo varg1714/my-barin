@@ -1,8 +1,8 @@
-# ElasticSearch学习
+# 1. ElasticSearch学习
 
 大数据两个问题：存储和计算问题。
 
-## ELK
+## 1.1. ELK
 
 ElasticSearch+LogStash+Kibana
 
@@ -10,7 +10,7 @@ ElasticSearch+LogStash+Kibana
 - ELasticSearch：数据存储与搜索
 - Kibana：数据展示
 
-## 关于索引的基本操作
+## 1.2. 关于索引的基本操作
 
 ![image-20200913203843231](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20200913203843.png)
 

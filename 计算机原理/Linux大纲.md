@@ -1,6 +1,6 @@
 #知识大纲 #Linux
 
-# Linux 大纲
+# 1. Linux 大纲
 
 - Linux 常用命令
 	- Tail

@@ -1,4 +1,4 @@
-### Life:
+### 1. Life
 
 - BaiDuNetdisk
 - CloudMusic
@@ -7,37 +7,25 @@
 - WeChat
 - XMind
 
-### Tool:
+### 2. Tool
 
 - AnotherRedis
-
   ~~~
   https://github.com/qishibo/AnotherRedisDesktopManager
   ~~~
-
 - AutoHotKey
-
 - BandZip
-
 - ClashWindows
-
 - DeskGo
-
 - GeekUninstall
-
 - NotePad++
-
 - OSSBrowser
-
 - PicGo
-
 - QQPcMgr
-
 - ScreenToGif
-
 - Thunder
 
-### Work
+### 3. Work
 
 - DataGrip
 - Git

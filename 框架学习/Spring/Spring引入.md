@@ -1,8 +1,8 @@
-# Spring 介绍
+# 1. Spring 介绍
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220407230008.png)
 
-## Spring 各个模块功能
+## 1.1. Spring 各个模块功能
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220407230544.png)
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220407230559.png)
@@ -11,18 +11,18 @@
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220407230639.png)
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220407230710.png)
 
-## Spring 各个模块的关系
+## 1.2. Spring 各个模块的关系
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220407230726.png)
 
-# 300 代码行手写 Spring
+# 2. 300 代码行手写 Spring
 
 Spring 的执行流程:
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220410200400.png)
 
-## 30 个类手写 Spring
+## 2.1. 30 个类手写 Spring
 
-###  IOC 核心组件
+### 2.1.1. IOC 核心组件
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220416222047.png)
 
@@ -30,7 +30,7 @@ Spring 的执行流程:
 2. BeanDefinitionReader 负责从配置中加载 Spring 的 Bean 生命，将其封装为 BeanDefinition 对象。
 3. BeanDefinition 对象是初始的 Bean 声明，当对 Bean 进行了代理等操作后，会生成相关的代理类，该代理类就是 Spring 运行过程中实际运行的类。该类由 BeanWrapper 类管理。
 
-### MVC 核心组件
+### 2.1.2. MVC 核心组件
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220416222701.png)
 
@@ -38,7 +38,7 @@ Spring 的执行流程:
 2. HandlerAdapter 负责将 http 参数动态解析到 Java 方法中，同时返回 ModelAndView 对象，该对象是视图部分逻辑的封装。
 3. 由 ViewResolver 负责解析视图，将其呈现到页面上。
 
-### AOP 核心组件
+### 2.1.3. AOP 核心组件
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220416223042.png)
 

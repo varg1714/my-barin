@@ -1,6 +1,6 @@
 #SpringBoot
 
-# SpringBoot 大纲
+# 1. SpringBoot 大纲
 
 - 在 SpringBoot 应用启动时运行特定代码
 	1. 实现 ApplicaitonRunner 接口

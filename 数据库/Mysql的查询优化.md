@@ -5,11 +5,8 @@
 `MySQL` 执行一个查询可以有不同的执行方案，它会选择其中成本最低，或者说代价最低的那种方案去真正的执行查询。不过我们之前对 `成本` 的描述是非常模糊的，其实在 `MySQL` 中一条查询语句的执行成本是由下边这两个方面组成的：
 
 - `I/O` 成本
-    
     我们的表经常使用的 `MyISAM`、`InnoDB` 存储引擎都是将数据和索引都存储到磁盘上的，当我们想查询表中的记录时，需要先把数据或者索引加载到内存中然后再操作。这个从磁盘到内存这个加载的过程损耗的时间称之为 `I/O` 成本。
-    
 - `CPU` 成本
-
     读取以及检测记录是否满足对应的搜索条件、对结果集进行排序等这些操作损耗的时间称之为 `CPU` 成本。
 
 对于 `InnoDB` 存储引擎来说，页是磁盘和内存之间交互的基本单位，设计 `MySQL` 的大叔规定读取一个页面花费的成本默认是 `1.0`，读取以及检测一条记录是否符合搜索条件的成本默认是 `0.2`。`1.0`、`0.2` 这些数字称之为 `成本常数`，这两个成本常数我们最常用到，除此之外还有一切其他的成本常数。
@@ -19,25 +16,20 @@
 在一条单表查询语句真正执行之前，`MySQL` 的查询优化器会找出执行该语句所有可能使用的方案，对比之后找出成本最低的方案，这个成本最低的方案就是所谓的 `执行计划`，之后才会调用存储引擎提供的接口真正的执行查询，这个过程总结一下就是这样：
 
 1.  根据搜索条件，找出所有可能使用的索引。
-
 2.  计算全表扫描的代价。
-
 3.  计算使用不同索引执行查询的代价。
-
 1.  对比各种执行方案的代价，找出成本最低的那一个。
 
 ### 1.1.1. 全表查询成本
 
 对于 `InnoDB` 存储引擎来说，全表扫描的意思就是把聚簇索引中的记录都依次和给定的搜索条件做一下比较，把符合搜索条件的记录加入到结果集，所以需要将聚簇索引对应的页面加载到内存中，然后再检测记录是否符合搜索条件。由于查询成本= `I/O` 成本+ `CPU` 成本，所以计算全表扫描的代价需要两个信息：
 
--   聚簇索引占用的页面数
-
--   该表中的记录数
+- 聚簇索引占用的页面数
+- 该表中的记录数
 
 `MySQL` 提供了 `SHOW TABLE STATUS` 语句来查看表的统计信息：
 
 ```yaml
-
 mysql> USE xiaohaizi;
 Database changed
 
@@ -62,17 +54,13 @@ Max_data_length: 0
  Create_options:
         Comment:
 1 row in set (0.01 sec)
-
 ```
 
 虽然出现了很多统计选项，但我们目前只关心两个：
 
 - `Rows`
-
 	本选项表示表中的记录条数。对于使用 `MyISAM` 存储引擎的表来说，该值是准确的，对于使用 `InnoDB` 存储引擎的表来说，该值是一个估计值。
-
 - `Data_length`
-
 	本选项表示表占用的存储空间字节数。使用 `MyISAM` 存储引擎的表来说，该值就是数据文件的大小，对于使用 `InnoDB` 存储引擎的表来说，该值就相当于聚簇索引占用的存储空间大小，也就是说可以这样计算该值的大小：
 
 	$$
@@ -123,9 +111,7 @@ $$
 假设 `idx_key2` 对应的搜索条件是：`key2 > 10 AND key2 < 1000`，也就是说对应的范围区间就是：`(10, 1000)`。
 
 对于使用 `二级索引 + 回表` 方式的查询，设计 `MySQL` 的大叔计算这种查询的成本依赖两个方面的数据：
-
 * 范围区间数量
-    
     不论某个范围区间的二级索引到底占用了多少页面，查询优化器粗暴的认为读取索引的一个范围区间的 `I/O` 成本和读取一个页面是相同的。本例中使用 `idx_key2` 的范围区间只有一个：`(10, 1000)`，所以相当于访问这个范围区间的二级索引付出的 `I/O` 成本就是：
     
     $$
@@ -135,13 +121,9 @@ $$
     $$
     
 * 需要回表的记录数
-    
     优化器需要计算二级索引的某个范围区间到底包含多少条记录，对于本例来说就是要计算 `idx_key2` 在 `(10, 1000)` 这个范围区间中包含多少二级索引记录，计算过程是这样的：
-    
     1. 先根据 `key2 > 10` 这个条件访问一下 `idx_key2` 对应的 `B+` 树索引，找到满足 `key2 > 10` 这个条件的第一条记录，我们把这条记录称之为 `区间最左记录`。在 `B+` 数树中定位一条记录的过程是常数级别的，所以这个过程的性能消耗是可以忽略不计的。
-
     2. 然后再根据 `key2 < 1000` 这个条件继续从 `idx_key2` 对应的 `B+` 树索引中找出最后一条满足这个条件的记录，我们把这条记录称之为 `区间最右记录`，这个过程的性能消耗也可以忽略不计的。
-
     3. 如果 `区间最左记录` 和 `区间最右记录` 相隔不太远（在 `MySQL 5.7.21` 这个版本里，只要相隔不大于 10 个页面即可），那就可以精确统计出满足 `key2 > 10 AND key2 < 1000` 条件的二级索引记录条数。否则只沿着 `区间最左记录` 向右读 10 个页面，计算平均每个页面中包含多少记录，然后用这个平均值乘以 `区间最左记录` 和 `区间最右记录` 之间的页面数量就可以了。那么问题又来了，怎么估计 `区间最左记录` 和 `区间最右记录` 之间有多少个页面呢？解决这个问题还得回到 `B+` 树索引的结构中来：
         
         ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209082349305.png)
@@ -161,9 +143,7 @@ $$
     其中 `95` 是需要读取的二级索引记录条数，`0.2` 是读取一条记录成本常数，`0.01` 是微调。
     
     在通过二级索引获取到记录之后，还需要干两件事儿：
-    
-    *   根据这些记录里的主键值到聚簇索引中做回表操作
-        
+    * 根据这些记录里的主键值到聚簇索引中做回表操作
         ** `MySQL` 评估回表操作的 `I/O` 成本很豪放，他们认为每次回表操作都相当于访问一个页面**，也就是说二级索引范围区间有多少记录，就需要进行多少次回表操作，也就是需要进行多少次页面 `I/O`。我们上边统计了使用 `idx_key2` 二级索引执行查询时，预计有 `95` 条二级索引记录需要进行回表操作，所以回表操作带来的 `I/O` 成本就是：
         
         $$
@@ -174,8 +154,7 @@ $$
         
         其中 `95` 是预计的二级索引记录数，`1.0` 是一个页面的 `I/O` 成本常数。
         
-    *   回表操作后得到的完整用户记录，然后再检测其他搜索条件是否成立
-        
+    * 回表操作后得到的完整用户记录，然后再检测其他搜索条件是否成立
         回表操作的本质就是通过二级索引记录的主键值到聚簇索引中找到完整的用户记录，然后再检测除 `key2 > 10 AND key2 < 1000` 这个搜索条件以外的搜索条件是否成立。因为我们通过范围区间获取到二级索引记录共 `95` 条，也就对应着聚簇索引中 `95` 条完整的用户记录，读取并检测这些完整的用户记录是否符合其余的搜索条件的 `CPU` 成本如下：
         
         在定位到这些完整的用户记录后，需要检测除 `key2 > 10 AND key2 < 1000` 这个搜索条件以外的搜索条件是否成立，这个比较过程花费的 `CPU` 成本就是：
@@ -187,10 +166,8 @@ $$
         $$
         
         其中 `95` 是待检测记录的条数，`0.2` 是检测一条记录是否符合给定的搜索条件的成本常数。
-        
 
 所以本例中使用 `idx_key2` 执行查询的成本就如下所示：
-
 *   `I/O` 成本：
     
     $$
@@ -206,7 +183,6 @@ $$
     95 \times 0.2 + 0.01 + 95 \times 0.2 = 38.01 （读取二级索引记录的成本 + 读取并检测回表后聚簇索引记录的成本）
     
     $$
-    
 
 综上所述，使用 `idx_key2` 执行查询的总成本就是：
 
@@ -221,9 +197,7 @@ $$
 有时候使用索引执行查询时会有许多单点区间，比如使用 `IN` 语句就很容易产生非常多的单点区间，比如下边这个查询：
 
 ```sql
-
 SELECT * FROM single_table WHERE key1 IN ('aa1', 'aa2', 'aa3', ... , 'zzz');
-
 ```
 
 很显然，这个查询可能使用到的索引就是 `idx_key1`，由于这个索引并不是唯一二级索引，所以并不能确定一个单点区间对应的二级索引记录的条数有多少，需要我们去计算。
@@ -235,7 +209,6 @@ SELECT * FROM single_table WHERE key1 IN ('aa1', 'aa2', 'aa3', ... , 'zzz');
 `MySQL` 考虑到了这种情况，所以提供了一个系统变量 `eq_range_index_dive_limit`，我们看一下在 `MySQL 5.7.21` 中这个系统变量的默认值：
 
 ```txt
-
 mysql> SHOW VARIABLES LIKE '%dive%';
 +---------------------------+-------+
 | Variable_name             | Value |
@@ -243,7 +216,6 @@ mysql> SHOW VARIABLES LIKE '%dive%';
 | eq_range_index_dive_limit | 200   |
 +---------------------------+-------+
 1 row in set (0.08 sec)
-
 ```
 
 也就是说如果我们的 `IN` 语句中的参数个数小于 200 个的话，将使用 `index dive` 的方式计算各个单点区间对应的记录条数，如果大于或等于 200 个的话，可就不能使用 `index dive` 了，要使用所谓的索引统计数据来进行估算。
@@ -251,7 +223,6 @@ mysql> SHOW VARIABLES LIKE '%dive%';
 像会为每个表维护一份统计数据一样，`MySQL` 也会为表中的每一个索引维护一份统计数据：
 
 ```sql
-
 mysql> SHOW INDEX FROM single_table;
 +--------------+------------+--------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
 | Table        | Non_unique | Key_name     | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment |
@@ -265,7 +236,6 @@ mysql> SHOW INDEX FROM single_table;
 | single_table |          1 | idx_key_part |            3 | key_part3   | A         |       10000 |     NULL | NULL   | YES  | BTREE      |         |               |
 +--------------+------------+--------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
 7 rows in set (0.01 sec)
-
 ```
 
 <table> <thead> <tr> <th> 属性名 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> Table </code> </td> <td> 索引所属表的名称。</td> </tr> <tr> <td> <code> Non_unique </code> </td> <td> 索引列的值是否是唯一的，聚簇索引和唯一二级索引的该列值为 <code> 0 </code>，普通二级索引该列值为 <code> 1 </code>。</td> </tr> <tr> <td> <code> Key_name </code> </td> <td> 索引的名称。</td> </tr> <tr> <td> <code> Seq_in_index </code> </td> <td> 索引列在索引中的位置，从 1 开始计数。比如对于联合索引 <code> idx_key_part </code>，来说，<code> key_part1 </code>、<code> key_part2 </code> 和 <code> key_part3 </code> 对应的位置分别是 1、2、3。</td> </tr> <tr> <td> <code> Column_name </code> </td> <td> 索引列的名称。</td> </tr> <tr> <td> <code> Collation </code> </td> <td> 索引列中的值是按照何种排序方式存放的，值为 <code> A </code> 时代表升序存放，为 <code> NULL </code> 时代表降序存放。</td> </tr> <tr> <td> <code> Cardinality </code> </td> <td> 索引列中不重复值的数量。后边我们会重点看这个属性的。</td> </tr> <tr> <td> <code> Sub_part </code> </td> <td> 对于存储字符串或者字节串的列来说，有时候我们只想对这些串的前 <code> n </code> 个字符或字节建立索引，这个属性表示的就是那个 <code> n </code> 值。如果对完整的列建立索引的话，该属性的值就是 <code> NULL </code>。</td> </tr> <tr> <td> <code> Packed </code> </td> <td> 索引列如何被压缩，<code> NULL </code> 值表示未被压缩。这个属性我们暂时不了解，可以先忽略掉。</td> </tr> <tr> <td> <code> Null </code> </td> <td> 该索引列是否允许存储 <code> NULL </code> 值。</td> </tr> <tr> <td> <code> Index_type </code> </td> <td> 使用索引的类型，我们最常见的就是 <code> BTREE </code>，其实也就是 <code> B+ </code> 树索引。</td> </tr> <tr> <td> <code> Comment </code> </td> <td> 索引列注释信息。</td> </tr> <tr> <td> <code> Index_comment </code> </td> <td> 索引注释信息。</td> </tr> </tbody> </table>
@@ -275,9 +245,7 @@ mysql> SHOW INDEX FROM single_table;
 不过需要注意的是，对于 InnoDB 存储引擎来说，使用 SHOW INDEX 语句展示出来的某个索引列的 Cardinality 属性是一个估计值，并不是精确的。
 
 前边说道，当 `IN` 语句中的参数个数大于或等于系统变量 `eq_range_index_dive_limit` 的值的话，就不会使用 `index dive` 的方式计算各个单点区间对应的索引记录条数，而是使用索引统计数据，这里所指的 `索引统计数据` 指的是这两个值：
-
 * 使用 `SHOW TABLE STATUS` 展示出的 `Rows` 值，也就是一个表中有多少条记录。
-
 * 使用 `SHOW INDEX` 语句展示出的 `Cardinality` 属性。
 
 结合上一个 `Rows` 统计数据，我们可以针对索引列，计算出平均一个值重复多少次。
@@ -319,17 +287,13 @@ $$
 ### 1.2.1. 两表联合查询的成本
 
 `MySQL` 中连接查询采用的是嵌套循环连接算法，驱动表会被访问一次，被驱动表可能会被访问多次，所以对于两表连接查询来说，它的查询成本由下边两个部分构成：
-
 - 单次查询驱动表的成本
- 
 - 多次查询被驱动表的成本（具体查询多少次取决于对驱动表查询的结果集中有多少条记录）
 
 我们把对驱动表进行查询后得到的记录条数称之为驱动表的 `扇出`（英文名：`fanout`）。很显然驱动表的扇出值越小，对被驱动表的查询次数也就越少，连接查询的总成本也就越低。当查询优化器想计算整个连接查询所使用的成本时，就需要计算出驱动表的扇出值。
 
 **驱动表扇出值需要靠猜**：
-
 - 如果使用的是全表扫描的方式执行的单表查询，那么计算驱动表扇出时需要猜满足搜索条件的记录到底有多少条。
-
 - 如果使用的是索引执行的单表扫描，那么计算驱动表扇出的时候需要猜满足除使用到对应索引的搜索条件外的其他搜索条件的记录有多少条。
 
 设计 `MySQL` 的大叔把这个 **猜** 的过程称之为 [[Mysql的查询优化#4 1 10 filtered|condition filtering]]。
@@ -342,7 +306,6 @@ $$
 对于左（外）连接和右（外）连接查询来说，它们的驱动表是固定的，所以想要得到最优的查询方案只需要分别为驱动表和被驱动表选择成本最低的访问方法。可是对于内连接来说，驱动表和被驱动表的位置是可以互换的，所以需要考虑两个方面的问题：
 
 - 不同的表作为驱动表最终的查询成本可能是不同的，也就是需要考虑最优的表连接顺序。
-
 - 然后分别为驱动表和被驱动表选择成本最低的访问方法。
 
 ### 1.2.2. 多表联合的成本
@@ -350,31 +313,23 @@ $$
 有 `n` 个表进行连接，`MySQL` 查询优化器要每一种连接顺序的成本都计算一遍么？那可是 `n!` 种连接顺序呀。其实真的是要都算一遍，不过 `MySQL` 想了很多办法减少计算非常多种连接顺序的成本的方法：
 
 - 提前结束某种顺序的成本评估
-    
     `MySQL` 在计算各种链接顺序的成本之前，会维护一个全局的变量，这个变量表示当前最小的连接查询成本。如果在分析某个连接顺序的成本时，该成本已经超过当前最小的连接查询成本，那就压根儿不对该连接顺序继续往下分析了。
-
-	比方说 A、B、C 三个表进行连接，已经得到连接顺序 `ABC` 是当前的最小连接成本，比方说 `10.0`，在计算连接顺序 `BCA` 时，发现 `B` 和 `C` 的连接成本就已经大于 `10.0` 时，就不再继续往后分析 `BCA` 这个连接顺序的成本了。
     
+    比方说 A、B、C 三个表进行连接，已经得到连接顺序 `ABC` 是当前的最小连接成本，比方说 `10.0`，在计算连接顺序 `BCA` 时，发现 `B` 和 `C` 的连接成本就已经大于 `10.0` 时，就不再继续往后分析 `BCA` 这个连接顺序的成本了。
 - 系统变量 `optimizer_search_depth`
-    
     为了防止无穷无尽的分析各种连接顺序的成本，设计 `MySQL` 的大叔们提出了 `optimizer_search_depth` 系统变量，如果连接表的个数小于该值，那么就继续穷举分析每一种连接顺序的成本，否则只对与 `optimizer_search_depth` 值相同数量的表进行穷举分析。很显然，该值越大，成本分析的越精确，越容易得到好的执行计划，但是消耗的时间也就越长，否则得到不是很好的执行计划，但可以省掉很多分析连接成本的时间。
-    
 - 根据某些规则压根儿就不考虑某些连接顺序
-    
     即使是有上边两条规则的限制，但是分析多个表不同连接顺序成本花费的时间还是会很长，所以设计 `MySQL` 的大叔干脆提出了一些所谓的 `启发式规则`（就是根据以往经验指定的一些规则），凡是不满足这些规则的连接顺序压根儿就不分析，这样可以极大的减少需要分析的连接顺序的数量，但是也可能造成错失最优的执行计划。他们提供了一个系统变量 `optimizer_prune_level` 来控制到底是不是用这些启发式规则。
 
 ## 1.3. 调节成本常数
 
 我们前边已经介绍了两个 `成本常数` ：
-
 - 读取一个页面花费的成本默认是 `1.0`
-
 - 检测一条记录是否符合搜索条件的成本默认是 `0.2`
 
 其实除了这两个成本常数，`MySQL` 还支持好多呢，它们被存储到了 `mysql` 数据库（的两个表中：
 
 ```sql
-
 mysql> SHOW TABLES FROM mysql LIKE '%cost%';
 +--------------------------+
 | Tables_in_mysql (%cost%) |
@@ -383,7 +338,6 @@ mysql> SHOW TABLES FROM mysql LIKE '%cost%';
 | server_cost              |
 +--------------------------+
 2 rows in set (0.00 sec)
-
 ```
 
 ### 1.3.1. mysql. server_cost 表
@@ -391,7 +345,6 @@ mysql> SHOW TABLES FROM mysql LIKE '%cost%';
 `server_cost` 表中在 `server` 层进行的一些操作对应的 `成本常数`，具体内容如下：
 
 ```sql
-
 mysql> SELECT * FROM mysql.server_cost;
 +------------------------------+------------+---------------------+---------+
 | cost_name                    | cost_value | last_update         | comment |
@@ -404,23 +357,14 @@ mysql> SELECT * FROM mysql.server_cost;
 | row_evaluate_cost            |       NULL | 2018-01-20 12:03:21 | NULL    |
 +------------------------------+------------+---------------------+---------+
 6 rows in set (0.05 sec)
-
 ```
-
 - `cost_name`
-
     表示成本常数的名称。
-
 - `cost_value`
-
     表示成本常数对应的值。如果该列的值为 `NULL` 的话，意味着对应的成本常数会采用默认值。
-
 - `last_update`
-
     表示最后更新记录的时间。
-
 - `comment`
-
     注释。
 
 从 `server_cost` 中的内容可以看出来，目前在 `server` 层的一些操作对应的 `成本常数` 有以下几种：
@@ -449,13 +393,9 @@ mysql> SELECT * FROM mysql.engine_cost;
 ```
 
 与 `server_cost` 相比，`engine_cost` 多了两个列：
-
 - `engine_name` 列
-
     指成本常数适用的存储引擎名称。如果该值为 `default`，意味着对应的成本常数适用于所有的存储引擎。
-
 - `device_type` 列
-
     指存储引擎使用的设备类型，这主要是为了区分常规的机械硬盘和固态硬盘，不过在 `MySQL 5.7.21` 这个版本中并没有对机械硬盘的成本和固态硬盘的成本作区分，所以该值默认是 `0`。
 
 我们从 `engine_cost` 表中的内容可以看出来，目前支持的存储引擎成本常数只有两个：
@@ -473,13 +413,9 @@ mysql> SELECT * FROM mysql.engine_cost;
 查询成本的时候经常用到一些统计数据，比如通过 `SHOW TABLE STATUS` 可以看到关于表的统计数据，通过 `SHOW INDEX` 可以看到关于索引的统计数据，那么这些统计数据是怎么来的呢？它们是以什么方式收集的呢？本章将聚焦于 `InnoDB` 存储引擎的统计数据收集策略，看完本章大家就会明白为啥前边老说 `InnoDB` 的统计信息是不精确的估计值了。
 
 `InnoDB` 提供了两种存储统计数据的方式：
-
 - 永久性的统计数据
-
     这种统计数据存储在磁盘上，也就是服务器重启之后这些统计数据还在。
-
 - 非永久性的统计数据
-
     这种统计数据存储在内存中，当服务器关闭时这些这些统计数据就都被清除掉了，等到服务器重启之后，在某些适当的场景下才会重新收集这些统计数据。
 
  `MySQL` 提供了系统变量 `innodb_stats_persistent` 来控制到底采用哪种方式去存储统计数据。在 `MySQL 5.6.6` 之前，`innodb_stats_persistent` 的值默认是 `OFF`，也就是说 `InnoDB` 的统计数据默认是存储到内存的，之后的版本中 `innodb_stats_persistent` 的值默认是 `ON`，也就是统计数据默认被存储到磁盘中。
@@ -502,9 +438,7 @@ mysql> SHOW TABLES FROM mysql LIKE 'innodb%';
 ```
 
 这两个表都位于 `mysql` 系统数据库下边，其中：
-
 - `innodb_table_stats` 存储了关于表的统计数据，每一条记录对应着一个表的统计数据。
-
 - `innodb_index_stats` 存储了关于索引的统计数据，每一条记录对应着一个索引的一个统计项的统计数据。
 
 ### 2.1.1. innodb_table_stats
@@ -528,19 +462,12 @@ mysql> SHOW TABLES FROM mysql LIKE 'innodb%';
 统计这两个数据需要大量用到 `InnoDB` 表空间的知识。
 
 这两个统计项的收集过程如下：
-
 1. 从数据字典里找到表的各个索引对应的根页面位置。
-    
     系统表 `SYS_INDEXES` 里存储了各个索引对应的根页面信息。
-    
 2. 从根页面的 `Page Header` 里找到叶子节点段和非叶子节点段对应的 `Segment Header`。
-    
     在每个索引的根页面的 `Page Header` 部分都有两个字段：
-    
     - `PAGE_BTR_SEG_LEAF` ：表示 B+树叶子段的 `Segment Header` 信息。
-
     - `PAGE_BTR_SEG_TOP` ：表示 B+树非叶子段的 `Segment Header` 信息。
-
 3. 从叶子节点段和非叶子节点段的 `Segment Header` 中找到这两个段对应的 `INODE Entry` 结构。
 
 	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209090023931.png)
@@ -565,7 +492,6 @@ innodb_index_stats 表的每条记录代表着一个索引的一个统计项。
 可能这会大家有些懵逼这个统计项到底指什么，别着急，我们直接看一下关于 `single_table` 表的索引统计数据都有些什么：
 
 ```
-
 mysql> SELECT * FROM mysql.innodb_index_stats WHERE table_name = 'single_table';
 +---------------+--------------+--------------+---------------------+--------------+------------+-------------+-----------------------------------+
 | database_name | table_name   | index_name   | last_update         | stat_name    | stat_value | sample_size | stat_description                  |
@@ -592,31 +518,22 @@ mysql> SELECT * FROM mysql.innodb_index_stats WHERE table_name = 'single_table';
 | xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | size         |         97 |        NULL | Number of pages in the index      |
 +---------------+--------------+--------------+---------------------+--------------+------------+-------------+-----------------------------------+
 20 rows in set (0.03 sec)
-
 ```
 
 这个结果有点儿多，正确查看这个结果的方式是这样的：
 
 1. 先查看 `index_name` 列，这个列说明该记录是哪个索引的统计信息，从结果中我们可以看出来，`PRIMARY` 索引（也就是主键）占了 3 条记录，`idx_key_part` 索引占了 6 条记录。
-
 2. 针对 `index_name` 列相同的记录，`stat_name` 表示针对该索引的统计项名称，`stat_value` 展示的是该索引在该统计项上的值，`stat_description` 指的是来描述该统计项的含义的。我们来具体看一下一个索引都有哪些统计项：
-    
     - `n_leaf_pages` ：表示该索引的叶子节点占用多少页面。
-
     - `size` ：表示该索引共占用多少页面。
-
     - `n_diff_pfx**NN**` ：表示对应的索引列不重复的值有多少。其中的 `NN` 长得有点儿怪呀，啥意思呢？
-        
         其实 `NN` 可以被替换为 `01`、`02`、`03`... 这样的数字。比如对于 `idx_key_part` 来说：
         
         - `n_diff_pfx01` 表示的是统计 `key_part1` 这单单一个列不重复的值有多少。
-
         - `n_diff_pfx02` 表示的是统计 `key_part1、key_part2` 这两个列组合起来不重复的值有多少。
-
         - `n_diff_pfx03` 表示的是统计 `key_part1、key_part2、key_part3` 这三个列组合起来不重复的值有多少。
-
         - `n_diff_pfx04` 表示的是统计 `key_part1、key_part2、key_part3、id` 这四个列组合起来不重复的值有多少。
-
+          
         这里需要注意的是，对于普通的二级索引，并不能保证它的索引列值是唯一的，比如对于 idx_key1 来说，key1 列就可能有很多值重复的记录。此时只有在索引列上加上主键值才可以区分两条索引列值都一样的二级索引记录。对于主键和唯一二级索引则没有这个问题，它们本身就可以保证索引列值的不重复，所以也不需要再统计一遍在索引列后加上主键值的不重复值有多少。比如上边的 idx_key1 有 n_diff_pfx01、n_diff_pfx02 两个统计项，而 idx_key2 却只有 n_diff_pfx01 一个统计项。
 
 3. 在计算某些索引列中包含多少不重复值时，需要对一些叶子节点页面进行采样，`sample_size` 列就表明了采样的页面数量是多少。
@@ -624,17 +541,13 @@ mysql> SELECT * FROM mysql.innodb_index_stats WHERE table_name = 'single_table';
 ### 2.1.3. 定期更新统计数据
 
 随着我们不断的对表进行增删改操作，表中的数据也一直在变化，`innodb_table_stats` 和 `innodb_index_stats` 表里的统计数据也会产生相应变化。设计 `MySQL` 的大叔提供了如下两种更新统计数据的方式：
-
 - 开启 `innodb_stats_auto_recalc`。
-    
     系统变量 `innodb_stats_auto_recalc` 决定着服务器是否自动重新计算统计数据，它的默认值是 `ON`，也就是该功能默认是开启的。每个表都维护了一个变量，该变量记录着对该表进行增删改的记录条数，如果发生变动的记录数量超过了表大小的 `10%`，并且自动重新计算统计数据的功能是打开的，那么服务器会重新进行一次统计数据的计算，并且更新 `innodb_table_stats` 和 `innodb_index_stats` 表。不过自动重新计算统计数据的过程是异步发生的，也就是即使表中变动的记录数超过了 `10%`，自动重新计算统计数据也不会立即发生，可能会延迟几秒才会进行计算。
     
-    再一次强调，`InnoDB` 默认是以表为单位来收集和存储统计数据的，我们也可以单独为某个表设置是否自动重新计算统计数的属性，设置方式就是在创建或修改表的时候通过指定 `STATS_AUTO_RECALC` 属性来指明该表的统计数据存储方式：
-
+    再一次强调，`InnoDB` 默认是以表为单位来收集和存储统计数据的，我们也可以单独为某个表设置是否自动重新计算统计数的属性，设置方式就是在创建或修改表的时候通过指定 `STATS_AUTO_RECALC` 属性来指明该表的统计数据存储方式。
+    
     当 `STATS_AUTO_RECALC=1` 时，表明我们想让该表自动重新计算统计数据，当 `STATS_AUTO_RECALC=0` 时，表明不想让该表自动重新计算统计数据。如果我们在创建表时未指定 `STATS_AUTO_RECALC` 属性，那默认采用系统变量 `innodb_stats_auto_recalc` 的值作为该属性的值。
-    
 - 手动调用 `ANALYZE TABLE` 语句来更新统计信息
-    
     如果 `innodb_stats_auto_recalc` 系统变量的值为 `OFF` 的话，我们也可以手动调用 `ANALYZE TABLE` 语句来重新计算统计数据，比如我们可以这样更新关于 `single_table` 表的统计数据：
 
     需要注意的是，ANALYZE TABLE 语句会立即重新计算统计数据，也就是这个过程是同步的，在表中索引多或者采样页面特别多时这个过程可能会特别慢，请不要没事儿就运行一下 `ANALYZE TABLE` 语句，最好在业务不是很繁忙的时候再运行。
@@ -655,11 +568,9 @@ mysql> SELECT * FROM mysql.innodb_index_stats WHERE table_name = 'single_table';
 
 有时候表达式里有许多无用的括号，比如下方两个表达式是等价的：
 
-```css
-
+```txt
 ((a = 5 AND b = c) OR ((a > c) AND (c < 5)))
 (a = 5 and b = c) OR (a > c AND c < 5)
-
 ```
 
 ### 3.1.2. 常量传递（constant_propagation）
@@ -667,25 +578,19 @@ mysql> SELECT * FROM mysql.innodb_index_stats WHERE table_name = 'single_table';
 有时候某个表达式是某个列和某个常量做等值匹配，比如这样：
 
 ```txt
-
 a = 5
-
 ```
 
 当这个表达式和其他涉及列 `a` 的表达式使用 `AND` 连接起来时，可以将其他表达式中的 `a` 的值替换为 `5`，比如这样：
 
 ```css
-
 a = 5 AND b > a
-
 ```
 
 就可以被转换为：
 
 ```css
-
 a = 5 AND b > 5
-
 ```
 
 ### 3.1.3. 等值传递（equality_propagation）
@@ -693,17 +598,13 @@ a = 5 AND b > 5
 有时候多个列之间存在等值匹配的关系，比如这样：
 
 ```css
-
 a = b and b = c and c = 5
-
 ```
 
 这个表达式可以被简化为：
 
 ```css
-
 a = 5 and b = 5 and c = 5
-
 ```
 
 ### 3.1.4. 移除没用的条件（trivial_condition_removal）
@@ -721,30 +622,23 @@ a = 5 and b = 5 and c = 5
 ### 3.1.7. 常量表检测
 
 `MySQL` 认为以下两种查询运行的特别快：
-
 - 查询的表中一条记录没有，或者只有一条记录。
-
     没开始查表呢咋就知道这表里边有几条记录呢？这个其实依靠的是统计数据。不过 InnoDB 的统计数据数据不准确，所以这一条不能用于使用 InnoDB 作为存储引擎的表，只能适用于使用 Memory 或者 MyISAM 存储引擎的表。
-
 - 使用主键等值匹配或者唯一二级索引列等值匹配作为搜索条件来查询某个表。
 
 设计 `MySQL` 的大叔觉得这两种查询花费的时间特别少，少到可以忽略，所以也把通过这两种方式查询的表称之为 `常量表`（英文名：`constant tables`）。优化器在分析一个查询语句时，先首先执行常量表查询，然后把查询中涉及到该表的条件全部替换成常数，最后再分析其余表的查询成本，比方说这个查询语句：
 
 ```sql
-
 SELECT * FROM table1 INNER JOIN table2
     ON table1.column1 = table2.column2 
     WHERE table1.primary_key = 1;
-    
 ```
 
 很明显，这个查询可以使用主键和常量值的等值匹配来查询 `table1` 表，也就是在这个查询中 `table1` 表相当于 `常量表`，在分析对 `table2` 表的查询成本之前，就会执行对 `table1` 表的查询，并把查询中涉及 `table1` 表的条件都替换掉，也就是上边的语句会被转换成这样：
 
 ```sql
-
 SELECT table1表记录的各个字段的常量值, table2.* FROM table1 INNER JOIN table2 
     ON table1表column1列的常量值 = table2.column2;
-    
 ```
 
 ## 3.2. 外连接消除
@@ -756,7 +650,6 @@ SELECT table1表记录的各个字段的常量值, table2.* FROM table1 INNER JO
 我们知道 `WHERE` 子句的杀伤力比较大，凡是不符合 WHERE 子句中条件的记录都不会参与连接。只要我们在搜索条件中指定关于被驱动表相关列的值不为 `NULL`，那么外连接中在被驱动表中找不到符合 `ON` 子句条件的驱动表记录也就被排除出最后的结果集了，也就是说：在这种情况下：外连接和内连接也就没有什么区别了！比方说这个查询：
 
 ```sql
-
 mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
 +------+------+------+------+
 | m1   | n1   | m2   | n2   |
@@ -765,7 +658,6 @@ mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
 |    3 | c    |    3 | c    |
 +------+------+------+------+
 2 rows in set (0.01 sec)
-
 ```
 
 我们把这种在外连接查询中，指定的 `WHERE` 子句中包含被驱动表中的列不为 `NULL` 值的条件称之为 `空值拒绝`（英文名：`reject-NULL`）。**在被驱动表的 WHERE 子句符合空值拒绝的条件后，外连接和内连接可以相互转换。这种转换带来的好处就是查询优化器可以通过评估表的不同连接顺序的成本，选出成本最低的那种连接顺序来执行查询。**
@@ -779,29 +671,19 @@ mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
 因为子查询本身也算是一个查询，所以可以按照它们返回的不同结果集类型而把这些子查询分为不同的类型：
 
 - 标量子查询
-
     那些只返回一个单一值的子查询称之为 `标量子查询`。
-
 - 行子查询
-
     顾名思义，就是返回一条记录的子查询，不过这条记录需要包含多个列（只包含一个列就成了标量子查询了）。
-
 - 列子查询
-
     列子查询自然就是查询出一个列的数据喽，不过这个列的数据需要包含多条记录（只包含一条记录就成了标量子查询了）。
-
 - 表子查询
-
     顾名思义，就是子查询的结果既包含很多条记录，又包含很多个列。
 
 #### 3.3.1.2. 按与外层查询关系分类
 
 - 不相关子查询
-
 	如果子查询可以单独运行出结果，而不依赖于外层查询的值，我们就可以把这个子查询称之为 `不相关子查询`。
-
 - 相关子查询
-
 	如果子查询的执行需要依赖于外层查询的值，我们就可以把这个子查询称之为 `相关子查询`。
 
 ### 3.3.2. 子查询使用
@@ -813,19 +695,13 @@ mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
 #### 3.3.2.2. \[NOT] IN/ANY/SOME/ALL 子查询
 
 对于列子查询和表子查询来说，它们的结果集中包含很多条记录，这些记录相当于是一个集合，所以就不能单纯的和另外一个操作数使用 `comparison_operator` 来组成布尔表达式了，`MySQL` 通过下面的语法来支持某个操作数和一个集合组成一个布尔表达式：
-
 - `IN` 或者 `NOT IN`
-
     用来判断某个操作数在不在由子查询结果集组成的集合中。
-
 - `ANY/SOME`（`ANY` 和 `SOME` 是同义词）
-
     这个布尔表达式的意思是只要子查询结果集中存在某个值和给定的操作数做 `comparison_operator` 比较结果为 `TRUE`，那么整个表达式的结果就为 `TRUE`，否则整个表达式的结果就为 `FALSE`。    
-
+    
     另外，=ANY 相当于判断子查询结果集中是否存在某个值和给定的操作数相等，它的含义和 IN 是相同的。
-
 - `ALL`
-
     这个布尔表达式的意思是子查询结果集中所有的值和给定的操作数做 `comparison_operator` 比较结果为 `TRUE`，那么整个表达式的结果就为 `TRUE`，否则整个表达式的结果就为 `FALSE`。
 
 #### 3.3.2.3. EXISTS 子查询
@@ -835,65 +711,41 @@ mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
 ### 3.3.3. 子查询注意事项
 
 - 子查询必须用小括号扩起来。
-
 - 在 `SELECT` 子句中的子查询必须是标量子查询。
-
 - 在想要得到标量子查询或者行子查询，但又不能保证子查询的结果集只有一条记录时，应该使用 `LIMIT 1` 语句来限制记录数量。
-
 - 对于 `[NOT] IN/ANY/SOME/ALL` 子查询来说，子查询中不允许有 `LIMIT` 语句。
-
 	正因为 `[NOT] IN/ANY/SOME/ALL` 子查询不支持 `LIMIT` 语句，所以子查询中的这些语句也就是多余的了：
-
     - `ORDER BY` 子句
-
         子查询的结果其实就相当于一个集合，集合里的值排不排序一点儿都不重要。
-
     - `DISTINCT` 语句
-
         集合里的值去不去重也没啥意义。
-
     - 没有聚集函数以及 `HAVING` 子句的 `GROUP BY` 子句。
-
         在没有聚集函数以及 `HAVING` 子句时，`GROUP BY` 子句就是个摆设。
-
     对于这些冗余的语句，查询优化器在一开始就把它们给干掉了。
-    
 - 不允许在一条语句中增删改某个表的记录时同时还对该表进行子查询。
 
 ### 3.3.4. 无优化的子查询执行方式
 
 对于未经过任何优化的子查询，它的执行方式是这样的：
-
 - 不相关子查询
-
-    ```sql
-    
+    ```sql   
     SELECT * FROM s1 
         WHERE key1 IN (SELECT common_field FROM s2);
-        
     ```
 
     1. 先单独执行 `(SELECT common_field FROM s2)` 这个子查询。
-
     2. 然后在将上一步子查询得到的结果当作外层查询的参数再执行外层查询 `SELECT * FROM s1 WHERE key1 IN (...)`。
-
 - 相关子查询
-
+  
     ```sql
-    
     SELECT * FROM s1 
         WHERE key1 IN (SELECT common_field FROM s2 WHERE s1.key2 = s2.key2);
-        
     ```
 
     这个查询中的子查询中出现了 `s1.key2 = s2.key2` 这样的条件，意味着该子查询的执行依赖着外层查询的值，这个查询的执行方式是这样的：
-
     1. 先从外层查询中获取一条记录，本例中也就是先从 `s1` 表中获取一条记录。
-
     2. 然后从上一步骤中获取的那条记录中找出子查询中涉及到的值，本例中就是从 `s1` 表中获取的那条记录中找出 `s1.key2` 列的值，然后执行子查询。
-
     3. 最后根据子查询的查询结果来检测外层查询 `WHERE` 子句的条件是否成立，如果成立，就把外层查询的那条记录加入到结果集，否则就丢弃。
-
     4. 再次执行第一步，获取第二条外层查询中的记录，依次类推～
 
 对于标量子查询和行子查询，它们的实现方式就是无优化的执行方式。**因为只有一条数据，所以先将该数据查出来再进行外层查询就是最优的方式**。
@@ -907,28 +759,21 @@ mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
 对于不相关的 `IN` 子查询来说，如果子查询的结果集中的记录条数很少，那么把子查询和外层查询分别看成两个单独的单表查询效率还是蛮高的，但是如果单独执行子查询后的结果集太多的话，就会导致这些问题：
 
 - 结果集太多，可能内存中都放不下。
-
 - 对于外层查询来说，如果子查询的结果集太多，那就意味着 `IN` 子句中的参数特别多，这就导致：
-
     - 无法有效的使用索引，只能对外层查询进行全表扫描。
-
     - 在对外层查询执行全表扫描时，由于 `IN` 子句中的参数太多，这会导致检测一条记录是否符合和 `IN` 子句中的参数匹配花费的时间太长。
 
 于是乎设计 `MySQL` 的大叔想了一个招：不直接将不相关子查询的结果集当作外层查询的参数，而是将该结果集写入一个临时表里。写入临时表的过程是这样的：
 
 1. 该临时表的列就是子查询结果集中的列。
-
 2. 写入临时表的记录会被去重。
-
     我们说 `IN` 语句是判断某个操作数在不在某个集合中，所以我们在将结果集写入临时表时对记录进行去重可以让临时表变得更小，更省地方。
-
+    
     临时表如何对记录进行去重？临时表也是个表，只要为表中记录的所有列建立主键或者唯一索引就好了。
-
 3. 为临时表建立索引
-
 	一般情况下子查询结果集不会太大，所以会为它建立基于内存的使用 `Memory` 存储引擎的临时表，而且会为该表建立哈希索引。IN 语句的本质就是判断某个操作数在不在某个集合里，如果集合中的数据建立了哈希索引，那么这个匹配的过程就是超级快的。
-
-    如果子查询的结果集非常大，超过了系统变量 `tmp_table_size` 或者 `max_heap_table_size`，临时表会转而使用基于磁盘的存储引擎来保存结果集中的记录，索引类型也对应转变为 `B+` 树索引。
+	
+	如果子查询的结果集非常大，超过了系统变量 `tmp_table_size` 或者 `max_heap_table_size`，临时表会转而使用基于磁盘的存储引擎来保存结果集中的记录，索引类型也对应转变为 `B+` 树索引。
 
 上述将子查询结果集中的记录保存到临时表的过程称之为 `物化`（英文名：`Materialize`）。我们把那个存储子查询结果集的临时表称之为 `物化表`。**正因为物化表中的记录都建立了索引（基于内存的物化表有哈希索引，基于磁盘的有 B+树索引），通过索引执行 `IN` 语句判断某个操作数在不在子查询结果集中变得非常快，从而提升了子查询语句的性能**。
 
@@ -944,7 +789,6 @@ SELECT * FROM s1
 ```
 
 当我们把子查询进行物化之后，假设子查询物化表的名称为 `materialized_table`，该物化表存储的子查询结果集的列为 `m_val`，那么这个查询其实可以从下边两种角度来看待：
-
 - 从表 `s1` 的角度来看待，整个查询的意思其实是：对于 `s1` 表中的每条记录来说，如果该记录的 `key1` 列的值在子查询对应的物化表中，则该记录会被加入最终的结果集。画个图表示一下就是这样：
 
 	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209130043313.png)
@@ -957,27 +801,17 @@ SELECT * FROM s1
 也就是说其实上边的查询就相当于表 `s1` 和子查询物化表 `materialized_table` 进行内连接：
 
 ```sql
-
 SELECT s1.* FROM s1 INNER JOIN materialized_table ON key1 = m_val;
-
 ```
 
 转化成内连接之后就有意思了，**查询优化器可以评估不同连接顺序需要的成本是多少，选取成本最低的那种查询方式执行查询**。我们分析一下上述查询中使用外层查询的表 `s1` 和物化表 `materialized_table` 进行内连接的成本都是由哪几部分组成的：
-
 - 如果使用 `s1` 表作为驱动表的话，总查询成本由下边几个部分组成：
-
     - 物化子查询时需要的成本
-
     - 扫描 `s1` 表时的成本
-
     - s1 表中的记录数量 × 通过 `m_val = xxx` 对 `materialized_table` 表进行单表访问的成本（我们前边说过物化表中的记录是不重复的，并且为物化表中的列建立了索引，所以这个步骤显然是非常快的）。
-
 - 如果使用 `materialized_table` 表作为驱动表的话，总查询成本由下边几个部分组成：
-
     - 物化子查询时需要的成本
-
     - 扫描物化表时的成本
-
     - 物化表中的记录数量 × 通过 `key1 = xxx` 对 `s1` 表进行单表访问的成本（非常庆幸 `key1` 列上建立了索引，所以这个步骤是非常快的）。
 
 `MySQL` 查询优化器会通过运算来选择上述成本更低的方案来执行查询。
@@ -989,28 +823,21 @@ SELECT s1.* FROM s1 INNER JOIN materialized_table ON key1 = m_val;
 虽然将子查询进行物化之后再执行查询都会有建立临时表的成本，但是不管怎么说，我们见识到了将子查询转换为连接的强大作用，设计 `MySQL` 的大叔继续开脑洞：能不能不进行物化操作直接把子查询转换为连接呢？
 
 ```sql
-
 SELECT * FROM s1 
     WHERE key1 IN (SELECT common_field FROM s2 WHERE key3 = 'a');
-    
 ```
 
 我们可以把这个查询理解成：对于 `s1` 表中的某条记录，如果我们能在 `s2` 表（准确的说是执行完 `WHERE s2.key3 = 'a'` 之后的结果集）中找到一条或多条记录，这些记录的 `common_field` 的值等于 `s1` 表记录的 `key1` 列的值，那么该条 `s1` 表的记录就会被加入到最终的结果集。这个过程其实和把 `s1` 和 `s2` 两个表连接起来的效果很像：
 
 ```sql
-
 SELECT s1.* FROM s1 INNER JOIN s2 
     ON s1.key1 = s2.common_field 
     WHERE s2.key3 = 'a';
-    
 ```
 
 只不过我们不能保证对于 `s1` 表的某条记录来说，在 `s2` 表（准确的说是执行完 `WHERE s2.key3 = 'a'` 之后的结果集）中有多少条记录满足 `s1.key1 = s2.common_field` 这个条件，不过我们可以分三种情况：
-
 - 情况一：对于 `s1` 表的某条记录来说，`s2` 表中没有任何记录满足 `s1.key1 = s2.common_field` 这个条件，那么该记录自然也不会加入到最后的结果集。
-
 - 情况二：对于 `s1` 表的某条记录来说，`s2` 表中有且只有 1 条记录满足 `s1.key1 = s2.common_field` 这个条件，那么该记录会被加入最终的结果集。
-
 - 情况三：对于 `s1` 表的某条记录来说，`s2` 表中至少有 2 条记录满足 `s1.key1 = s2.common_field` 这个条件，那么该记录会被多次加入最终的结果集。
 
 对于 `s1` 表的某条记录来说，由于我们只关心 `s2` 表中是否存在记录满足 `s1.key1 = s2.common_field` 这个条件，而不关心具体有多少条记录与之匹配，又因为有 `情况三` 的存在，我们上边所说的 `IN` 子查询和两表连接之间并不完全等价。但是将子查询转换为连接又真的可以充分发挥优化器的作用，所以设计 `MySQL` 的大叔在这里提出了一个新概念：`半连接`（英文名：`semi-join`）。
@@ -1020,11 +847,9 @@ SELECT s1.* FROM s1 INNER JOIN s2
 为了让大家有更直观的感受，我们假设 MySQL 内部是这么改写上边的子查询的：
 
 ```sql
-
 SELECT s1.* FROM s1 SEMI JOIN s2
     ON s1.key1 = s2.common_field
     WHERE key3 = 'a';
-    
 ```
 
 #### 3.3.6.2. 半连接查询实现
@@ -1036,20 +861,16 @@ SELECT s1.* FROM s1 SEMI JOIN s2
 当子查询的查询列表处只有主键或者唯一索引列时，可以直接把子查询中的表 `上拉` 到外层查询的 `FROM` 子句中，并把子查询中的搜索条件合并到外层查询的搜索条件中，比如这个
 
 ```sql
-
 SELECT * FROM s1 
 	WHERE key2 IN (SELECT key2 FROM s2 WHERE key3 = 'a');
-	
 ```
 
 由于 `key2` 列是 `s2` 表的唯一二级索引列，所以我们可以直接把 `s2` 表上拉到外层查询的 `FROM` 子句中，并且把子查询中的搜索条件合并到外层查询的搜索条件中，上拉之后的查询就是这样的：
 
 ```sql
-
 SELECT s1.* FROM s1 INNER JOIN s2 
 	ON s1.key2 = s2.key2 
 	WHERE s2.key3 = 'a';
-	
 ```
 
 为啥当子查询的查询列表处只有主键或者唯一索引列时，就可以直接将子查询转换为连接查询呢？**主键或者唯一索引列中的数据本身就是不重复的，所以对于同一条 `s1` 表中的记录，不可能找到两条以上的符合 `s1.key2 = s2.key2` 的记录**。
@@ -1059,10 +880,8 @@ SELECT s1.* FROM s1 INNER JOIN s2
 对于这个查询来说：
 
 ```sql
-
 SELECT * FROM s1 
 	WHERE key1 IN (SELECT common_field FROM s2 WHERE key3 = 'a');
-	
 ```
 
 转换为半连接查询后，`s1` 表中的某条记录可能在 `s2` 表中有多条匹配的记录，所以该条记录可能多次被添加到最后的结果集中，为了消除重复，我们可以建立一个临时表，比方说这个临时表长这样：
@@ -1101,17 +920,13 @@ SELECT * FROM s1
 对于某些使用 `IN` 语句的相关子查询，它也可以很方便的转为半连接：
 
 ```sql
-
 SELECT * FROM s1 
     WHERE key1 IN (SELECT common_field FROM s2 WHERE s1.key3 = s2.key3);
-    
 ```
 
 ```sql
-
 SELECT s1.* FROM s1 SEMI JOIN s2 
     ON s1.key1 = s2.common_field AND s1.key3 = s2.key3;
-    
 ```
 
 然后就可以使用我们上边介绍过的 `DuplicateWeedout`、`LooseScan`、`FirstMatch` 等半连接执行策略来执行查询，当然，如果子查询的查询列表处只有主键或者唯一二级索引列，还可以直接使用 `table pullout` 的策略来执行查询，但是需要大家注意的是，由于相关子查询并不是一个独立的查询，所以不能转换为物化表来执行查询。
@@ -1121,67 +936,46 @@ SELECT s1.* FROM s1 SEMI JOIN s2
 当然，并不是所有包含 `IN` 子查询的查询语句都可以转换为 `semi-join`，只有形如这样的查询才可以被转换为 `semi-join` ：
 
 ```sql
-
 SELECT ... FROM outer_tables 
     WHERE expr IN (SELECT ... FROM inner_tables ...) AND ...
-
 ```
 
 或者这样的形式也可以：
 
 ```sql
-
 SELECT ... FROM outer_tables 
     WHERE (oe1, oe2, ...) IN (SELECT ie1, ie2, ... FROM inner_tables ...) AND ...
-    
 ```
 
 用文字总结一下，只有符合下边这些条件的子查询才可以被转换为 `semi-join` ：
-
 - 该子查询必须是和 `IN` 语句组成的布尔表达式，并且在外层查询的 `WHERE` 或者 `ON` 子句中出现。
-
 - 外层查询也可以有其他的搜索条件，只不过和 `IN` 子查询的搜索条件必须使用 `AND` 连接起来。
-
 - 该子查询必须是一个单一的查询，不能是由若干查询由 `UNION` 连接起来的形式。
-
 - 该子查询不能包含 `GROUP BY` 或者 `HAVING` 语句或者聚集函数。
-
 -   ... 还有一些条件比较少见
 
 #### 3.3.6.4. 不适用半连接的子查询优化
 
 对于一些不能将子查询转位 `semi-join` 的情况，典型的比如下边这几种：
-
 - 外层查询的 WHERE 条件中有其他搜索条件与 IN 子查询组成的布尔表达式使用 `OR` 连接起来
-
 -   使用 `NOT IN` 而不是 `IN` 的情况
-
 -   在 `SELECT` 子句中的 IN 子查询的情况
-
 -   子查询中包含 `GROUP BY`、`HAVING` 或者聚集函数的情况
-
 -   子查询中包含 `UNION` 的情况
 
 `MySQL` 仍然留了两手绝活来优化不能转为 `semi-join` 查询的子查询，那就是：
-
 - 对于不相关子查询来说，可以尝试把它们物化之后再参与查询
-
 - 不管子查询是相关的还是不相关的，都可以把 `IN` 子查询尝试转为 `EXISTS` 子查询
-
     其实对于任意一个 IN 子查询来说，都可以被转为 `EXISTS` 子查询，通用的例子如下：
 
     ```sql
-    
     outer_expr IN (SELECT inner_expr FROM ... WHERE subquery_where)
-    
     ```
 
     可以被转换为：
 
     ```sql
-    
     EXISTS (SELECT inner_expr FROM ... WHERE subquery_where AND outer_expr=inner_expr)
-    
     ```
     
     当然这个过程中有一些特殊情况，比如在 `outer_expr` 或者 `inner_expr` 值为 `NULL` 的情况下就比较特殊。因为有 `NULL` 值作为操作数的表达式结果往往是 `NULL`，而 `EXISTS` 子查询的结果肯定是 `TRUE` 或者 `FASLE`。
@@ -1189,33 +983,27 @@ SELECT ... FROM outer_tables
     但是幸运的是，我们大部分使用 `IN` 子查询的场景是把它放在 `WHERE` 或者 `ON` 子句中，而 `WHERE` 或者 `ON` 子句是不区分 `NULL` 和 `FALSE` 的，比方说：
     
     ```sql
-    
     mysql> SELECT 1 FROM s1 WHERE NULL;
     Empty set (0.00 sec)
     
     mysql> SELECT 1 FROM s1 WHERE FALSE;
     Empty set (0.00 sec)
-    
     ```
 
     所以只要我们的 `IN` 子查询是放在 `WHERE` 或者 `ON` 子句中的，那么 `IN -> EXISTS` 的转换就是没问题的。说了这么多，为啥要转换呢？这是因为**不转换的话可能用不到索引**，比方说下边这个查询：
 
     ```sql
-    
     SELECT * FROM s1
         WHERE key1 IN (SELECT key3 FROM s2 where s1.common_field = s2.common_field) 
-            OR key2 > 1000;
-            
+            OR key2 > 1000;   
     ```
     
     这个查询中的子查询是一个相关子查询，而且子查询执行的时候不能使用到索引，但是将它转为 `EXISTS` 子查询后却可以使用到索引：
     
     ```sql
-    
     SELECT * FROM s1
         WHERE EXISTS (SELECT 1 FROM s2 where s1.common_field = s2.common_field AND s2.key3 = s1.key1) 
-            OR key2 > 1000;
-            
+            OR key2 > 1000; 
     ```
     
     转为 `EXISTS` 子查询时便可以使用到 `s2` 表的 `idx_key3` 索引了。
@@ -1227,91 +1015,67 @@ SELECT ... FROM outer_tables
 把子查询放在外层查询的 `FROM` 子句后，那么这个子查询的结果相当于一个 `派生表`，比如下边这个查询：
 
 ```sql
-
 SELECT * FROM  (
         SELECT id AS d_id,  key3 AS d_key3 FROM s2 WHERE key1 = 'a'
-    ) AS derived_s1 WHERE d_key3 = 'a';
-    
+    ) AS derived_s1 WHERE d_key3 = 'a'; 
 ```
 
 子查询 `( SELECT id AS d_id, key3 AS d_key3 FROM s2 WHERE key1 = 'a')` 的结果就相当于一个派生表，这个表的名称是 `derived_s1`，该表有两个列，分别是 `d_id` 和 `d_key3`。
 
 对于含有 `派生表` 的查询，`MySQL` 提供了两种执行策略：
-
 - 派生表物化。
-
     我们可以将派生表的结果集写到一个内部的临时表中，然后就把这个物化表当作普通表一样参与查询。当然，在对派生表进行物化时，设计 `MySQL` 的大叔使用了一种称为 `延迟物化` 的策略，也就是在查询中真正使用到派生表时才回去尝试物化派生表，而不是还没开始执行查询呢就把派生表物化掉。比方说对于下边这个含有派生表的查询来说：
 
 	```sql
-	
 	    SELECT * FROM (
 	            SELECT * FROM s1 WHERE key1 = 'a'
 	        ) AS derived_s1 INNER JOIN s2
 	        ON derived_s1.key1 = s2.key1
 	        WHERE s2.key2 = 1;
-	
 	```
 
     如果采用物化派生表的方式来执行这个查询的话，那么执行时首先会到 `s2` 表中找出满足 `s2.key2 = 1` 的记录，如果压根儿找不到，说明参与连接的 `s2` 表记录就是空的，所以整个查询的结果集就是空的，所以也就没有必要去物化查询中的派生表了。
-
 - 将派生表和外层的表合并，也就是将查询重写为没有派生表的形式
-
     我们来看这个贼简单的包含派生表的查询：
 
     ```sql
-	
     SELECT * FROM (SELECT * FROM s1 WHERE key1 = 'a') AS derived_s1;
-	
     ```
 
     这个查询本质上就是想查看 `s1` 表中满足 `key1 = 'a'` 条件的的全部记录，所以和下边这个语句是等价的：
 
     ```sql
-    
     SELECT * FROM s1 WHERE key1 = 'a';
-	
     ```
     
     对于一些稍微复杂的包含派生表的语句，比如我们上边提到的那个：
     
     ```sql
-    
     SELECT * FROM (
             SELECT * FROM s1 WHERE key1 = 'a'
         ) AS derived_s1 INNER JOIN s2
         ON derived_s1.key1 = s2.key1
         WHERE s2.key2 = 1;
-        
     ```
     
     我们可以将派生表与外层查询的表合并，然后将派生表中的搜索条件放到外层查询的搜索条件中，就像这样：
     
     ```sql
-    
     SELECT * FROM s1 INNER JOIN s2 
         ON s1.key1 = s2.key1
         WHERE s1.key1 = 'a' AND s2.key2 = 1;
-        
     ```
     
     这样通过将外层查询和派生表合并的方式成功的消除了派生表，也就意味着我们没必要再付出创建和访问临时表的成本了。
     
     可是并不是所有带有派生表的查询都能被成功的和外层查询合并，当派生表中有这些语句就不可以和外层查询合并：
-
     -   聚集函数，比如 MAX ()、MIN ()、SUM () 啥的
-
     -   DISTINCT
-
     -   GROUP BY
-
     -   HAVING
-
     -   LIMIT
-
     -   UNION 或者 UNION ALL
-
     -   派生表对应的子查询的 `SELECT` 子句中含有另一个子查询
-
     -   ... 还有些不常用的情况
 
 所以 `MySQL` 在执行带有派生表的时候，优先尝试把派生表和外层查询合并掉，如果不行的话，再把派生表物化掉执行查询。
@@ -1347,53 +1111,31 @@ SELECT * FROM  (
 <table> <thead> <tr> <th> 名称 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> SIMPLE </code> </td> <td> Simple SELECT (not using UNION or subqueries) </td> </tr> <tr> <td> <code> PRIMARY </code> </td> <td> Outermost SELECT </td> </tr> <tr> <td> <code> UNION </code> </td> <td> Second or later SELECT statement in a UNION </td> </tr> <tr> <td> <code> UNION RESULT </code> </td> <td> Result of a UNION </td> </tr> <tr> <td> <code> SUBQUERY </code> </td> <td> First SELECT in subquery </td> </tr> <tr> <td> <code> DEPENDENT SUBQUERY </code> </td> <td> First SELECT in subquery, dependent on outer query </td> </tr> <tr> <td> <code> DEPENDENT UNION </code> </td> <td> Second or later SELECT statement in a UNION, dependent on outer query </td> </tr> <tr> <td> <code> DERIVED </code> </td> <td> Derived table </td> </tr> <tr> <td> <code> MATERIALIZED </code> </td> <td> Materialized subquery </td> </tr> <tr> <td> <code> UNCACHEABLE SUBQUERY </code> </td> <td> A subquery for which the result cannot be cached and must be re-evaluated for each row of the outer query </td> </tr> <tr> <td> <code> UNCACHEABLE UNION </code> </td> <td> The second or later select in a UNION that belongs to an uncacheable subquery (see UNCACHEABLE SUBQUERY) </td> </tr> </tbody> </table>
 
 - `SIMPLE`
-
     查询语句中不包含 `UNION` 或者子查询的查询都算作是 `SIMPLE` 类型。
-
 - `PRIMARY`
-
     对于包含 `UNION`、`UNION ALL` 或者子查询的大查询来说，它是由几个小查询组成的，其中最左边的那个查询的 `select_type` 值就是 `PRIMARY`。
-
 - `UNION`
-
     对于包含 `UNION` 或者 `UNION ALL` 的大查询来说，它是由几个小查询组成的，其中除了最左边的那个小查询以外，其余的小查询的 `select_type` 值就是 `UNION`。
-
 - `UNION RESULT`
-
     `MySQL` 选择使用临时表来完成 `UNION` 查询的去重工作，针对该临时表的查询的 `select_type` 就是 `UNION RESULT`。
-
 - `SUBQUERY`
-    
     如果包含子查询的查询语句不能够转为对应的 `semi-join` 的形式，并且该子查询是不相关子查询，并且查询优化器决定采用将该子查询物化的方案来执行该子查询时，该子查询的第一个 `SELECT` 关键字代表的那个查询的 `select_type` 就是 `SUBQUERY`。
-	
-	由于 select_type 为 SUBQUERY 的子查询会被物化，所以只需要执行一遍。
-
+    
+    由于 select_type 为 SUBQUERY 的子查询会被物化，所以只需要执行一遍。
 - `DEPENDENT SUBQUERY`
-
     如果包含子查询的查询语句不能够转为对应的 `semi-join` 的形式，并且该子查询是相关子查询，则该子查询的第一个 `SELECT` 关键字代表的那个查询的 `select_type` 就是 `DEPENDENT SUBQUERY`。
-
-	select_type 为 DEPENDENT SUBQUERY 的查询可能会被执行多次。
-
+    
+    select_type 为 DEPENDENT SUBQUERY 的查询可能会被执行多次。
 - `DEPENDENT UNION`
-
     在包含 `UNION` 或者 `UNION ALL` 的大查询中，如果各个小查询都依赖于外层查询的话，那除了最左边的那个小查询之外，其余的小查询的 `select_type` 的值就是 `DEPENDENT UNION`。
-
 - `DERIVED`
-
     对于采用物化的方式执行的包含派生表的查询，该派生表对应的子查询的 `select_type` 就是 `DERIVED`。
-
 - `MATERIALIZED`
-
     当查询优化器在执行包含子查询的语句时，选择将子查询物化之后与外层查询进行连接查询时，该子查询对应的 `select_type` 属性就是 `MATERIALIZED`。
-
 - `UNCACHEABLE SUBQUERY`
-
     不常用。
-
 - `UNCACHEABLE UNION`
-
     不常用。
-
 ### 4.1.4. `partitions`
 
 查询的表归属于哪一个 [[Mysql大纲#2 8 Mysql 分区表|分区]]。
@@ -1411,11 +1153,8 @@ SELECT * FROM  (
 ### 4.1.7. `key_len`
 
 `key_len` 列表示当优化器决定使用某个索引执行查询时，该索引记录的最大长度，它是由这三个部分构成的：
-
 - 对于使用固定长度类型的索引列来说，它实际占用的存储空间的最大长度就是该固定值，对于指定字符集的变长类型的索引列来说，比如某个索引列的类型是 `VARCHAR(100)`，使用的字符集是 `utf8`，那么该列实际占用的最大存储空间就是 `100 × 3 = 300` 个字节。
-
 - 如果该索引列可以存储 `NULL` 值，则 `key_len` 比不可以存储 `NULL` 值时多 1 个字节。
-
 - 对于变长字段来说，都会有 2 个字节的空间来存储该变长列的实际长度。
 
 这里需要强调的一点是，执行计划的生成是在 `MySQL server` 层中的功能，并不是针对具体某个存储引擎的功能。设计 `MySQL` 的大叔在执行计划中输出 `key_len` 列主要是为了让我们区分某个使用联合索引的查询具体用了几个索引列，而不是为了准确的说明针对某个具体存储引擎存储变长字段的实际长度占用的空间到底是占用 1 个字节还是 2 个字节。
@@ -1433,9 +1172,7 @@ SELECT * FROM  (
 ### 4.1.10. `filtered`
 
 之前在分析连接查询的成本时提出过一个 `condition filtering` 的概念，就是 `MySQL` 在计算驱动表扇出时采用的一个策略：
-
 - 如果使用的是全表扫描的方式执行的单表查询，那么计算驱动表扇出时需要估计出满足搜索条件的记录到底有多少条。
-
 - 如果使用的是索引执行的单表扫描，那么计算驱动表扇出的时候需要估计出满足除使用到对应索引的搜索条件外的其他搜索条件的记录有多少条。
 
 比方说下边这个查询：
@@ -1618,13 +1355,9 @@ Query OK, 0 rows affected (0.00 sec)
 ```
 
 然后我们就可以输入我们想要查看优化过程的查询语句，当该查询语句执行完成后，就可以到 `information_schema` 数据库下的 `OPTIMIZER_TRACE` 表中查看完整的优化过程。这个 `OPTIMIZER_TRACE` 表有 4 个列，分别是：
-
 - `QUERY` ：表示我们的查询语句。
-
 - `TRACE` ：表示优化过程的 JSON 格式文本。
-
 - `MISSING_BYTES_BEYOND_MAX_MEM_SIZE` ：由于优化过程可能会输出很多，如果超过某个限制时，多余的文本将不会被显示，这个字段展示了被忽略的文本字节数。
-
 - `INSUFFICIENT_PRIVILEGES` ：表示是否没有权限查看优化过程，默认值是 0，只有某些特殊情况下才会是 `1`，我们暂时不关心这个字段的值。
 
 完整的使用 `optimizer trace` 功能的步骤总结如下：
