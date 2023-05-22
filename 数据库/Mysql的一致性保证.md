@@ -505,7 +505,7 @@ binlog 日志的格式：
 
 Update 语句过程中在写完第一个日志后，第二个日志还没有写完期间发生了 crash，会出现什么情况呢?
 
-1.  先写 redo log 后写 binlog 。
+1. 先写 redo log 后写 binlog 。
 
 	假设在 redo log 写完，binlog 还没有写完的时候，MySQL 进程异常重启。由于我们前面说过的，redo log 写完之后，系统即使崩溃，仍然能够把数据恢复回来，所以恢复后这一行 c 的值是 1。  
 	
