@@ -239,16 +239,15 @@ COMPACT 格式一条完整的记录其实可以被分为 `记录的额外信息`
 比如我们修改一下 `record_format_demo` 表的字符集：
 
 ```sql
-
 mysql> ALTER TABLE record_format_demo MODIFY COLUMN c3 CHAR(10) CHARACTER SET utf8;
 Query OK, 2 rows affected (0.02 sec)
 Records: 2  Duplicates: 0  Warnings: 0
-
 ```
 
 修改该列字符集后记录的 `变长字段长度列表` 也发生了变化，如图：
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042243072.png)
+
 这就意味着：对于 _**CHAR (M)**_ 类型的列来说，**当列采用的是定长字符集时，该列占用的字节数不会被加到变长字段长度列表，而如果采用变长字符集时，该列占用的字节数也会被加到变长字段长度列表**。
 
 另外有一点还需要注意，变长字符集的 `CHAR(M)` 类型的列要求至少占用 `M` 个字节，而 `VARCHAR(M)` 却没有这个要求。比方说对于使用 `utf8` 字符集的 `CHAR(10)` 的列来说，该列存储的数据字节长度的范围是 10～30 个字节。即使我们向该列中存储一个空字符串也会占用 `10` 个字节，这是为了将来更新该列的值时，若该新值的字节长度大于原有值的字节长度而小于 10 个字节时，可以在该记录处直接更新，而不是在存储空间中重新分配一个新的记录空间，导致原有的记录空间成为所谓的碎片。
