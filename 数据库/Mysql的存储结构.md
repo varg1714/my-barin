@@ -99,17 +99,13 @@ mysql> SHOW COLLATION LIKE 'utf8\_%';
 我们可以在创建或修改表的语句中指定 `行格式` ：
 
 ```sql
-
 CREATE TABLE 表名 (列的信息) ROW_FORMAT=行格式名称;
-   
 ALTER TABLE 表名 ROW_FORMAT=行格式名称;
-
 ```
 
 比如我们在 `xiaohaizi` 数据库里创建一个演示用的表 `record_format_demo`，可以这样指定它的 `行格式` ：
 
 ```sql
-
 mysql> USE xiaohaizi;
 Database changed
 
@@ -120,7 +116,6 @@ mysql> CREATE TABLE record_format_demo (
     ->     c4 VARCHAR(10)
     -> ) CHARSET=ascii ROW_FORMAT=COMPACT;
 Query OK, 0 rows affected (0.03 sec)
-
 ```
 
 可以看到我们刚刚创建的这个表的 `行格式` 就是 `Compact`，另外，我们还显式指定了这个表的字符集为 `ascii`，因为 `ascii` 字符集只包括空格、标点符号、数字、大小写字母和一些不可见字符，所以我们的汉字是不能存到这个表里的。我们现在向这个表中插入两条记录：
