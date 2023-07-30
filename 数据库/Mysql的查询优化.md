@@ -124,7 +124,7 @@ $$
     优化器需要计算二级索引的某个范围区间到底包含多少条记录，对于本例来说就是要计算 `idx_key2` 在 `(10, 1000)` 这个范围区间中包含多少二级索引记录，计算过程是这样的：
     1. 先根据 `key2 > 10` 这个条件访问一下 `idx_key2` 对应的 `B+` 树索引，找到满足 `key2 > 10` 这个条件的第一条记录，我们把这条记录称之为 `区间最左记录`。在 `B+` 数树中定位一条记录的过程是常数级别的，所以这个过程的性能消耗是可以忽略不计的。
     2. 然后再根据 `key2 < 1000` 这个条件继续从 `idx_key2` 对应的 `B+` 树索引中找出最后一条满足这个条件的记录，我们把这条记录称之为 `区间最右记录`，这个过程的性能消耗也可以忽略不计的。
-    3. 如果 `区间最左记录` 和 `区间最右记录` 相隔不太远（在 `MySQL 5.7.21` 这个版本里，只要相隔不大于 10 个页面即可），那就可以精确统计出满足 `key2 > 10 AND key2 < 1000` 条件的二级索引记录条数。否则只沿着 `区间最左记录` 向右读 10 个页面，计算平均每个页面中包含多少记录，然后用这个平均值乘以 `区间最左记录` 和 `区间最右记录` 之间的页面数量就可以了。那么问题又来了，怎么估计 `区间最左记录` 和 `区间最右记录` 之间有多少个页面呢？解决这个问题还得回到 `B+` 树索引的结构中来：
+    3. 如果 `区间最左记录` 和 `区间最右记录` 相隔不太远（在 `MySQL 5.7.21` 这个版本里，只要相隔不大于 10 个页面即可），那就可以精确统计出满足 `key2 > 10 AND key2 < 1000` 条件的二级索引记录条数。否则**只沿着 `区间最左记录` 向右读 10 个页面，计算平均每个页面中包含多少记录，然后用这个平均值乘以 `区间最左记录` 和 `区间最右记录` 之间的页面数量**就可以了。那么问题又来了，怎么估计 `区间最左记录` 和 `区间最右记录` 之间有多少个页面呢？解决这个问题还得回到 `B+` 树索引的结构中来：
         
         ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209082349305.png)
 
@@ -202,7 +202,7 @@ SELECT * FROM single_table WHERE key1 IN ('aa1', 'aa2', 'aa3', ... , 'zzz');
 
 很显然，这个查询可能使用到的索引就是 `idx_key1`，由于这个索引并不是唯一二级索引，所以并不能确定一个单点区间对应的二级索引记录的条数有多少，需要我们去计算。
 
-计算方式就是先获取索引对应的 `B+` 树的 `区间最左记录` 和 `区间最右记录`，然后再计算这两条记录之间有多少记录（记录条数少的时候可以做到精确计算，多的时候只能估算）。`MySQL` 把这种通过直接访问索引对应的 `B+` 树来计算某个范围区间对应的索引记录条数的方式称之为 `index dive`。
+计算方式就是先获取索引对应的 `B+` 树的 `区间最左记录` 和 `区间最右记录`，然后再计算这两条记录之间有多少记录（记录条数少的时候可以做到精确计算，多的时候只能估算）。`MySQL` 把这种**通过直接访问索引对应的 `B+` 树来计算某个范围区间对应的索引记录条数的方式称之为 `index dive`**。
 
 有零星几个单点区间的话，使用 `index dive` 的方式去计算这些单点区间对应的记录数也不是什么问题，可如果单点区间的数量非常多，`MySQL` 的查询优化器为了计算这些单点区间对应的索引记录条数，要进行大量的 `index dive` 操作，这性能损耗可就大了，搞不好计算这些单点区间对应的索引记录条数的成本比直接全表扫描的成本都大了。
 
@@ -402,9 +402,6 @@ mysql> SELECT * FROM mysql.engine_cost;
 
 <table> <thead> <tr> <th> 成本常数名称 </th> <th> 默认值 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> io_block_read_cost </code> </td> <td> <code> 1.0 </code> </td> <td> 从磁盘上读取一个块对应的成本。请注意我使用的是 <code> 块 </code>，而不是 <code> 页 </code> 这个词儿。对于 <code> InnoDB </code> 存储引擎来说，一个 <code> 页 </code> 就是一个块，不过对于 <code> MyISAM </code> 存储引擎来说，默认是以 <code> 4096 </code> 字节作为一个块的。增大这个值会加重 <code> I/O </code> 成本，可能让优化器更倾向于选择使用索引执行查询而不是执行全表扫描。</td> </tr> <tr> <td> <code> memory_block_read_cost </code> </td> <td> <code> 1.0 </code> </td> <td> 与上一个参数类似，只不过衡量的是从内存中读取一个块对应的成本。</td> </tr> </tbody> </table>
 
-
-与上一个参数类似，只不过衡量的是从内存中读取一个块对应的成本。
-
 > [!question] 内存和磁盘效率一致？
 > 大家看完这两个成本常数的默认值是不是有些疑惑，怎么从内存中和从磁盘上读取一个块的默认成本是一样的？这主要是因为在 `MySQL` 目前的实现中，并不能准确预测某个查询需要访问的块中有哪些块已经加载到内存中，有哪些块还停留在磁盘上，所以设计 `MySQL` 的大叔们很粗暴的认为不管这个块有没有加载到内存中，使用的成本都是 `1.0`，不过随着 `MySQL` 的发展，等到可以准确预测哪些块在磁盘上，那些块在内存中的那一天，这两个成本常数的默认值可能会改一改吧。
 
@@ -451,7 +448,7 @@ mysql> SHOW TABLES FROM mysql LIKE 'innodb%';
 
 按照一定算法（并不是纯粹随机的）选取几个叶子节点页面，计算每个页面中主键值记录数量，然后计算平均一个页面中主键值的记录数量乘以全部叶子节点的数量就算是该表的 `n_rows` 值（真实的计算过程比这个稍微复杂一些）。
 
-可以看出来这个 `n_rows` 值精确与否取决于统计时采样的页面数量。`MySQL` 很贴心的为我们准备了一个名为 `innodb_stats_persistent_sample_pages` 的系统变量来控制使用永久性的统计数据时，计算统计数据时采样的页面数量。该值设置的越大，统计出的 `n_rows` 值越精确，但是统计耗时也就最久；该值设置的越小，统计出的 `n_rows` 值越不精确，但是统计耗时特别少。所以在实际使用是需要我们去权衡利弊，该系统变量的默认值是 `20`。
+可以看出来这个 **`n_rows` 值精确与否取决于统计时采样的页面数量**。`MySQL` 很贴心的为我们准备了一个名为 `innodb_stats_persistent_sample_pages` 的系统变量来控制使用永久性的统计数据时，计算统计数据时采样的页面数量。该值设置的越大，统计出的 `n_rows` 值越精确，但是统计耗时也就最久；该值设置的越小，统计出的 `n_rows` 值越不精确，但是统计耗时特别少。所以在实际使用是需要我们去权衡利弊，该系统变量的默认值是 `20`。
 
 我们前边说过，不过 `InnoDB` 默认是以表为单位来收集和存储统计数据的，我们也可以单独设置某个表的采样页面的数量，设置方式就是在创建或修改表的时候通过指定 `STATS_SAMPLE_PAGES` 属性来指明该表的统计数据存储方式：
 
@@ -491,34 +488,32 @@ innodb_index_stats 表的每条记录代表着一个索引的一个统计项。
 
 可能这会大家有些懵逼这个统计项到底指什么，别着急，我们直接看一下关于 `single_table` 表的索引统计数据都有些什么：
 
-```
+```sql
 mysql> SELECT * FROM mysql.innodb_index_stats WHERE table_name = 'single_table';
-+---------------+--------------+--------------+---------------------+--------------+------------+-------------+-----------------------------------+
+```
+
 | database_name | table_name   | index_name   | last_update         | stat_name    | stat_value | sample_size | stat_description                  |
-+---------------+--------------+--------------+---------------------+--------------+------------+-------------+-----------------------------------+
+|---------------|--------------|--------------|---------------------|--------------|------------|-------------|-----------------------------------|
 | xiaohaizi     | single_table | PRIMARY      | 2018-12-14 14:24:46 | n_diff_pfx01 |       9693 |          20 | id                                |
 | xiaohaizi     | single_table | PRIMARY      | 2018-12-14 14:24:46 | n_leaf_pages |         91 |        NULL | Number of leaf pages in the index |
 | xiaohaizi     | single_table | PRIMARY      | 2018-12-14 14:24:46 | size         |         97 |        NULL | Number of pages in the index      |
 | xiaohaizi     | single_table | idx_key1     | 2018-12-14 14:24:46 | n_diff_pfx01 |        968 |          28 | key1                              |
-| xiaohaizi     | single_table | idx_key1     | 2018-12-14 14:24:46 | n_diff_pfx02 |      10000 |          28 | key1,id                           |
+| xiaohaizi     | single_table | idx_key1     | 2018-12-14 14:24:46 | n_diff_pfx02 |      10000 |          28 | key1, id                           |
 | xiaohaizi     | single_table | idx_key1     | 2018-12-14 14:24:46 | n_leaf_pages |         28 |        NULL | Number of leaf pages in the index |
 | xiaohaizi     | single_table | idx_key1     | 2018-12-14 14:24:46 | size         |         29 |        NULL | Number of pages in the index      |
 | xiaohaizi     | single_table | idx_key2     | 2018-12-14 14:24:46 | n_diff_pfx01 |      10000 |          16 | key2                              |
 | xiaohaizi     | single_table | idx_key2     | 2018-12-14 14:24:46 | n_leaf_pages |         16 |        NULL | Number of leaf pages in the index |
 | xiaohaizi     | single_table | idx_key2     | 2018-12-14 14:24:46 | size         |         17 |        NULL | Number of pages in the index      |
 | xiaohaizi     | single_table | idx_key3     | 2018-12-14 14:24:46 | n_diff_pfx01 |        799 |          31 | key3                              |
-| xiaohaizi     | single_table | idx_key3     | 2018-12-14 14:24:46 | n_diff_pfx02 |      10000 |          31 | key3,id                           |
+| xiaohaizi     | single_table | idx_key3     | 2018-12-14 14:24:46 | n_diff_pfx02 |      10000 |          31 | key3, id                           |
 | xiaohaizi     | single_table | idx_key3     | 2018-12-14 14:24:46 | n_leaf_pages |         31 |        NULL | Number of leaf pages in the index |
 | xiaohaizi     | single_table | idx_key3     | 2018-12-14 14:24:46 | size         |         32 |        NULL | Number of pages in the index      |
 | xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_diff_pfx01 |       9673 |          64 | key_part1                         |
-| xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_diff_pfx02 |       9999 |          64 | key_part1,key_part2               |
-| xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_diff_pfx03 |      10000 |          64 | key_part1,key_part2,key_part3     |
-| xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_diff_pfx04 |      10000 |          64 | key_part1,key_part2,key_part3,id  |
+| xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_diff_pfx02 |       9999 |          64 | key_part1, key_part2               |
+| xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_diff_pfx03 |      10000 |          64 | key_part1, key_part2, key_part3     |
+| xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_diff_pfx04 |      10000 |          64 | key_part1, key_part2, key_part3, id  |
 | xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | n_leaf_pages |         64 |        NULL | Number of leaf pages in the index |
 | xiaohaizi     | single_table | idx_key_part | 2018-12-14 14:24:46 | size         |         97 |        NULL | Number of pages in the index      |
-+---------------+--------------+--------------+---------------------+--------------+------------+-------------+-----------------------------------+
-20 rows in set (0.03 sec)
-```
 
 这个结果有点儿多，正确查看这个结果的方式是这样的：
 
@@ -542,13 +537,13 @@ mysql> SELECT * FROM mysql.innodb_index_stats WHERE table_name = 'single_table';
 
 随着我们不断的对表进行增删改操作，表中的数据也一直在变化，`innodb_table_stats` 和 `innodb_index_stats` 表里的统计数据也会产生相应变化。设计 `MySQL` 的大叔提供了如下两种更新统计数据的方式：
 - 开启 `innodb_stats_auto_recalc`。
-    系统变量 `innodb_stats_auto_recalc` 决定着服务器是否自动重新计算统计数据，它的默认值是 `ON`，也就是该功能默认是开启的。每个表都维护了一个变量，该变量记录着对该表进行增删改的记录条数，如果发生变动的记录数量超过了表大小的 `10%`，并且自动重新计算统计数据的功能是打开的，那么服务器会重新进行一次统计数据的计算，并且更新 `innodb_table_stats` 和 `innodb_index_stats` 表。不过自动重新计算统计数据的过程是异步发生的，也就是即使表中变动的记录数超过了 `10%`，自动重新计算统计数据也不会立即发生，可能会延迟几秒才会进行计算。
+    系统变量 `innodb_stats_auto_recalc` 决定着服务器是否自动重新计算统计数据，它的默认值是 `ON`，也就是该功能默认是开启的。每个表都维护了一个变量，该变量记录着对该表进行增删改的记录条数，**如果发生变动的记录数量超过了表大小的 `10%`，并且自动重新计算统计数据的功能是打开的，那么服务器会重新进行一次统计数据的计算**，并且更新 `innodb_table_stats` 和 `innodb_index_stats` 表。不过自动重新计算统计数据的过程是异步发生的，也就是即使表中变动的记录数超过了 `10%`，自动重新计算统计数据也不会立即发生，可能会延迟几秒才会进行计算。
     
     再一次强调，`InnoDB` 默认是以表为单位来收集和存储统计数据的，我们也可以单独为某个表设置是否自动重新计算统计数的属性，设置方式就是在创建或修改表的时候通过指定 `STATS_AUTO_RECALC` 属性来指明该表的统计数据存储方式。
     
     当 `STATS_AUTO_RECALC=1` 时，表明我们想让该表自动重新计算统计数据，当 `STATS_AUTO_RECALC=0` 时，表明不想让该表自动重新计算统计数据。如果我们在创建表时未指定 `STATS_AUTO_RECALC` 属性，那默认采用系统变量 `innodb_stats_auto_recalc` 的值作为该属性的值。
 - 手动调用 `ANALYZE TABLE` 语句来更新统计信息
-    如果 `innodb_stats_auto_recalc` 系统变量的值为 `OFF` 的话，我们也可以手动调用 `ANALYZE TABLE` 语句来重新计算统计数据，比如我们可以这样更新关于 `single_table` 表的统计数据：
+    如果 `innodb_stats_auto_recalc` 系统变量的值为 `OFF` 的话，我们也可以手动调用 `ANALYZE TABLE` 语句来重新计算统计数据。
 
     需要注意的是，ANALYZE TABLE 语句会立即重新计算统计数据，也就是这个过程是同步的，在表中索引多或者采样页面特别多时这个过程可能会特别慢，请不要没事儿就运行一下 `ANALYZE TABLE` 语句，最好在业务不是很繁忙的时候再运行。
 
@@ -647,7 +642,7 @@ SELECT table1表记录的各个字段的常量值, table2.* FROM table1 INNER JO
 
 外连接和内连接的本质区别就是：对于外连接的驱动表的记录来说，如果无法在被驱动表中找到匹配 ON 子句中的过滤条件的记录，那么该记录仍然会被加入到结果集中，对应的被驱动表记录的各个字段使用 NULL 值填充；而内连接的驱动表的记录如果无法在被驱动表中找到匹配 ON 子句中的过滤条件的记录，那么该记录会被舍弃。
 
-我们知道 `WHERE` 子句的杀伤力比较大，凡是不符合 WHERE 子句中条件的记录都不会参与连接。只要我们在搜索条件中指定关于被驱动表相关列的值不为 `NULL`，那么外连接中在被驱动表中找不到符合 `ON` 子句条件的驱动表记录也就被排除出最后的结果集了，也就是说：在这种情况下：外连接和内连接也就没有什么区别了！比方说这个查询：
+我们知道 `WHERE` 子句的杀伤力比较大，凡是不符合 WHERE 子句中条件的记录都不会参与连接。只要我们**在搜索条件中指定关于被驱动表相关列的值不为 `NULL`，那么外连接中在被驱动表中找不到符合 `ON` 子句条件的驱动表记录也就被排除出最后的结果集了**，也就是说：在这种情况下：外连接和内连接也就没有什么区别了！比方说这个查询：
 
 ```sql
 mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
@@ -690,7 +685,7 @@ mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
 
 #### 3.3.2.1. 布尔表达式
 
-使用=、>、<、> =、<=、<>、!=、<=> 作为布尔表达式的操作符。
+使用 =、>、<、>=、<=、<>、!=、<=> 作为布尔表达式的操作符。
 
 #### 3.3.2.2. \[NOT] IN/ANY/SOME/ALL 子查询
 
@@ -723,6 +718,9 @@ mysql> SELECT * FROM t1 LEFT JOIN t2 ON t1.m1 = t2.m2 WHERE t2.n2 IS NOT NULL;
         在没有聚集函数以及 `HAVING` 子句时，`GROUP BY` 子句就是个摆设。
     对于这些冗余的语句，查询优化器在一开始就把它们给干掉了。
 - 不允许在一条语句中增删改某个表的记录时同时还对该表进行子查询。
+    ```sql
+    DELETE FROM t1 WHERE m1 < (SELECT MAX(m1) FROM t1);
+    ```
 
 ### 3.3.4. 无优化的子查询执行方式
 
@@ -820,7 +818,7 @@ SELECT s1.* FROM s1 INNER JOIN materialized_table ON key1 = m_val;
 
 #### 3.3.6.1. 半连接查询概念
 
-虽然将子查询进行物化之后再执行查询都会有建立临时表的成本，但是不管怎么说，我们见识到了将子查询转换为连接的强大作用，设计 `MySQL` 的大叔继续开脑洞：能不能不进行物化操作直接把子查询转换为连接呢？
+虽然将子查询进行物化之后再执行查询都会有建立临时表的成本，但是不管怎么说，我们见识到了将子查询转换为连接的强大作用，设计 `MySQL` 的大叔继续开脑洞：**能不能不进行物化操作直接把子查询转换为连接呢**？
 
 ```sql
 SELECT * FROM s1 
@@ -929,7 +927,7 @@ SELECT s1.* FROM s1 SEMI JOIN s2
     ON s1.key1 = s2.common_field AND s1.key3 = s2.key3;
 ```
 
-然后就可以使用我们上边介绍过的 `DuplicateWeedout`、`LooseScan`、`FirstMatch` 等半连接执行策略来执行查询，当然，如果子查询的查询列表处只有主键或者唯一二级索引列，还可以直接使用 `table pullout` 的策略来执行查询，但是需要大家注意的是，由于相关子查询并不是一个独立的查询，所以不能转换为物化表来执行查询。
+然后就可以使用我们上边介绍过的 `DuplicateWeedout`、`LooseScan`、`FirstMatch` 等半连接执行策略来执行查询，当然，如果子查询的查询列表处只有主键或者唯一二级索引列，还可以直接使用 `table pullout` 的策略来执行查询，但是需要大家注意的是，**由于相关子查询并不是一个独立的查询，所以不能转换为物化表来执行查询**。
 
 #### 3.3.6.3. 半连接适用条件
 
@@ -1008,7 +1006,7 @@ SELECT ... FROM outer_tables
     
     转为 `EXISTS` 子查询时便可以使用到 `s2` 表的 `idx_key3` 索引了。
 
-    需要注意的是，如果 `IN` 子查询不满足转换为 `semi-join` 的条件，又不能转换为物化表或者转换为物化表的成本太大，那么它就会被转换为 `EXISTS` 查询。
+    **需要注意的是，如果 `IN` 子查询不满足转换为 `semi-join` 的条件，又不能转换为物化表或者转换为物化表的成本太大，那么它就会被转换为 `EXISTS` 查询**。
 
 ## 3.4. 派生表查询优化
 
@@ -1024,7 +1022,7 @@ SELECT * FROM  (
 
 对于含有 `派生表` 的查询，`MySQL` 提供了两种执行策略：
 - 派生表物化。
-    我们可以将派生表的结果集写到一个内部的临时表中，然后就把这个物化表当作普通表一样参与查询。当然，在对派生表进行物化时，设计 `MySQL` 的大叔使用了一种称为 `延迟物化` 的策略，也就是在查询中真正使用到派生表时才回去尝试物化派生表，而不是还没开始执行查询呢就把派生表物化掉。比方说对于下边这个含有派生表的查询来说：
+    我们可以将派生表的结果集写到一个内部的临时表中，然后就把这个物化表当作普通表一样参与查询。当然，在对派生表进行物化时，设计 `MySQL` 的大叔使用了一种称为 **`延迟物化` 的策略，也就是在查询中真正使用到派生表时才回去尝试物化派生表**，而不是还没开始执行查询呢就把派生表物化掉。比方说对于下边这个含有派生表的查询来说：
 
 	```sql
 	    SELECT * FROM (
@@ -1100,7 +1098,7 @@ SELECT * FROM  (
 
 对于包含子查询的查询语句来说，就可能涉及多个 `SELECT` 关键字，所以在包含子查询的查询语句的执行计划中，每个 `SELECT` 关键字都会对应一个唯一的 `id` 值。但是这里大家需要特别注意，查询优化器可能对涉及子查询的查询语句进行重写，从而转换为连接查询。
 
-所以如果我们想知道查询优化器对某个包含子查询的语句是否进行了重写，直接查看执行计划就好了，如果我们的查询语句是一个子查询，但是执行计划中子查询涉及表对应的记录的 `id` 值相同的话，这就表明了查询优化器将子查询转换为了连接查询。
+所以如果我们想知道查询优化器对某个包含子查询的语句是否进行了重写，直接查看执行计划就好了，如果我们的**查询语句是一个子查询，但是执行计划中子查询涉及表对应的记录的 `id` 值相同的话，这就表明了查询优化器将子查询转换为了连接查询**。
 
 ### 4.1.3. `select_type`
 
@@ -1138,15 +1136,15 @@ SELECT * FROM  (
     不常用。
 ### 4.1.4. `partitions`
 
-查询的表归属于哪一个 [[Mysql大纲#2 8 Mysql 分区表|分区]]。
+查询的表归属于哪一个 [[Mysql大纲#2.7. Mysql 分区表|分区]]。
 
 ### 4.1.5. `type`
 
-我们前边说过执行计划的一条记录就代表着 `MySQL` 对某个表的执行查询时的访问方法，其中的 `type` 列就表明了这个访问方法是个啥。
+我们前边说过执行计划的一条记录就代表着 `MySQL` 对某个表的执行查询时的[[Mysql大纲#3.5. 索引的访问类型|访问方法]]，其中的 `type` 列就表明了这个访问方法是个啥。
 
 ### 4.1.6. `possible_keys` 和 `key`
 
-`possible_keys` 列表示在某个查询语句中，对某个表执行单表查询时可能用到的索引有哪些，`key` 列表示实际用到的索引有哪些（有哪些而不是有哪个，因为可能使用 [[Mysql大纲#3 7 索引合并|索引合并]]从而使用到多个索引）。
+`possible_keys` 列表示在某个查询语句中，对某个表执行单表查询时可能用到的索引有哪些，`key` 列表示实际用到的索引有哪些（有哪些而不是有哪个，因为可能使用[[Mysql大纲#3 7 索引合并|索引合并]]从而使用到多个索引）。
 
 另外需要注意的一点是，possible_keys 列中的值并不是越多越好，可能使用的索引越多，查询优化器计算查询成本时就得花费更长时间，所以如果可以的话，尽量删除那些用不到的索引。
 
@@ -1178,18 +1176,14 @@ SELECT * FROM  (
 比方说下边这个查询：
 
 ```sql
-
 mysql> EXPLAIN SELECT * FROM s1 WHERE key1 > 'z' AND common_field = 'a';
-+----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+------------------------------------+
-| id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra                              |
-+----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+------------------------------------+
-|  1 | SIMPLE      | s1    | NULL       | range | idx_key1      | idx_key1 | 303     | NULL |  266 |    10.00 | Using index condition; Using where |
-+----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+------------------------------------+
-1 row in set, 1 warning (0.00 sec)
-
 ```
 
-从执行计划的 `key` 列中可以看出来，该查询使用 `idx_key1` 索引来执行查询，从 `rows` 列可以看出满足 `key1 > 'z'` 的记录有 `266` 条。执行计划的 `filtered` 列就代表查询优化器预测在这 `266` 条记录中，有多少条记录满足其余的搜索条件，也就是 `common_field = 'a'` 这个条件的百分比。此处 `filtered` 列的值是 `10.00`，说明查询优化器预测在 `266` 条记录中有 `10.00%` 的记录满足 `common_field = 'a'` 这个条件。
+| id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra                              |
+|----|-------------|-------|------------|-------|---------------|----------|---------|------|------|----------|------------------------------------|
+|  1 | SIMPLE      | s1    | NULL       | range | idx_key1      | idx_key1 | 303     | NULL |  266 |    10.00 | Using index condition; Using where |
+
+从执行计划的 `key` 列中可以看出来，该查询使用 `idx_key1` 索引来执行查询，从 `rows` 列可以看出满足 `key1 > 'z'` 的记录有 `266` 条。执行计划的 `filtered` 列就代表查询优化器预测在这 `266` 条记录中，**有多少条记录满足其余的搜索条件**，也就是 `common_field = 'a'` 这个条件的百分比。此处 `filtered` 列的值是 `10.00`，说明查询优化器预测在 `266` 条记录中有 `10.00%` 的记录满足 `common_field = 'a'` 这个条件。
 
 对于单表查询来说，这个 `filtered` 列的值没什么意义，我们更关注在连接查询中驱动表对应的执行计划记录的 `filtered` 值，比方说下边这个查询：
 
@@ -1226,7 +1220,7 @@ mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key1 WHERE s1.comm
 
 #### 4.1.11.4. Using index
 
-当我们的查询列表以及搜索条件中只包含属于某个索引的列，也就是在可以使用索引覆盖的情况下，在 `Extra` 列将会提示该额外信息。
+当我们的查询列表以及搜索条件中只包含属于某个索引的列，也就是在可以使用[[Mysql大纲#3.2.1. 索引覆盖|索引覆盖]]的情况下，在 `Extra` 列将会提示该额外信息。
 
 #### 4.1.11.5. Using index condition
 
@@ -1281,7 +1275,7 @@ mysql> EXPLAIN SELECT * FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.id IS
 
 #### 4.1.11.13. `Start temporary, End temporary`
 
-我们前边唠叨子查询的时候说过，查询优化器会优先尝试将 `IN` 子查询转换成 [[Mysql的查询优化#3 3 6 semi-join 半连接优化子查询|semi-join]]。而 `semi-join` 又有好多种执行策略，当执行策略为 [[Mysql的查询优化#3 3 6 2 2 DuplicateWeedout execution strategy （重复值消除）|DuplicateWeedout]] 时，也就是通过建立临时表来实现为外层查询中的记录进行去重操作时，驱动表查询执行计划的 `Extra` 列将显示 `Start temporary` 提示，被驱动表查询执行计划的 `Extra` 列将显示 `End temporary` 提示。
+我们前边唠叨子查询的时候说过，查询优化器会优先尝试将 `IN` 子查询转换成 [[Mysql的查询优化#3 3 6 semi-join 半连接优化子查询|semi-join]]。而 `semi-join` 又有好多种执行策略，当执行策略为 [[Mysql的查询优化#3 3 6 2 2 DuplicateWeedout execution strategy （重复值消除）|DuplicateWeedout]] 时，也就是**通过建立临时表来实现为外层查询中的记录进行去重操作时，驱动表查询执行计划的 `Extra` 列将显示 `Start temporary` 提示，被驱动表查询执行计划的 `Extra` 列将显示 `End temporary` 提示**。
 
 #### 4.1.11.14. `LooseScan`
 
@@ -1332,7 +1326,6 @@ Message: /* select#1 */ select `xiaohaizi`.`s1`.`key1` AS `key1`,`xiaohaizi`.`s2
 在 `MySQL 5.6` 以及之后的版本中，设计 `MySQL` 的大叔贴心的为这部分小伙伴提出了一个 `optimizer trace` 的功能，这个功能可以让我们方便的查看优化器生成执行计划的整个过程，这个功能的开启与关闭由系统变量 `optimizer_trace` 决定：
 
 ```sql
-
 mysql> SHOW VARIABLES LIKE 'optimizer_trace';
 +-----------------+--------------------------+
 | Variable_name   | Value                    |
@@ -1340,7 +1333,6 @@ mysql> SHOW VARIABLES LIKE 'optimizer_trace';
 | optimizer_trace | enabled=off,one_line=off |
 +-----------------+--------------------------+
 1 row in set (0.02 sec)
-
 ```
 
 可以看到 `enabled` 值为 `off`，表明这个功能默认是关闭的。
@@ -1348,10 +1340,8 @@ mysql> SHOW VARIABLES LIKE 'optimizer_trace';
 如果想打开这个功能，必须首先把 `enabled` 的值改为 `on`，就像这样：
 
 ```sql
-
 mysql> SET optimizer_trace="enabled=on";
 Query OK, 0 rows affected (0.00 sec)
-
 ```
 
 然后我们就可以输入我们想要查看优化过程的查询语句，当该查询语句执行完成后，就可以到 `information_schema` 数据库下的 `OPTIMIZER_TRACE` 表中查看完整的优化过程。这个 `OPTIMIZER_TRACE` 表有 4 个列，分别是：
@@ -1362,24 +1352,15 @@ Query OK, 0 rows affected (0.00 sec)
 
 完整的使用 `optimizer trace` 功能的步骤总结如下：
 
-```txt
-
-# 1. 打开optimizer trace功能 (默认情况下它是关闭的):
-SET optimizer_trace="enabled=on";
-
-# 2. 这里输入你自己的查询语句
-SELECT ...; 
-
-# 3. 从OPTIMIZER_TRACE表中查看上一个查询的优化过程
-SELECT * FROM information_schema.OPTIMIZER_TRACE;
-
-# 4. 可能你还要观察其他语句执行的优化过程，重复上边的第2、3步
-...
-
-# 5. 当你停止查看语句的优化过程时，把optimizer trace功能关闭
-SET optimizer_trace="enabled=off";
-
-```
+1. 打开optimizer trace功能 (默认情况下它是关闭的):
+    `SET optimizer_trace="enabled=on";`
+1. 这里输入你自己的查询语句
+    `SELECT ...;` 
+1. 从OPTIMIZER_TRACE表中查看上一个查询的优化过程
+    `SELECT * FROM information_schema.OPTIMIZER_TRACE;`
+1. 可能你还要观察其他语句执行的优化过程，重复上边的第2、3步
+2. 当你停止查看语句的优化过程时，把optimizer trace功能关闭
+    `SET optimizer_trace="enabled=off";`
 
 现在我们有一个搜索条件比较多的查询语句，它的执行计划如下：
 
