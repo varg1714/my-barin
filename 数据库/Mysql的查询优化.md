@@ -1135,6 +1135,7 @@ SELECT * FROM  (
     不常用。
 - `UNCACHEABLE UNION`
     不常用。
+
 ### 4.1.4. `partitions`
 
 查询的表归属于哪一个 [[Mysql大纲#2.7. Mysql 分区表|分区]]。
