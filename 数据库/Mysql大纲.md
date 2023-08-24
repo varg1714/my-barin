@@ -910,7 +910,7 @@ MVCC 的规则如下：
 
         Mysql 规定事务在等待的时候也需要在内存中生成一个 `锁结构`，表明有事务想在某个 `间隙` 中插入新记录，但是现在在等待，这种类型的锁命名为 `Insert Intention Locks`，官方的类型名称为：`LOCK_INSERT_INTENTION`，我们也可以称为 `插入意向锁`。
     - 空间索引的谓词锁
-        `InnoDB` 支持对包含空间数据的列进行 `SPATIAL` 索引，为了处理涉及 `SPATIAL` 索引的操作的锁定，`next-key` 锁不能很好地支持 `REPEATABLE READ` 或 `SERIALIZABLE` 事务隔离级别。多维数据中不存在绝对的排序概念，因此并不清楚哪个是“下一个”键。
+        `InnoDB` 支持对包含空间数据的列进行 `SPATIAL` 索引，为了处理涉及 `SPATIAL` 索引的操作的锁定，`next-key` 锁不能很好地支持 `REPEATABLE READ` 或 `SERIALIZABLE` 事务隔离级别。多维数据中不存在绝对的排序概念，因此并不清楚哪个是 `next-key` 键。
 
         为了支持具有 `SPATIAL` 索引的表的隔离级别， `InnoDB` 使用谓词锁。 `SPATIAL` 索引包含最小边界矩形 (MBR) 值，因此 `InnoDB` 通过在用于查询的 MBR 值上设置谓词锁来强制对索引进行一致读取。其他事务无法插入或修改与查询条件匹配的行。
 
@@ -1355,7 +1355,7 @@ Mysql 使用 LRU 算法进行内存缓冲区的管理，淘汰最近最少使用
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220515160901.png)
 
-在 InnoDB 实现上，按照 5: 3 的比例把整个 LRU 链表分成了 young 区域和 old 区域。图中 LRU_old 指向的就是 old 区域的第一个位置，是整个链表的 5/8 处。也就是说，靠近链表头部的 5/8 是 young 区域，靠近链表尾部的 3/8 是 old 区域。
+在 InnoDB 实现上，按照 5 : 3 的比例把整个 LRU 链表分成了 young 区域和 old 区域。图中 LRU_old 指向的就是 old 区域的第一个位置，是整个链表的 5/8 处。也就是说，靠近链表头部的 5/8 是 young 区域，靠近链表尾部的 3/8 是 old 区域。
 
 - 图中状态 1，要访问数据页 P3，由于 P3 在 young 区域，因此和优化前的 LRU 算法一样，将其移到链表头部，变成状态 2。
 - 之后要访问一个新的不存在于当前链表的数据页，这时候依然是淘汰掉数据页 pm，但是新插入的数据页 px，是放在 LRU\_old 处。

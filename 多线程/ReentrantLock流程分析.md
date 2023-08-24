@@ -10,7 +10,7 @@ ReentrantLock 实现有两种，分为公平锁与非公平锁。两者的却别
 
 # 2. ReentrantLock 执行流程分析
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220609170512.svg)
+![ReentrantLock流程.drawio.svg](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308222354164.svg)
 
 # 3. ReentrartLock 疑问记录
 
