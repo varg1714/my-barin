@@ -6,7 +6,7 @@
 
 # 2. CountDownLatch 的流程分析
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220609172349.svg)
+![CountDownLatch.drawio.svg](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308260048332.svg)
 
 **对于 Semaphore 类，其实现逻辑和 CountDownLatch 基本一致。**
 
