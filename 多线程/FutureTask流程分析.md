@@ -6,7 +6,13 @@
 
 # 2. FutureTask 流程分析
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220609172432.svg)
+## 2.1. run 方法调用流程
+
+![[Excalidraw/多线程/FutureTask.md#^group=W4z6N-R80g68r-o81MhO4|run方法流程]]
+
+## 2.2. get 方法调用流程
+
+![[Excalidraw/多线程/FutureTask.md#^group=eBMxZU15QaALZYzS5Vwsc|get调用流程]]
 
 # 3. FutureTask 疑问记录
 

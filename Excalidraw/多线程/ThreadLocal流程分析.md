@@ -52,9 +52,9 @@ false
 
 认定当前槽是一个脏数据，记为staleSlot，从staleSlot开始清理并更新数据 ^DebJ7p0F
 
-从当前槽开始往前查找脏槽，记为slotToExpunge ^AyW2Y6C4
+从当前槽开始往前查找脏槽直至遇到空槽，记为slotToExpunge ^AyW2Y6C4
 
-从staleSlot开始往后查找脏槽 ^upHm9JqX
+从staleSlot开始往后查找脏槽直至遇到空槽 ^upHm9JqX
 
 查找到
 key相同的槽 ^lB4IWJ2t
@@ -5289,8 +5289,8 @@ true ^hUy6Oc7o
 		},
 		{
 			"type": "text",
-			"version": 935,
-			"versionNonce": 1965445,
+			"version": 957,
+			"versionNonce": 2136714469,
 			"isDeleted": false,
 			"id": "AyW2Y6C4",
 			"fillStyle": "hachure",
@@ -5299,12 +5299,12 @@ true ^hUy6Oc7o
 			"roughness": 1,
 			"opacity": 100,
 			"angle": 0,
-			"x": 464.57635966104965,
-			"y": 1397.1254771964175,
+			"x": 457.9363373832176,
+			"y": 1387.5254771964176,
 			"strokeColor": "#1e1e1e",
 			"backgroundColor": "#ffec99",
-			"width": 177.51992797851562,
-			"height": 38.4,
+			"width": 190.7999725341797,
+			"height": 57.599999999999994,
 			"seed": 1543136173,
 			"groupIds": [
 				"1ATtC1pyB-ixM1yYnl7vZ",
@@ -5313,19 +5313,19 @@ true ^hUy6Oc7o
 			"frameId": null,
 			"roundness": null,
 			"boundElements": [],
-			"updated": 1693242755477,
+			"updated": 1693324358819,
 			"link": null,
 			"locked": false,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "从当前槽开始往前查找脏\n槽，记为slotToExpunge",
-			"rawText": "从当前槽开始往前查找脏槽，记为slotToExpunge",
+			"text": "从当前槽开始往前查找脏\n槽直至遇到空槽，记为slot\nToExpunge",
+			"rawText": "从当前槽开始往前查找脏槽直至遇到空槽，记为slotToExpunge",
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "CoQ_g_7z03BwYj7CzfHvD",
-			"originalText": "从当前槽开始往前查找脏槽，记为slotToExpunge",
+			"originalText": "从当前槽开始往前查找脏槽直至遇到空槽，记为slotToExpunge",
 			"lineHeight": 1.2,
-			"baseline": 33
+			"baseline": 52
 		},
 		{
 			"type": "rectangle",
@@ -5374,8 +5374,8 @@ true ^hUy6Oc7o
 		},
 		{
 			"type": "text",
-			"version": 987,
-			"versionNonce": 1290667237,
+			"version": 1010,
+			"versionNonce": 145890373,
 			"isDeleted": false,
 			"id": "upHm9JqX",
 			"fillStyle": "hachure",
@@ -5398,17 +5398,17 @@ true ^hUy6Oc7o
 			"frameId": null,
 			"roundness": null,
 			"boundElements": [],
-			"updated": 1693242755477,
+			"updated": 1693324335737,
 			"link": null,
 			"locked": false,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "从staleSlot开始往后查找\n脏槽",
-			"rawText": "从staleSlot开始往后查找脏槽",
+			"text": "从staleSlot开始往后查找\n脏槽直至遇到空槽",
+			"rawText": "从staleSlot开始往后查找脏槽直至遇到空槽",
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "NSwFDKRVBEpY2lpoJzuRM",
-			"originalText": "从staleSlot开始往后查找脏槽",
+			"originalText": "从staleSlot开始往后查找脏槽直至遇到空槽",
 			"lineHeight": 1.2,
 			"baseline": 33
 		},
@@ -6036,8 +6036,8 @@ true ^hUy6Oc7o
 		},
 		{
 			"type": "arrow",
-			"version": 1338,
-			"versionNonce": 1803349765,
+			"version": 1340,
+			"versionNonce": 88292101,
 			"isDeleted": false,
 			"id": "Pq6dqDtDC3xGQ9RJLzCDM",
 			"fillStyle": "hachure",
@@ -6062,7 +6062,7 @@ true ^hUy6Oc7o
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1693243151395,
+			"updated": 1693324359850,
 			"link": null,
 			"locked": false,
 			"startBinding": {
@@ -6091,8 +6091,8 @@ true ^hUy6Oc7o
 		},
 		{
 			"type": "arrow",
-			"version": 1403,
-			"versionNonce": 564072421,
+			"version": 1407,
+			"versionNonce": 488242629,
 			"isDeleted": false,
 			"id": "oMfxFNtmZ9ABrTviZrzJM",
 			"fillStyle": "hachure",
@@ -6117,18 +6117,18 @@ true ^hUy6Oc7o
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1693242755477,
+			"updated": 1693324359850,
 			"link": null,
 			"locked": false,
 			"startBinding": {
 				"elementId": "CoQ_g_7z03BwYj7CzfHvD",
-				"focus": -0.016051021619844858,
-				"gap": 10.674895402678658
+				"gap": 10.674895402678658,
+				"focus": -0.016051021619844858
 			},
 			"endBinding": {
 				"elementId": "NSwFDKRVBEpY2lpoJzuRM",
-				"focus": 0.019841442307800612,
-				"gap": 11.303977272727934
+				"gap": 11.303977272727934,
+				"focus": 0.019841442307800612
 			},
 			"lastCommittedPoint": null,
 			"startArrowhead": null,
@@ -6146,8 +6146,8 @@ true ^hUy6Oc7o
 		},
 		{
 			"type": "arrow",
-			"version": 1371,
-			"versionNonce": 394661099,
+			"version": 1373,
+			"versionNonce": 832491813,
 			"isDeleted": false,
 			"id": "kqR6RUHJxSRRMLm9BAPvx",
 			"fillStyle": "hachure",
@@ -6157,11 +6157,11 @@ true ^hUy6Oc7o
 			"opacity": 100,
 			"angle": 0,
 			"x": 554.5153009230347,
-			"y": 1686.1905340145997,
+			"y": 1686.1905340146,
 			"strokeColor": "#1e1e1e",
 			"backgroundColor": "#ffec99",
 			"width": 0.06392045454549589,
-			"height": 64.98579545454413,
+			"height": 64.9857954545439,
 			"seed": 564617187,
 			"groupIds": [
 				"1ATtC1pyB-ixM1yYnl7vZ",
@@ -6172,18 +6172,18 @@ true ^hUy6Oc7o
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1693242755477,
+			"updated": 1693324336685,
 			"link": null,
 			"locked": false,
 			"startBinding": {
 				"elementId": "NSwFDKRVBEpY2lpoJzuRM",
-				"focus": -0.011066761159842883,
-				"gap": 14.29403409090969
+				"gap": 14.29403409090969,
+				"focus": -0.011066761159842883
 			},
 			"endBinding": {
 				"elementId": "qLcFjKvWDXMtoAljewKg8",
-				"focus": -0.08816565962547511,
-				"gap": 7.677205553195336
+				"gap": 7.677205553195336,
+				"focus": -0.08816565962547511
 			},
 			"lastCommittedPoint": null,
 			"startArrowhead": null,
@@ -6195,7 +6195,7 @@ true ^hUy6Oc7o
 				],
 				[
 					0.06392045454549589,
-					64.98579545454413
+					64.9857954545439
 				]
 			]
 		},
@@ -8966,10 +8966,10 @@ true ^hUy6Oc7o
 		"currentItemTextAlign": "left",
 		"currentItemStartArrowhead": null,
 		"currentItemEndArrowhead": "arrow",
-		"scrollX": 4849.504118585075,
-		"scrollY": 1881.5638359209606,
+		"scrollX": 959.3922237533941,
+		"scrollY": -1147.4423808688355,
 		"zoom": {
-			"value": 0.1477482292056084
+			"value": 0.5201124018430708
 		},
 		"currentItemRoundness": "round",
 		"gridSize": null,

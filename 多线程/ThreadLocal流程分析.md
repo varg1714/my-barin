@@ -24,18 +24,18 @@ static class Entry extends WeakReference<ThreadLocal<?>> {
 
 ### 2.1. ThreadLocal 获取值流程
 
-![[Excalidraw/ThreadLocal流程分析.md#^group=ZLC0KhN3UaUIIhUvPuS-a]]
+![[Excalidraw/多线程/ThreadLocal流程分析#^group=ZLC0KhN3UaUIIhUvPuS-a]]
 
 ## 2.1. ThreadLocal 赋值流程
 
-![[Excalidraw/ThreadLocal流程分析.md#^group=-ghrUwKzysCBvFwQM59lR|set流程]]
+![[Excalidraw/多线程/ThreadLocal流程分析#^group=-ghrUwKzysCBvFwQM59lR|set流程]]
 
 
 # 3. ThreadLocal 的疑问记录
 
 ## 3.1. ThreadLocal 中为何 Entry 对象要使用弱引用？
 
-![[Excalidraw/ThreadLocal流程分析.md#^group=aGAMDMZzFxdbZDwhnh487]]
+![[Excalidraw/多线程/ThreadLocal流程分析#^group=aGAMDMZzFxdbZDwhnh487]]
 
 如上所示，当 ThreadLocal 存在两个引用，一个为 ThreadLocal 声明赋值时的引用，一个为 ThreadLocalMap 中的 key 引用。ThreadLocal 声明引用为强引用，若 ThreadLocalMap 中的 key 同样为强引用，那么 ThreadLocal 对象只能等待两个引用都失效后才可回收。**即意味着 ThreadLocalMap 线程不中止，该区域永远无法回收**。
 
