@@ -824,7 +824,7 @@ SELECT * FROM single_table WHERE key1 < 'a' OR key3 > 'z';
 - 优化查询结果，并评估这么多的返回结果是否合理。
 - 如果要快速减少处于这个状态的线程的话，将 `net_buffer_length` 参数设置为一个更大的值是一个可选方案。`net_buffer_length` 调大以后查询结果就会扔到缓存中，执行器就可以认为查询结束了。虽然网络栈还是慢慢发的，但是那些没发完的都缓存在 net_buffer 中，对于执行器来说，都是“已经写出去了”。
 
-# 5. MVCC 的实现原理
+# 5. MVCC (Multi-Version Concurrency Control) 的实现原理
 
 ## 5.1. undo 日志
 
