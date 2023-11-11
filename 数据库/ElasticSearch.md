@@ -89,19 +89,13 @@ ES 集群由一个或多个 Elasticsearch 节点组成，每个节点配置相�
 
 ### 1.3.1. 集群的发现
 
-Zen Discovery 是 ES 的内置默认发现模块（发现模块的职责是发现集群中的节点以及选举 Master 节点）。它提供单播和基于文件的发现，并且可以扩展为通过插件支持云环境和其他形式的发现。Zen Discovery 可与其他模块集成，例如，节点之间的所有通信都使用 Transport 模块完成。节点使用发现机制通过 Ping 的方式查找其他节点。
+[Zen Discovery](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-zen.html) 是 ES 的内置默认发现模块（发现模块的职责是发现集群中的节点以及选举 Master 节点）。它提供单播和基于文件的发现，并且可以扩展为通过插件支持云环境和其他形式的发现。Zen Discovery 可与其他模块集成，例如，节点之间的所有通信都使用 Transport 模块完成。节点使用发现机制通过 Ping 的方式查找其他节点。
 
 ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110126695.png)
 
-ES 默认被配置为使用单播发现，以防止节点无意中加入集群。只有在同一台机器上运行的节点才会自动组成集群。如果集群的节点运行在不同的机器上，可以为 ES 提供一些尝试连接的节点列表。当一个节点联系到单播列表中的成员时，它就会得到整个集群所有节点的状态，然后它会联系 Master 节点，并加入集群。这意味着**单播列表不需要包含集群中的所有节点，它只是需要足够的节点，当一个新节点联系上其中一个并且通信就可以了**。该列表可由 `discovery.zen.ping.unicast.hosts` 指定。
+ES 默认被配置为使用单播发现，以防止节点无意中加入集群。只有在同一台机器上运行的节点才会自动组成集群。如果集群的节点运行在不同的机器上，可以为 ES 提供一些尝试连接的节点列表。当一个节点联系到单播列表中的成员时，它就会得到整个集群所有节点的状态，然后它会联系 Master 节点，并加入集群。这意味着**单播列表不需要包含集群中的所有节点，它只是需要足够的节点，当一个新节点联系上其中一个并且通信就可以了**。该列表可由 `discovery.zen.ping.unicast.hosts` 指定，官方推荐设置为所有的候选主节点。
 
 节点启动后先 Ping ，如果 `discovery.zen.ping.unicast.hosts` 有设置，则 Ping 设置中的 Host ，否则尝试 ping localhost 的几个端口。ES 支持同一个主机启动多个节点，Ping 的 Response 会包含该节点的基本信息以及该节点认为的 Master 节点。
-
-选举阶段，各节点会推举出自认为的 Master ，规则为按照 ID 的字典序排序，取第一个。如果各节点都没有认为的 Master ，则从所有节点中选择，规则同上。这里有个限制条件就是 `discovery.zen.minimum_master_nodes`，如果**节点数达不到最小值的限制，则循环上述过程，直到节点数足够可以开始选举**。
-
-选举结果是肯定能选举出一个 Master ，如果只有一个 Local 节点那就选出的是自己。如果当前节点是 Master ，则开始等待节点数达到 `discovery.zen.minimum_master_nodes`，然后提供服务。如果当前节点不是 Master ，则尝试加入 Master 。ES 将以上服务发现以及选主的流程叫做 Zen Discovery 。
-
-由于它支持任意数目的集群（ 1 - N ），所以不能像 Zookeeper 那样限制节点必须是奇数，也就无法用投票的机制来选主，而是通过一个规则。只要所有的节点都遵循同样的规则，得到的信息都是对等的，选出来的主节点肯定是一致的。但分布式系统的问题就出在信息不对等的情况，这时候很容易出现脑裂（Split-Brain）的问题。大多数解决方案就是设置一个 Quorum 值，要求**可用节点必须大于 Quorum（一般是超过半数节点），才能对外提供服务**。而 ES 中，这个 Quorum 的配置就是 `discovery.zen.minimum_master_nodes`。
 
 ### 1.3.2. 节点类型
 
@@ -111,7 +105,7 @@ ES 默认被配置为使用单播发现，以防止节点无意中加入集群�
 
 主节点负责创建索引、删除索引、跟踪哪些节点是群集的一部分，并决定哪些分片分配给相关的节点、追踪集群中节点的状态等，稳定的主节点对集群的健康是非常重要的。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309101842863.png)
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311100029080.png)
 
 每个节点上都保存了集群状态，但只有主节点才能修改集群状态信息（如创建索引、决定分片分布等），集群状态（Cluster State)，维护了一个集群中必要的信息   ：
 - 所有的节点信息
@@ -124,11 +118,58 @@ ES 默认被配置为使用单播发现，以防止节点无意中加入集群�
 
 ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110128550.png)
 
-虽然对节点做了角色区分，但是**用户的请求可以发往任何一个节点，并由该节点负责分发请求、收集结果等操作，而不需要主节点转发**。这种节点可称之为协调节点，协调节点是不需要指定和配置的，集群中的任何节点都可以充当协调节点的角色。
+虽然对节点做了角色区分，但是**用户的请求可以发往任何一个节点，并由该节点负责分发请求、收集结果等操作，而不需要主节点转发**。这种节点可称之为协调节点，协调节点是不需要指定和配置的，集群中的任何节点都可以充当协调节点的角色。同时协调节点的存在使得请求可以发往任意节点，这提升了灵活性，但另一方面若该协调节点本身已经处于高负载状态，那么势必会降低转发的性能。
 
-### 1.3.3. 脑裂现象
+### 1.3.3. 节点选举
+
+master 节点的选举过程如下：
+1. 选举的时机
+    由 master-eligible 节点发起，当一个 master-eligible 节点发现满足以下条件时发起选举：
+    1.  该 master-eligible 节点的当前状态不是 master。
+    2.  该 master-eligible 节点通过 ZenDiscovery 模块的 ping 操作询问其已知的集群其他节点，没有任何节点连接到 master。
+    3.  包括本节点在内，当前已有超过 minimum_master_nodes 个节点没有连接到 master。
+    
+    即当一个节点发现包括自己在内的多数派的 master-eligible 节点认为集群没有 master 时，就可以发起 master 选举。
+1. 选举的对象
+    1. 节点的状态越新，优先级越高
+        当 clusterStateVersion 越大，优先级越高。这是为了保证新 Master 拥有最新的 clusterState (即集群的 meta)，避免已经 commit 的 meta 变更丢失。
+        
+        因为 Master 当选后，就会以这个版本的 clusterState 为基础进行更新。(一个例外是集群全部重启，所有节点都没有 meta，需要先选出一个 master，然后 master 再通过持久化的数据进行 meta 恢复，再进行 meta 同步)。
+    2. 当 clusterStateVersion 相同时，节点的 Id 越小，优先级越高。
+        即总是倾向于选择 Id 小的 Node，这个 Id 是节点第一次启动时生成的一个随机字符串。之所以这么设计，应该是为了让选举结果尽可能稳定，不要出现都想当 master 而选不出来的情况。
+1. 选举的流程
+    当一个 master-eligible node (我们假设为 Node_A) 发起一次选举时，它会按照上述排序策略选出一个它认为的 master。
+    
+    - 假设 Node_A 选 Node_B 当 Master  
+        Node_A 会向 Node_B 发送 join 请求，那么此时：
+        1. 如果 Node_B 已经成为 Master  
+            Node_B 就会把 Node_A 加入到集群中，然后发布最新的 cluster_state，最新的 cluster_state 就会包含 Node_A 的信息。
+            
+            这就相当于一次正常情况的新节点加入。对于 Node_A，等新的 cluster_state 发布到 Node_A 的时候，Node_A 也就完成 join 了。
+        2. 如果 Node_B 在竞选 Master  
+            此时 Node_B 会把这次 join 当作一张选票。对于这种情况，Node_A 会等待一段时间，看 Node_B 是否能成为真正的 Master，直到超时或者有别的 Master 选成功。
+        3. 如果 Node_B 认为自己不是 Master (现在不是，将来也选不上)，那么 Node_B 会拒绝这次 join。对于这种情况，Node_A 会开启下一轮选举。
+    - 假设 Node_A 选自己当 Master  
+        此时 NodeA 会等别的 node 来 join，即等待别的 node 的选票，当收集到超过半数的选票时，认为自己成为 master，然后变更 cluster_state 中的 master node 为自己，并向集群发布这一消息。
+
+这里有个限制条件就是 `discovery.zen.minimum_master_nodes`，如果**节点数达不到最小值的限制，则循环上述过程，直到节点数足够可以开始选举**。选举结果是肯定能选举出一个 Master ，如果只有一个 Local 节点那就选出的是自己。如果当前节点是 Master ，则开始等待节点数达到 `discovery.zen.minimum_master_nodes`，然后提供服务。如果当前节点不是 Master ，则尝试加入 Master 。ES 将以上服务发现以及选主的流程叫做 Zen Discovery 。
+
+由于它支持任意数目的集群（ 1 - N ），所以不能像 Zookeeper 那样限制节点必须是奇数，也就无法用投票的机制来选主，而是通过一个规则。只要所有的节点都遵循同样的规则，得到的信息都是对等的，选出来的主节点肯定是一致的。但分布式系统的问题就出在信息不对等的情况，这时候很容易出现脑裂（Split-Brain）的问题。大多数解决方案就是设置一个 Quorum 值，要求**可用节点必须大于 Quorum（一般是超过半数节点），才能对外提供服务**。而 ES 中，这个 Quorum 的配置就是 `discovery.zen.minimum_master_nodes`。
+
+### 1.3.4. 脑裂现象
 
 如果由于网络或其他原因导致集群中选举出多个 Master 节点，使得数据更新时出现不一致，这种现象称之为脑裂，即集群中不同的节点对于 Master 的选择出现了分歧，出现了多个 Master 竞争。
+
+Zen Discovery 流程中，master 候选人需要等待多数派节点进行 join 后才能真正成为 master，就是为了保证这个 master 得到了多数派的认可。上述流程在绝大部份场景下没问题，但是却是有 bug 的：**没有限制在选举过程中，一个 Node 只能投一票**。
+
+那么什么场景下会投两票呢？比如 NodeB 投 NodeA 一票，但是 NodeA 迟迟不成为 Master，NodeB 等不及了发起了下一轮选主，这时候发现集群里多了个 Node0，Node0 优先级比 NodeA 还高，那 NodeB 肯定就改投 Node0 了。假设 Node0 和 NodeA 都处在等选票的环节，那显然这时候 NodeB 其实发挥了两票的作用，而且投给了不同的人。
+
+```ad-question
+title: 如何解决多次投票的问题呢？
+
+在raft 算法中引入了选举周期 (term) 的概念，保证了每个选举周期中每个成员只能投一票，如果需要再投就会进入下一个选举周期，term+1。假如最后出现两个节点都认为自己是 master，那么肯定有一个 term 要大于另一个的 term，而且因为两个 term 都收集到了多数派的选票，所以多数节点的 term 是较大的那个，保证了 term 小的 master 不可能 commit 任何状态变更(commit 需要多数派节点先持久化日志成功，由于有 term 检测，不可能达到多数派持久化条件)。这就保证了集群的状态变更总是一致的。
+
+```
 
 “脑裂”问题可能有以下几个原因造成：
 
@@ -151,6 +192,120 @@ ES 默认被配置为使用单播发现，以防止节点无意中加入集群�
 - 角色分离
     即候选主节点和数据节点进行角色分离，这样可以减轻主节点的负担，防止主节点的假死状态发生，减少对主节点“已死”的误判。
 
+### 1.3.5. 节点监控
+
+节点监控主要用于检测 master 节点及其他节点的状态，可以理解为类似心跳的机制。有两类错误检测，一类是 Master 定期检测集群内其他的 Node，另一类是集群内其他的 Node 定期检测当前集群的 Master。检查的方法就是定期执行 ping 请求。
+
+```ad-quote
+title: ES 的错误检测
+
+There are two fault detection processes running. The first is by the master, to ping all the other nodes in the cluster and verify that they are alive. And on the other end, each node pings to master to verify if its still alive or an election process needs to be initiated.
+```
+
+检测的方式如下：
+1. Master 节点检测其他节点
+    如果 Master 检测到某个 Node 连不上了，会执行 removeNode 的操作，将节点从 cluste_state 中移除，并发布新的 cluster_state。当各个模块 apply 新的 cluster_state 时，就会执行一些恢复操作，比如选择新的 primaryShard 或者 replica，执行数据复制等。
+2. 其他节点检测 Master 节点
+    如果某个 Node 发现 Master 连不上了，会清空 pending 在内存中还未 commit 的 new cluster_state，然后发起 rejoin，重新加入集群 (如果达到选举条件则触发新 master 选举)。
+3. Master 节点检查自身
+    若 Master 发现自己已经不满足多数派条件 (>=minimumMasterNodes) 了，需要主动退出 master 状态 (退出 master 状态并执行 rejoin) 以避免脑裂的发生，那么 master 如何发现自己需要 rejoin 呢？
+    
+    1. 移除其他节点后判断 minimumMasterNodes 条件
+        当 Master 节点发现其他节点无法连接时，会执行 removeNode。在执行 removeNode 时判断剩余的 Node 是否满足多数派条件，如果不满足，则执行 rejoin。
+    2. 发布集群状态时
+        在 publish 新的 cluster_state 时，分为 send 阶段和 commit 阶段，send 阶段要求多数派必须成功，然后再进行 commit。如果在 send 阶段没有实现多数派返回成功，那么可能是有了新的 master 或者是无法连接到多数派个节点等，则 master 需要执行 rejoin。
+
+### 1.3.6. 集群扩缩容
+
+假设一个 ES 集群存储或者计算资源不够了，我们需要进行扩容。
+
+#### 1.3.6.1. 数据节点
+
+对于数据节点的扩容，只要配置数据节点信息将其加入集群即可。启动节点后，节点会自动加入到集群中，集群会自动进行 rebalance，或者通过 [reroute api](https://www.elastic.co/guide/en/elasticsearch/reference/current/cluster-reroute.html) 进行手动操作。
+
+对于数据节点的缩容，为了保证数据安全，我们需要把这个 Node 上的 Shards 迁移到其他节点上，方法是先设置 allocation [规则](https://www.elastic.co/guide/en/elasticsearch/reference/current/allocation-filtering.html)，禁止分配 Shard 到要缩容的机器上，然后让集群进行 rebalance。
+
+````ad-example
+title: 规则示例
+
+```bash
+PUT _cluster/settings
+{
+  "transient" : {
+    "cluster.routing.allocation.exclude._ip" : "10.0.0.1"
+  }
+}
+```
+
+````
+
+#### 1.3.6.2. 主节点
+
+假如我们想扩容一个 MasterNode (master-eligible node)，那么有个需要考虑的问题是：为了避免脑裂，ES 是采用多数派的策略，需要配置一个 quorum 数。因此在扩容主节点时，需要先提升 quorum 数量，然后再进行集群的扩容操作。缩容与之相似。
+
+### 1.3.7. 集群元数据管理
+
+#### 1.3.7.1. 元数据管理
+
+要管理集群，那么 Master 节点必然需要以某种方式通知其他节点，从而让其他节点执行相应的动作，来完成某些事情。比如建立一个新的 Index 就需要将其 Shard 分配在某些节点上，在这些节点上需要创建出对应 Shard 的目录，并在内存中创建对应 Shard 的一些结构等。
+
+在 ES 中，Master 节点是通过发布 ClusterState 来通知其他节点的。Master 会将新的 ClusterState 发布给其他的所有节点，当节点收到新的 ClusterState 后，会把新的 ClusterState 发给相关的各个模块，各个模块根据新的 ClusterState 判断是否要做什么事情，比如创建 Shard 等。即这是一种通过 Meta 数据来驱动各个模块工作的方式。
+
+在 Master 进行 Meta 变更并通知所有节点的过程中，需要考虑 Meta 变更的一致性问题，假如这个过程中 Master 挂掉了，那么可能只有部分节点按照新的 Meta 执行了操作。当选举出新的 Master 后，需要保证所有节点都要按照最新的 Meta 执行操作，不能回退，因为已经有节点按照新的 Meta 执行操作了，再回退就会导致不一致。
+
+ES 中只要新 Meta 在一个节点上被 commit，那么就会开始执行相应的操作。因此我们要保证一旦新 Meta 在某个节点上被 commit，此后无论谁是 master，都要基于这个 commit 来产生更新的 meta，否则就可能产生不一致。
+
+Meta 是用来描述数据的数据。在 ES 中，Index 的 mapping 结构、配置、持久化状态等就属于 meta 数据，集群的一些配置信息也属于 meta。这类 meta 数据非常重要，假如记录某个 index 的 meta 数据丢失了，那么集群就认为这个 index 不再存在了。
+
+ES 中的 meta 数据只能由 master 进行更新，并同步给其他节点。集群中的每个节点都会在内存中维护一个当前的 ClusterState，表示当前集群的各种状态。ClusterState 中包含一个 MetaData 的结构，MetaData 中存储的内容更符合 meta 的特征，而且需要持久化的信息都在 MetaData 中，此外的一些变量可以认为是一些临时状态，是集群运行中动态构建出来的。
+
+#### 1.3.7.2. 元数据的恢复
+
+假设 ES 集群重启了，那么所有进程都没有了之前的 Meta 信息，需要有一个角色来恢复 Meta，这个角色就是 Master。所以 ES 集群需要先进行 Master 选举，选出 Master 后，才会进行故障恢复。
+
+当 Master 选举出来后，Master 进程还会等待一些条件，比如集群当前的节点数大于某个数目等，这是避免有些 DataNode 还没有连上来，造成不必要的数据恢复等。
+
+当 Master 进程决定进行恢复 Meta 时，它会向集群中的 MasterNode 和 DataNode 请求其机器上的 MetaData。对于集群的 Meta，选择其中 version 最大的版本。对于每个 Index 的 Meta，也选择其中最大的版本。然后将集群的 Meta 和每个 Index 的 Meta 再组合起来，构成当前的最新 Meta。
+
+#### 1.3.7.3. 元数据的更新
+
+1. 并发更新的控制
+    首先，master 进程内不同线程更改 ClusterState 时要保证是原子的。试想一下这个场景，有两个线程都在修改 ClusterState，各自更改其中的一部分。假如没有任何并发的保护，那么最后提交的线程可能就会覆盖掉前一个线程的修改，或者产生不符合条件的状态变更的发生。
+    
+    ES 解决这个问题的方式是：**串形化**。每次需要更新 ClusterState 时提交一个 Task 给 MasterService，MasterService 中只使用一个线程来串行处理这些 Task，每次处理时把当前的 ClusterState 作为 Task 中 execute 函数的参数。即保证了所有的 Task 都是在 currentClusterState 的基础上进行更改，然后不同的 Task 是串行执行的。
+2. 两阶段提交
+    新的 Meta 一旦在某个节点上 commit，那么这个节点就会执行相应的操作，比如删除某个 Shard 等，这样的操作是不可回退的。而假如此时 Master 节点挂掉了，新产生的 Master 一定要在新的 Meta 上进行更改，不能出现回退，否则就会出现 Meta 回退了但是操作无法回退的情况。本质上就是 Meta 更新没有保证一致性。
+    
+    ES 采取了两阶段提交，把 Master 发布 ClusterState 分成两步，第一步是向所有节点 send 最新的 ClusterState，当有超过半数的 master 节点返回 ack 时，再发送 commit 请求，要求节点 commit 接收到的 ClusterState。如果没有超过半数的节点返回 ack，那么认为本次发布失败，同时退出 master 状态，执行 rejoin 重新加入集群。
+    
+    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112240018.png)
+    
+    采取两阶段提交可以解决一些问题，但并不是完美的：
+    1. 第一阶段数据未持久化
+        第一阶段 master 节点 send 新的 ClusterState，接收到的节点只是把新的 ClusterState 放入内存一个队列中，就会返回 ack。这个过程没有持久化，所以当 master 接收到超过半数的 ack 后，也不能认为这些节点上都有新的 ClusterState 了。
+    2. 节点失效
+        如果 master 在 commit 阶段，只 commit 了少数几个节点就出现了网络分区，将 master 与这几个少数节点分在了一起，其他节点可以互相访问。此时其他节点构成多数派，会选举出新的 master，由于这部分节点中没有任何节点 commit 了新的 ClusterState，所以新的 master 仍会使用更新前的 ClusterState，造成 Meta 不一致。
+
+### 1.3.8. 节点数据的恢复
+
+ES 中每个写操作都会分配两个值，Term 和 SequenceNumber。Term 在每次 Primary 变更时都会加 1，类似于 PacificA 论文中的 Configuration Version。SequenceNumber 在每次操作后加 1，类似于 PacificA 论文中的 Serial Number。由于写请求总是发给 Primary，所以 Term 和 SequenceNumber 会由 Primary 分配，在向 Replica 发送同步请求时，会带上这两个值。
+
+LocalCheckpoint 代表本 Shard 中所有小于该值的请求都已经处理完毕。GlobalCheckpoint 代表所有小于该值的请求在所有的 Replica 上都处理完毕。GlobalCheckpoint 会由 Primary 进行维护，每个 Replica 会向 Primary 汇报自己的 LocalCheckpoint，Primary 根据这些信息来提升 GlobalCheckpoint。
+
+GlobalCheckpoint 是一个全局的安全位置，代表其前面的请求都被所有 Replica 正确处理了，可以应用在节点故障恢复后的数据回补。另一方面，GlobalCheckpoint 也可以用于 Translog 的 GC，因为之前的操作记录可以不保存了。
+
+当一个 Replica 故障时，ES 会将其移除，对于故障节点的处理，分为两种情况：
+1. 故障超过一定时间
+    ES 会分配一个新的 Replica 到新的 Node 上，此时需要全量同步数据。
+2. 故障节点自动恢复
+    如果之前故障的 Replica 回来了，就可以只回补故障之后的数据，追平后加回来即可，实现快速故障恢复。
+    
+    实现快速故障恢复的条件有两个：
+    1. 能够保存故障期间所有的操作以及其顺序
+    2. 能够知道从哪个点开始同步数据
+    
+    第一个条件可以通过保存一定时间的 Translog 实现，第二个条件可以通过 Checkpoint 实现，所以就能够实现快速的故障恢复。这是 SequenceNumber 和 Checkpoint 的第一个重要应用场景。
+
 ## 1.4. 分片
 
 ES 支持 PB 级全文搜索，当索引上的数据量太大的时候，ES 通过水平拆分的方式将一个索引上的数据拆分出来分配到不同的数据块上，拆分出来的数据库块称之为一个分片。
@@ -169,9 +324,13 @@ ES 为了提高写入的能力这个过程是并发写的，同时为了解决�
 
 当原主分片故障后，副本分片会被提升为主分片，这个提升主分片的过程是瞬间发生的。此时集群的状态将会为 Yellow。当该分片恢复时，如果期间有更改的数据只需要从主分片上复制修改的数据文件即可。
 
-# 2. 数组存储原理
+# 2. 数据存储原理
 
-## 2.1. 索引写入原理
+## 2.1. Es 的存储模型
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311030114347.png)
+
+## 2.2. 索引写入原理
 
 下图描述了 3 个节点的集群，共拥有 12 个分片，其中有 4 个主分片（S0、S1、S2、S3）和 8 个副本分片（R0、R1、R2、R3），每个主分片对应两个副本分片，节点 1 是主节点（Master 节点）负责整个集群的状态。
 
@@ -191,30 +350,19 @@ Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个
 
 ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309101915606.png)
 
-## 2.2. 数据存储原理
+每次写入的时候，写入请求会先根据_routing 规则选择发给哪个 Shard，Index Request 中可以设置使用哪个 Filed 的值作为路由参数，如果没有设置，则使用 Mapping 中的配置，如果 Mapping 中也没有配置，则使用 id 作为路由参数。然后通过 routing 的 Hash 值选择出 Shard，最后从集群的 Meta 中找出该 Shard 的 Primary 节点。
 
-### 2.2.1. 分段写
+请求接着会发送给 Primary Shard，在 Primary Shard 上执行成功后，再从 Primary Shard 上将请求同时发送给多个 Replica Shard，请求在多个 Replica Shard 上执行成功并返回给 Primary Shard 后，写入请求执行成功，返回结果给客户端。
+
+这种模式下，写入操作的延时就等于 latency = Latency (Primary Write) + Max (Replicas Write)。只要有副本在，写入延时最小也是两次单 Shard 的写入时延总和，写入效率会较低，但是这样的好处也很明显，避免写入后，单机或磁盘故障导致数据丢失，在数据重要性和性能方面，一般都是优先选择数据，除非一些允许丢数据的特殊场景。
+
+## 2.3. 数据存储原理
+
+### 2.3.1. 分段写
 
 索引文档以[[数据密集型系统设计1：引入#1.2.2. SSTables (SortStringTables)|段的形式]]存储在磁盘上，何为段？索引文件被拆分为多个子文件，则每个子文件叫作段，每一个段本身都是一个倒排索引，并且段具有不变性，一旦索引的数据被写入硬盘，就不可再修改。在底层采用了分段的存储模式，使它在读写时几乎完全避免了锁的出现，大大提升了读写性能 （在并发更新文档的场景下，ES 是采用乐观锁版本号的方式来实现并发控制）。
 
 段被写入到磁盘后会生成一个提交点，提交点是一个用来记录所有提交后段信息的文件。一个段一旦拥有了提交点，就说明这个段只有读的权限，失去了写的权限。相反，当段在内存中时，就只有写的权限，而不具备读数据的权限，意味着不能被检索。
-
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309102050159.png)
-
-每当有新 Document 要写入时，会进行以下操作：
-
-1. 文档会先写入 Index Buffer，作为缓冲区
-2. 将 Index Buffer 写入 Segment（内存），然后文档就可以被查询到了
-3. 将 Index Buffer 同时写入 Transaction Log（WAL 机制），用于断电恢复数据
-4. 将 Segments 落盘
-
-其中第 2、3 两步合并成为 Refresh，默认 1 秒（`index.refresh_interval`）执行一次，这也就是为什么 ES 是近实时搜索引擎的原因（高版本的 ES 默认落盘）；另外 Index Buffer 被写满时也会触发，默认大小是 JVM 内存的 10%
-
-其中第 4 步，其实是归属于 Flush 操作的一个步骤。Flush 默认 30 分钟执行一次，或者 Transaction Log 满（默认 512MB）也会触发。Flush 执行包含的流程有
-
-1. 调用 Refresh
-2. 调用 fsync，将 Segments 落盘
-3. 清空 Transaction Log
 
 段的概念提出主要是因为：在早期全文检索中为整个文档集合建立了一个很大的倒排索引，并将其写入磁盘中。如果索引有更新，就需要重新全量创建一个索引来替换原来的索引。这种方式在数据量很大时效率很低，并且由于创建一次索引的成本很高，所以对数据的更新不能过于频繁，也就不能保证时效性。
 
@@ -241,7 +389,157 @@ Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个
 - 每次新增数据时都需要新增一个段来存储数据。当段的数量太多时，对服务器的资源例如文件句柄的消耗会非常大。
 - 在查询的结果中包含所有的结果集，需要排除被标记删除的旧数据，这增加了查询的负担。
 
-### 2.2.2. 延迟写策略
+#### 2.3.1.1. Create 流程
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112029405.png)
+
+每当有新 Document 要写入时，会进行以下操作：
+
+1. 文档会先写入 Index Buffer，作为缓冲区
+2. 将 Index Buffer 写入 Segment（内存），然后文档就可以被查询到了
+3. 将 Index Buffer 同时写入 Transaction Log（WAL 机制），用于断电恢复数据
+4. 将 Segments 落盘
+
+其中第 2、3 两步合并成为 Refresh，默认 1 秒（`index.refresh_interval`）执行一次，这也就是为什么 ES 是近实时搜索引擎的原因（高版本的 ES 默认落盘）；另外 Index Buffer 被写满时也会触发，默认大小是 JVM 内存的 10%
+
+其中第 4 步，其实是归属于 Flush 操作的一个步骤。Flush 默认 30 分钟执行一次，或者 Transaction Log 满（默认 512MB）也会触发。Flush 执行包含的流程有
+
+1. 调用 Refresh
+2. 调用 fsync，将 Segments 落盘
+3. 清空 Transaction Log
+
+这里有几个关键点：
+
+1. 写入时机  
+    和数据库不同，数据库是先写 CommitLog，然后再写内存，而 Elasticsearch 是先写内存，最后才写 TransLog。
+    
+    一种可能的原因是 Lucene 的内存写入会有很复杂的逻辑，很容易失败，比如分词，字段长度超过限制等，比较重，为了避免 TransLog 中有大量无效记录，减少 recover 的复杂度和提高速度，所以就把写 Lucene 放在了最前面。
+2. 写 Lucene 内存后，并不是可被搜索的  
+    需要通过 Refresh 把内存的对象转成完整的 Segment 后，然后再次 reopen 后才能被搜索，一般这个时间设置为 1 秒钟，导致写入 Elasticsearch 的文档，最快要 1 秒钟才可被从搜索到，所以 Elasticsearch 在搜索方面是 NRT（Near Real Time）近实时的系统。
+3. 查询方式是 GetById 时可以直接从 TransLog 中查询，这时候就成了 RT（Real Time）实时系统
+4. 定时刷新 segment 到磁盘
+    每隔一段比较长的时间，比如 30 分钟后，Lucene 会把内存中生成的新 Segment 刷新到磁盘上，刷新后索引文件已经持久化了，历史的 TransLog 就没用了，会清空掉旧的 TransLog。
+
+#### 2.3.1.2. Update 流程
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112036650.png)
+
+Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实现该功能，具体流程如下：
+
+1. 读取历史数据
+    收到 Update 请求后，从 Segment 或者 TransLog 中读取同 id 的完整 Doc，记录版本号为 V1。
+2. 合并新旧数据
+    将版本 V1 的全量 Doc 和请求中的部分字段 Doc 合并为一个完整的 Doc，同时更新内存中的 VersionMap。获取到完整 Doc 后，Update 请求就变成了 Index 请求。
+3. 加锁
+    锁是 Refresh Lock，禁止 refresh 该条数据。
+4. 再次检查版本
+    再次从 versionMap 中读取该 id 的最大版本号 V2，如果 versionMap 中没有，则从 Segment 或者 TransLog 中读取，这里基本都会从 versionMap 中获取到。
+    
+    检查版本是否冲突： `V1 == V2`，如果冲突，则回退到开始的“Update doc” 阶段，重新执行。如果不冲突，则执行最新的 Add 请求。
+5. 更新数据
+    在 Index Doc 阶段，首先将 Version + 1 得到 V3，再将 Doc 加入到 Lucene 中去，Lucene 中会先删同 id 下的已存在 doc id，然后再增加新 Doc。写入 Lucene 成功后，将当前 V3 更新到 versionMap 中。
+6. 释放锁
+    此时部分更新的流程就结束了。
+
+#### 2.3.1.3. 整体写入流程
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112041329.png)
+
+- 红色：Client Node。
+- 绿色：Primary Node。
+- 蓝色：Replica Node。
+
+以下解释上图中写入的核心过程：
+1. Client Node 执行过程
+    1. Auto Create Index
+        判断当前 Index 是否存在，如果不存在，则需要自动创建 Index，这里需要和 Master 交互。也可以通过配置关闭自动创建 Index 的功能。
+    2. Set Routing
+        设置路由条件，如果 Request 中指定了路由条件，则直接使用 Request 中的 Routing，否则使用 Mapping 中配置的，如果 Mapping 中无配置，则使用默认的_id 字段值。
+        
+        在这一步中，如果没有指定_id 字段，则会自动生成一个唯一的_id 字段，目前使用的是 UUID。
+    3. Construct BulkShardRequest
+        由于 Bulk Request 中会包括多个 (Index/Update/Delete) 请求，这些请求根据 routing 可能会落在多个 Shard 上执行，这一步会按 Shard 挑拣 Single Write Request，同一个 Shard 中的请求聚集在一起，构建 BulkShardRequest，每个 BulkShardRequest 对应一个 Shard。
+    4. Send Request To Primary
+        将上一步每一个 BulkShardRequest 请求发送给相应 Shard 的 Primary Node。
+2. Primary Node 执行过程
+    Create/Index 是直接新增 Doc，Delete 是直接根据 id 删除 Doc，Update 会稍微复杂些，我们下面就以 Update 为例来介绍。
+    
+    1. Translate Update To Index or Delete
+        这一步是 Update 操作的特有步骤，在这里，会将 Update 请求转换为 Index 或者 Delete 请求。首先，会通过 GetRequest 查询到已经存在的同 id Doc（如果有）的完整字段和值（依赖 source 字段），然后和请求中的 Doc 合并。同时，这里会获取到读到的 Doc 版本号，记做 V1。
+    2. Parse Doc
+        解析 Doc 中各个字段。
+    3. Update Mapping
+        Elasticsearch 中有个自动更新 Mapping 的功能，就在这一步生效。会先挑选出 Mapping 中未包含的新 Field，然后判断是否运行自动更新 Mapping，如果允许，则更新 Mapping。
+    4. Get Sequence Id and Version
+        由于当前是 Primary Shard，则会从 SequenceNumber Service 获取一个 sequenceID 和 Version。SequenceID 在 Shard 级别每次递增 1，SequenceID 在写入 Doc 成功后，会用来初始化 LocalCheckpoint。Version 则是根据当前 Doc 的最大 Version 递增 1。
+    5. Add Doc To Lucene
+        这一步开始的时候会给特定 uid 加锁，然后判断该 uid 对应的 Version 是否等于之前 Translate Update To Index 步骤里获取到的 Version，如果不相等，则说明刚才读取 Doc 后，该 Doc 发生了变化，出现了版本冲突，这时候会抛出一个 VersionConflict 的异常，该异常会在 Primary Node 最开始处捕获，重新从 “Translate Update To Index or Delete” 开始执行。
+        
+        如果 Version 相等，则继续执行，如果已经存在同 id 的 Doc，则会调用 Lucene 的 UpdateDocument (uid, doc) 接口，先根据 uid 删除 Doc，然后再 Index 新 Doc。如果是首次写入，则直接调用 Lucene 的 AddDocument 接口完成 Doc 的 Index，AddDocument 也是通过 UpdateDocument 实现。
+        
+        这一步中有个问题是，如何保证 Delete-Then-Add 的原子性，怎么避免中间状态时被 Refresh？答案是在开始 Delete 之前，会加一个 Refresh Lock，禁止被 Refresh，只有等 Add 完后释放了 Refresh Lock 后才能被 Refresh，这样就保证了 Delete-Then-Add 的原子性。
+        
+        ```ad-info
+        title: Lucene字段写入过程
+        </br>
+        
+        Lucene 的 UpdateDocument 接口中就只是处理多个 Field，会遍历每个 Field 逐个处理，处理顺序是 invert index，store field，doc values，point dimension。
+        ```
+    6. Write Translog
+        写完 Lucene 的 Segment 后，会以 keyvalue 的形式写 TransLog，Key 是_id，Value 是 Doc 内容。当查询的时候，如果请求是 GetDocByID，则可以直接根据_id 从 TransLog 中读取到，满足 NoSQL 场景下的实时性要去。
+        
+        需要注意的是，这里**只是写入到内存的 TransLog**，是否 Sync 到磁盘的逻辑还在后面。这一步的最后，会标记当前 SequenceID 已经成功执行，接着会更新当前 Shard 的 LocalCheckPoint。
+    7. Renew Bulk Request
+        重新构造 Bulk Request，原因是前面已经将 UpdateRequest 翻译成了 Index 或 Delete 请求，则后续所有 Replica 中只需要执行 Index 或 Delete 请求就可以了，不需要再执行 Update 逻辑，一是保证 Replica 中逻辑更简单，性能更好，二是保证同一个请求在 Primary 和 Replica 中的执行结果一样。
+    8. Flush Translog
+        根据 TransLog 的策略，选择不同的执行方式，要么是立即 Flush 到磁盘，要么是等到以后再 Flush。Flush 的频率越高，可靠性越高，对写入性能影响越大。
+    9. Send Requests To Replicas
+        将刚才构造的新的 Bulk Request 并行发送给多个 Replica，然后等待 Replica 的返回，这里需要等待所有 Replica 返回后（可能有成功，也有可能失败），Primary Node 才会返回用户。如果某个 Replica 失败了，则 Primary 会给 Master 发送一个 Remove Shard 请求，要求 Master 将该 Replica Shard 从可用节点中移除。
+        
+        ```ad-tip
+        title: 副本写入的限制
+        
+        </br>
+        ES 中有一个参数，叫做 wait_for_active_shards，这个参数是 Index 的一个 setting，也可以在请求中带上这个参数。这个参数的含义是，<b>在每次写入前，该 shard 至少具有的 active 副本数</b>。假设我们有一个 Index，其每个 Shard 有 3 个 Replica，加上 Primary 则总共有 4 个副本。如果配置 wait_for_active_shards 为 3，那么允许最多有一个 Replica 挂掉，如果有两个 Replica 挂掉，则 Active 的副本数不足 3，此时不允许写入。
+        
+        这个参数默认是 1，即只要 Primary 在就可以写入，起不到什么作用。如果配置大于 1，可以起到一种保护的作用，保证写入的数据具有更高的可靠性。但是这个参数只在写入前检查，并不保证数据一定在至少这些个副本上写入成功，所以并不是严格保证了最少写入了多少个副本。
+        ```
+        
+        ```ad-warning
+        title: 副本写入失败的后果
+        </br>
+        
+        如果一个 Replica 写失败了，Primary 会将这个信息报告给 Master，然后 Master 会在 Meta 中更新这个 Index 的 InSyncAllocations 配置，将这个 Replica 从中移除，移除后它就不再承担读请求。在 Meta 更新到各个 Node 之前，用户可能还会读到这个 Replica 的数据，但是更新了 Meta 之后就不会了。所以这个方案并不是非常的严格，考虑到 ES 本身就是一个近实时系统，数据写入后需要 refresh 才可见，所以一般情况下，在短期内读到旧数据应该也是可接受的。
+        ```
+    11. Receive Response From Replicas
+        Replica 中请求都处理完后，会更新 Primary Node 的 LocalCheckPoint。
+3. Replica Node 执行过程
+    Replica Node 执行过程和 Primary Node 执行过程基本一致，只不过少了同步 Replica Node 与转化 Update 请求的过程。
+
+#### 2.3.1.4. 写入机制分析
+
+对于 Elasticsearch 的写入流程及其各个流程的工作机制，我们在此分析它是否符合分布式系统中的一些特性：
+
+1. 可靠性
+    由于 Lucene 的设计中不考虑可靠性，在 Elasticsearch 中通过 Replica 和 TransLog 两套机制保证数据的可靠性。
+2. 一致性
+    Lucene 中的 Refresh 锁只保证 Update 接口里面 Delete 和 Add 中间不会 Flush，但是 **Add 完成后仍然有可能立即发生 Flush，导致 Segment 可读，这样就没法保证 Primary 和所有其他 Replica 可以同一时间 Flush，就会出现查询不一致的情况**，这里只能实现最终一致性。
+3. 原子性
+    Add 和 Delete 都是直接调用 Lucene 的接口，是原子的。当部分更新时，使用 Version 和锁保证更新是原子的。
+4. 隔离性
+    仍然采用 Version 和局部锁来保证更新的是特定版本的数据。
+5. 实时性
+    使用定期 Refresh Segment 到内存，并且 Reopen Segment 方式保证搜索可以在较短时间（比如 1 秒）内被搜索到。通过将未刷新到磁盘数据记入 TransLog，保证对未提交数据可以通过 ID 实时访问到。
+6. 性能
+    性能是一个系统性工程，所有环节都要考虑对性能的影响，在 Elasticsearch 中，在很多地方的设计都考虑到了性能：
+    
+    1. 不需要所有 Replica 都返回后才能返回给用户，只需要返回特定数目的即可；
+    2. 生成的 Segment 先在内存中提供服务，等一段时间后才刷新到磁盘，Segment 在内存这段时间的可靠性由 TransLog 保证；
+    3. TransLog 可以配置为周期性的 Flush，但这个会给可靠性带来伤害；
+    4. 每个线程持有一个 Segment，多线程时相互不影响，相互独立，性能更好；
+    5. 系统的写入流程对版本依赖较重，读取频率较高，因此采用了 versionMap，减少热点数据的多次磁盘 IO 开销。
+
+### 2.3.2. 延迟写策略
 
 为了提升写的性能，ES 并没有每新增一条数据就增加一个段到磁盘上，而是采用延迟写的策略。每当有新增的数据时，就将其先写入到内存中，在内存和磁盘之间是文件系统缓存。
 
@@ -257,23 +555,7 @@ Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个
 > 
 > 可能你正在使用 Elasticsearch 索引大量的日志文件，你可能想优化索引速度而不是近实时搜索。这时可以在创建索引时在 Settings 中通过调大 `refresh_interval = "30s"` 的值，降低每个索引的刷新频率，设值时需要注意后面带上时间单位，否则默认是毫秒。当 `refresh_interval=-1` 时表示关闭索引的自动刷新。
 
-虽然通过延时写的策略可以减少数据往磁盘上写的次数提升了整体的写入能力，但是我们知道文件缓存系统也是内存空间，属于操作系统的内存，只要是内存都存在断电或异常情况下丢失数据的危险。为了避免丢失数据，Elasticsearch 添加了事务日志（Translog，一种预写日志），事务日志记录了所有还没有持久化到磁盘的数据。
-
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309101924322.png)
-
-添加了事务日志后整个写索引的流程如上图所示：
-1. 新文档写入内存
-    一个新文档被索引之后，先被写入到内存中，但是为了防止数据的丢失，会追加一份数据到事务日志中。
-    
-    不断有新的文档被写入到内存，同时也都会记录到事务日志中。这时新数据还不能被检索和查询。
-2. 内存数据刷新到磁盘
-    当达到默认的刷新时间或内存中的数据达到一定量后，会触发一次 Refresh，将内存中的数据以一个新段形式刷新到文件缓存系统中并清空内存。这时虽然新段未被提交到磁盘，但是可以提供文档的检索功能且不能被修改。
-3. 事务日志刷新
-    随着新文档索引不断被写入，当日志数据大小超过 512M 或者时间超过 30 分钟时，会触发一次 Flush。内存中的数据被写入到一个新段同时被写入到文件缓存系统，文件系统缓存中数据通过 Fsync 刷新到磁盘中，生成提交点，日志文件被删除，创建一个空的新日志。
-
-通过这种方式当断电或需要重启时，ES 不仅要根据提交点去加载已经持久化过的段，还需要根据 Translog 里的记录，把未持久化的数据重新持久化到磁盘上，避免了数据丢失的可能。
-
-### 2.2.3. 段合并
+### 2.3.3. 段合并
 
 由于自动刷新流程每秒会创建一个新的段，这样会导致短时间内的段数量暴增。而段数目太多会带来较大的麻烦。每一个段都会消耗文件句柄、内存和 CPU 运行周期。更重要的是，每个搜索请求都必须轮流检查每个段然后合并查询结果，所以段越多，搜索也就越慢。
 
@@ -438,16 +720,16 @@ GET _cluster/allocation/explain
 其中 index 和 shard 列出了具体哪个索引的哪个分片未分配成功。reason 字段则列出了哪种原因导致的分片未分配。这里也将所有可能的原因列出来：
 
 ```text
-INDEX_CREATED：由于创建索引的API导致未分配。
+INDEX_CREATED：由于创建索引的 API 导致未分配。
 CLUSTER_RECOVERED ：由于完全集群恢复导致未分配。
-INDEX_REOPENED ：由于打开open或关闭close一个索引导致未分配。
-DANGLING_INDEX_IMPORTED ：由于导入dangling索引的结果导致未分配。
+INDEX_REOPENED ：由于打开 open 或关闭 close 一个索引导致未分配。
+DANGLING_INDEX_IMPORTED ：由于导入 dangling 索引的结果导致未分配。
 NEW_INDEX_RESTORED ：由于恢复到新索引导致未分配。
 EXISTING_INDEX_RESTORED ：由于恢复到已关闭的索引导致未分配。
 REPLICA_ADDED：由于显式添加副本分片导致未分配。
 ALLOCATION_FAILED ：由于分片分配失败导致未分配。
 NODE_LEFT ：由于承载该分片的节点离开集群导致未分配。
-REINITIALIZED ：由于当分片从开始移动到初始化时导致未分配（例如，使用影子shadow副本分片）。REROUTE_CANCELLED ：作为显式取消重新路由命令的结果取消分配。
+REINITIALIZED ：由于当分片从开始移动到初始化时导致未分配（例如，使用影子 shadow 副本分片）。REROUTE_CANCELLED ：作为显式取消重新路由命令的结果取消分配。
 REALLOCATED_REPLICA ：确定更好的副本位置被标定使用，导致现有的副本分配被取消，出现未分配。
 ```
 
