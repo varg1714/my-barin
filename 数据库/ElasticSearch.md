@@ -496,7 +496,7 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
     9. Send Requests To Replicas
         将刚才构造的新的 Bulk Request 并行发送给多个 Replica，然后等待 Replica 的返回，这里需要等待所有 Replica 返回后（可能有成功，也有可能失败），Primary Node 才会返回用户。如果某个 Replica 失败了，则 Primary 会给 Master 发送一个 Remove Shard 请求，要求 Master 将该 Replica Shard 从可用节点中移除。
         
-        ```ad-tip
+        ```ad-info
         title: 副本写入的限制
         
         </br>
@@ -538,6 +538,54 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
     3. TransLog 可以配置为周期性的 Flush，但这个会给可靠性带来伤害；
     4. 每个线程持有一个 Segment，多线程时相互不影响，相互独立，性能更好；
     5. 系统的写入流程对版本依赖较重，读取频率较高，因此采用了 versionMap，减少热点数据的多次磁盘 IO 开销。
+
+#### 2.3.1.5. 查询流程
+
+##### 2.3.1.5.1. 节点与分区的选择
+
+Elasticsearch 中每个 Shard 都会有多个 Replica，主要是为了保证数据可靠性，除此之外，还可以增加读能力，因为写的时候虽然要写大部分 Replica Shard，但是查询的时候只需要查询 Primary 和 Replica 中的任何一个就可以了。
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130052812.png)
+
+当查询的时候，从三个节点中根据 Request 中的 preference 参数选择一个节点查询。preference 可以设置 \_local，\_primary，\_replica 以及其他选项。如果选择了 primary，则每次查询都是直接查询 Primary，可以保证每次查询都是最新的。如果设置了其他参数，那么可能会查询到 R1 或者 R2，这时候就有可能查询不到最新的数据。
+
+Elasticsearch 中通过分区实现分布式，数据写入的时候根据 \_routing 规则将数据写入某一个 Shard 中，这样就能将海量数据分布在多个 Shard 以及多台机器上，以达到分布式的目标。但这样就导致了查询的时候，潜在数据会在当前 index 的所有的 Shard 中，所以 Elasticsearch 查询的时候需要查询所有 Shard，同一个 Shard 的 Primary 和 Replica 选择一个即可，查询请求会分发给所有 Shard，每个 Shard 中都是一个独立的查询引擎，比如需要返回 Top 10 的结果，那么每个 Shard 都会查询并且返回 Top 10 的结果，然后在 Client Node 里面会接收所有 Shard 的结果，然后通过优先级队列二次排序，选择出 Top 10 的结果返回给用户。
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130053222.png)
+
+```ad-warning
+title: 请求膨胀问题
+
+这里有一个问题就是请求膨胀，用户的一个搜索请求在 Elasticsearch 内部会变成 Shard 个请求。一种优化方式是虽然会产生 Shard 个数量的请求，但是这个 Shard 个数不一定要是当前 Index 中的 Shard 个数，只要是当前查询相关的 Shard 即可，这个需要基于业务和请求内容优化，通过这种方式可以优化请求膨胀数。
+```
+
+##### 2.3.1.5.2. 节点内数据的获取
+
+Elasticsearch 中的查询主要分为两类：Get 请求：通过 ID 查询特定 Doc；Search 请求：通过 Query 查询匹配 Doc。
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130057857.png)
+
+对于 Search 类请求，查询的时候是一起查询内存（指刚 Refresh Segment，但是还没持久化到磁盘的新 Segment）和磁盘上的 Segment，最后将结果合并后返回。这种查询是近实时（Near Real Time）的，主要是由于内存中的 Index 数据需要一段时间后才会刷新为 Segment。
+
+对于 Get 类请求，查询的时候是先查询内存中的 TransLog，如果找到就立即返回，如果没找到再查询磁盘上的 TransLog，如果还没有则再去查询磁盘上的 Segment。这种查询是实时（Real Time）的。这种查询顺序可以保证查询到的 Doc 是最新版本的 Doc，这个功能也是为了保证 NoSQL 场景下的实时性要求。
+
+##### 2.3.1.5.3. 数据查询阶段
+
+![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130059187.png)
+
+所有的搜索系统一般都是两阶段查询，第一阶段查询到匹配的 DocID，第二阶段再查询 DocID 对应的完整文档，这种在 Elasticsearch 中称为 query_then_fetch，还有一种是一阶段查询的时候就返回完整 Doc，在 Elasticsearch 中称作 query_and_fetch，一般第二种适用于只需要查询一个 Shard 的请求。
+
+```ad-info
+title: query_then_fetch 与 query_and_fetch
+
+在 query_then_fetch 模式下，每个分片返回的是部分结果，这些部分结果包含了匹配查询条件的文档的相关信息（例如文档的 ID、评分等），但不包含完整的文档数据。然后，协调节点会收集所有分片返回的部分结果，并进行合并、排序、去重等操作，以生成最终的搜索结果，最终的搜索结果会包含完整的文档数据。
+
+对于大型索引或查询结果集较大的情况，query_then_fetch 模式可以减少每个分片返回的数据量，减轻网络传输和内存消耗。而 query_and_fetch 模式则立即从每个分片获取完整的文档数据，可能导致网络开销和内存消耗较高。
+```
+
+除了一阶段，两阶段外，还有一种三阶段查询的情况。搜索里面有一种算分逻辑是根据 TF（Term Frequency）和 DF（Document Frequency）计算基础分，但是 Elasticsearch 中查询的时候，是在每个 Shard 中独立查询的，每个 Shard 中的 TF 和 DF 也是独立的，虽然在写入的时候通过_routing 保证 Doc 分布均匀，但是没法保证 TF 和 DF 均匀，那么就有会导致局部的 TF 和 DF 不准的情况出现，这个时候基于 TF、DF 的算分就不准。
+
+为了解决这个问题，Elasticsearch 中引入了 DFS 查询，比如 DFS_query_then_fetch，会先收集所有 Shard 中的 TF 和 DF 值，然后将这些值带入请求中，再次执行 query_then_fetch，这样算分的时候 TF 和 DF 就是准确的，类似的有 DFS_query_and_fetch。这种查询的优势是算分更加精准，但是效率会变差。另一种选择是用 BM25 代替 TF/DF 模型。
 
 ### 2.3.2. 延迟写策略
 

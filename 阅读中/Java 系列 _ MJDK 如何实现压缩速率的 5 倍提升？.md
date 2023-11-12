@@ -1,3 +1,6 @@
+---
+create: 2023-11-13T00:44:00
+---
 ![](https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsVsE4Nicq51WdnKEhcaEEYDS4h6jA6JOZ3fnENgFV1B6ianDTqaQ3nzNOjvHUB79ocldrVj4YlkAW6g/640?wx_fmt=png)
 
 **总第 573** **篇**
@@ -20,13 +23,13 @@ MJDK 是基于 OpenJDK 构建的美团 JDK 发行版。本文主要介绍  MJDK
 *   [3.2 MJDK 优化方案](https://editor.mdnice.com/?outId=964da98d5d134c8fba81c7525ceafa98)
     
 
-## 1 前言
+## 0.1. 前言
 
 数据压缩技术 [1] 因可有效降低数据存储及传输成本，在计算机领域有非常广泛的应用（包括网络传输、文件传输、数据库、操作系统等场景）。主流压缩技术按其原理可划分为无损压缩 [2]、有损压缩 [3] 两类，工作中我们最常用的压缩工具 zip 和 gzip ，压缩函数库 zlib，都是无损压缩技术的应用。Java 应用中对压缩库的使用包括：处理 HTTP 请求时对 body 的压缩 / 解压缩操作、使用消息队列服务时对大消息体（如 > 1M）的压缩 / 解压缩、数据库写入前及读取后对大字段的压缩 / 解压缩操作等。常见于监控、广告等涉及大数据传输 / 存储的业务场景。
 
 美团基础研发平台曾经开发过一种基于 Intel 的 isa-l 库优化的 gzip 压缩工具及 zlib[4] 压缩库（又称：mzlib[5] 库），优化后的压缩速度可提升 10 倍，解压缩速度能提升 2 倍，并已在镜像分发、图片处理等场景长期稳定使用。遗憾的是，受限于 JDK[6] 对压缩库调用的底层设计，公司 Java8 服务一直无法使用优化后的 mzlib 库，也无法享受压缩 / 解压缩速率提升带来的收益。为了充分发挥 mzlib 的性能优势为业务赋能，在 MJDK 的最新版本中，我们改造并集成了 mzlib 库，完成了 JDK 中 java.util.zip.* 原生类库的优化，可实现在保障 API 及压缩格式兼容性的前提下，将内存数据压缩速率提升 5-10 倍的效果。本文主要介绍该特性的技术原理，希望相关的经验给大家带来一些启发或者帮助。
 
-## 2 数据压缩技术
+## 0.2. 数据压缩技术
 
 计算机领域的数据压缩技术的发展大致可分为以下三个阶段：
 
@@ -49,11 +52,11 @@ MJDK 是基于 OpenJDK 构建的美团 JDK 发行版。本文主要介绍  MJDK
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/hEx03cFgUsV8H0Xs1NeyCicpKWKdGNaWAEYC4S9wPHeSujuACDLN2GZib6icuwWP7jFO0thicEVtz9icblGUfMbaMyQ/640?wx_fmt=png)
 
-## 3 压缩技术在 Java 中的应用及优化思路
+## 0.3. 压缩技术在 Java 中的应用及优化思路
 
 前面我们介绍了压缩技术的基础知识，本章节主要介绍 MJDK8_mzlib 版本实现压缩速率 5 倍提升的技术原理。分两部分进行阐述：第一部分，介绍原生 JDK 中压缩 / 解压缩 API 的底层原理；第二部分，分享 MJDK 的优化思路。
 
-### | 3.1 Java 语言中压缩 / 解压缩 API 实现原理
+### 0.3.1. | 3.1 Java 语言中压缩 / 解压缩 API 实现原理
 
 Java 语言中，我们可以使用 JDK 原生压缩类库（java.util.zip.*）或第三方 Jar 包提供的压缩类库两种方式来实现数据压缩 / 解压缩，其底层原理是通过 JNI (Java Native Interface) 机制，调用 JDK 源码或第三方 Jar 包中提供的共享库函数。详细对比如下：
 
@@ -195,11 +198,11 @@ Silesia corpus 测试集说明
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/hEx03cFgUsVI6sOUMabM8cUP2s4bXvHlyjIFHqIuxsCGR1vEPUXYpBbXdYgLtQCnDG0e4OjM6GiadCHdNbLaAhg/640?wx_fmt=png)
 
-### | 3.2 MJDK 优化方案
+### 0.3.2. | 3.2 MJDK 优化方案
 
 通过 3.1 章节，我们知道 Java 原生的 java.util.zip.* 类库中的数据压缩 / 解压缩能力最终是调用 zlib 库实现的，因此 JDK 的压缩性能提升问题就可转换为对 JDK 使用的 zlib 库的优化。
 
-#### 3.2.1 优化思路
+#### 0.3.2.1. 优化思路
 
 除原生 zlib 外，同样使用 deflate 算法的压缩库有 [Intel ISA-L](https://github.com/intel/isa-l)、[Intel IPP](https://www.intel.com/content/www/us/en/developer/tools/oneapi/ipp.html)、[Zopfli](https://github.com/google/zopfli)，直接基于 zlib 源码优化的项目有 [zlib-cloudflare](https://aws.amazon.com/cn/blogs/opensource/improving-zlib-cloudflare-and-comparing-performance-with-other-zlib-forks/)，它们与 zlib 间的对比如下：
 
@@ -217,7 +220,7 @@ Silesia corpus 测试集说明
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/hEx03cFgUsVI6sOUMabM8cUP2s4bXvHl7qic6EjoVq2MRXEfQHs7P2CrUuOibDRHrDiasLJM1xJaNuP3ib6IZwlnHg/640?wx_fmt=png)
 
-#### 3.2.2 优化效果
+#### 0.3.2.2. 优化效果
 
 **测试说明**
 
@@ -239,11 +242,11 @@ Silesia corpus 测试集说明
 
 目前，美团内部的文档协同服务已使用该 MJDK 版本，进行用户协同编辑记录数据（> 6M）的压缩存储，验证了该功能在线上的稳定运行，压缩性能提升在 5 倍以上。
 
-## 4 本文作者
+## 0.4. 本文作者
 
 艳梅，来自美团 / 基础研发平台。
 
-## 5 参考文献
+## 0.5. 参考文献
 
 *   [1] [Comparison of Brotli, Deflate, Zopfli, LZMA, LZHAM and Bzip2 Compression Algorithms](http://www.gstatic.com/b/brotlidocs/brotli-2015-09-22.pdf)
     

@@ -1,40 +1,27 @@
+---
+create: 2023-11-13T00:45:00
+---
 # 
 
 ## 导读
 
 分页查询在数据库中是一种很常见的应用场景，一般都可以使用 limit 语句快速实现。但是随着表数据的增长，limit 查询性能也会越来越慢。
 
-  
-
-  
 
 **01** 
 
 **系统介绍和问题描述**
 
-  
-
-  
 
 在今年的敏捷团队建设中，我通过 Suite 执行器实现了一键自动化单元测试。Juint 除了 Suite 执行器还有哪些执行器呢？由此我的 Runner 探索之旅开始了！
 
 如何在 Mysql 中实现上亿数据的遍历查询？先来介绍一下系统主角：关注系统，主要是维护京东用户和业务对象之前的关注关系；并对外提供各种关系查询，比如查询用户的关注商品或店铺列表，查询用户是否关注了某个商品或店铺等。但是最近接到了一个新需求，要求提供查询关注对象的粉丝列表接口功能。该功能的难点就是关注对象的粉丝数量过多，不少店铺的粉丝数量都是千万级别，并且有些大 V 粉丝数量能够达到上亿级别。而这些粉丝列表数据目前全都存储在 Mysql 库中，然后通过业务对象 ID 进行分库分表，所有的粉丝列表数据分布在 16 个分片的 256 张表中。同时为了方便查询粉丝列表，同一个业务对象的所有粉丝都会路由到同一张表中，每个表的数据量都能够达到 2 亿 +。
 
-  
-
-  
-
 **02** 
 
- 
 
 # **解决问题的思路和方法**
 
- 
-
-  
-
-  
 
 理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目标页面展示到屏幕。
 
@@ -83,15 +70,9 @@ select id,biz_content,pin FROM follow_fans_1 where biz_content = #{bizContent} a
 ```
 
 *   方案优点：避免了数据量变大时，页码查询深入的性能下降问题；经过接口压测，千万级数据量时，前 N-1 页查询耗时可以控制在几十毫秒内。
-    
 *   方案缺点：只能支持按照页码顺序查询，不支持跳页，而且仅能保证前 N-1 页的查询性能；如果最后一页的表中行数量不满 10 条时，引擎不知道何时终止查询，只能遍历全表，所以当表中数据量很大时，还是会出现超时情况。
-    
 
 **2.3  区间限制法**
-
-  
-
-‍‍
 
 标签记录法最后一页查询超时就是因为不知道何时终止查询，所以可以提供一个区间限制范围来告诉引擎查询到此结束。
 
@@ -132,19 +113,11 @@ select min(id) from follow_fans_1 where biz_content = #{bizContent}
 
 # **对 SQL 优化治理的思考**
 
- 
-
-  
-
-  
-
 理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目标页面展示到屏幕。
 
 通过对以上三种方案的探索实践，可以发现每一种方案都有自己的优缺点和它的适用场景，但不能脱离实际业务场景去谈方案的好坏。所以要结合实际的业务环境以及表中数据量的大小去综合考虑、权衡利弊，然后找到更适合的技术方案。以下是总结的几条 SQL 优化建议：
 
 **3.1  查询条件一定要有索引**
-
-  
 
 索引主要分为两大类，聚簇索引和非聚簇索引，可以通过 explain 查看 sql 执行计划判断查询是否使用了索引。
 
@@ -180,64 +153,13 @@ select min(id) from follow_fans_1 where biz_content = #{bizContent}
 
 回表查询就是先定位主键值，在根据主键值定位行记录，需要扫描两遍索引。解决方案：只需要在一颗索引树上能够获取 SQL 所需要的所有列数据，则无需回表查询，速度更快。可以将要查询的字段，建立到联合索引里去，这就是索引覆盖。查询 sql 在进行 explain 解析时，Extra 字段为 Using Index 时，则触发索引覆盖。没有触发索引覆盖，发生了回表查询时，Extra 字段为 Using Index condition。
 
-  
-
-  
-
 **04** 
 
  **总结** 
 
-  
-
-  
 
 理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目
 
 本文通过结合实际系统案例，详细介绍了分页查询的优化历程，一步步从最简单的 limit 分页实现，到最后满足千万级表数据的分页查询探索实现，并介绍每种技术方案的优缺点，希望可以帮助读者去选择适合自己的技术方案。
-
-![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7rUiaXg1tNeElo6pVnvsQhGsVMSiaLn7bT6icNKw0caXsV9icVXUbRQ3S7A/640?wx_fmt=png)
-
   
 
-![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7rUiaXg1tNeElo6pVnvsQhGsVMSiaLn7bT6icNKw0caXsV9icVXUbRQ3S7A/640?wx_fmt=png)
-
-  
-
-**推荐阅读**
-
-[搜狗输入法双击输入框崩溃问题](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493193&idx=1&sn=0f7bafa76d814531920d83a4dbb757fb&chksm=fbf456a6cc83dfb07c0449dff5c63f25170aab80e7167f6fdf042e9aa0ae6ca237052b405adf&scene=21#wechat_redirect)  
-
-[LangChain：打造自己的 LLM 应用](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493179&idx=1&sn=b389c412064c2a9d8e64f9d9f32fef60&chksm=fbf456d4cc83dfc2cecfa62f9331f3b2fa75d2081fd47961600fd0605aadff80a2dd5e0660af&scene=21#wechat_redirect)  
-
-[移动端 APP 组件化架构实践](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493160&idx=1&sn=446b1eab80c65fb072c04fdde2aa732e&chksm=fbf456c7cc83dfd199cf7d63f2a16de695c379f6672b19af7f95e7b271ed3baae53bcd20f7ad&scene=21#wechat_redirect)  
-
-[JaCoCo 助您毁灭线上僵尸代码](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493149&idx=1&sn=1b2e9b400691bce5e61c148a29170b7c&chksm=fbf456f2cc83dfe4d8e40b2e8ebe9032450b4e36218caf1cb4cf935da2e052428c81c132d057&scene=21#wechat_redirect)
-
-![图片](https://mmbiz.qpic.cn/mmbiz_gif/RQv8vncPm1VL0uNianzSL1R3qHJCic0U7JlfFONOvicc7sVBAHKPC51fqfgaYkzibqkJzaD20NricYham9rhBuxvyqA/640?wx_fmt=gif)
-
-**求分享**
-
-![图片](https://mmbiz.qpic.cn/mmbiz_gif/RQv8vncPm1VL0uNianzSL1R3qHJCic0U7JlfFONOvicc7sVBAHKPC51fqfgaYkzibqkJzaD20NricYham9rhBuxvyqA/640?wx_fmt=gif)
-
-**求点赞**
-
-![图片](https://mmbiz.qpic.cn/mmbiz_gif/RQv8vncPm1VL0uNianzSL1R3qHJCic0U7JlfFONOvicc7sVBAHKPC51fqfgaYkzibqkJzaD20NricYham9rhBuxvyqA/640?wx_fmt=gif)
-
-**求在看**
-
-‍
-
-打造 SAAS 化服务的会员徽章体系，可以作为标准的产品化方案统一对外输出。结合现有平台的通用能力，实现会员行为全路径覆盖，并能结合企业自身业务特点，规划相应的会员精准营销活动，提升会员忠诚度和业务的持续增长。
-
-▪
-
-底层能力：维护用户基础数据、行为数据建模、用户画像分析、精准营销策略的制定
-
-▪功能支撑：会员成长体系、等级计算策略、权益体系、营销底层能力支持
-
-▪用户活跃：会员关怀、用户触达、活跃活动、业务线交叉获客、拉新促活
-
-‍
-
-‍
