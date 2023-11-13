@@ -51,8 +51,8 @@ Search 接口在使用 SearchAfter 后，相比 size+from 的翻页方式，翻�
 
 创建 SearchContex 后，如果是 scroll 请求，则在 searchContext 中设置 ScrollContext。ScrollContext 中主要包含 context 的有效时间、上一次访问了哪个文档 lastEmittedDoc（即游标位置）等信息。具体如下：
 
-```
-private Map<String, Object> context = null;
+```java
+    private Map<String, Object> context = null;
     public long totalHits = -1;
     public float maxScore;
     public ScoreDoc lastEmittedDoc;
@@ -102,7 +102,7 @@ fetch 结束的时候，需要将本次请求发给用户的最后一个元素�
 1.  在协调节点上，将 scroll_id 进行 parse，得到本次请求的目标 shard 和对应 shard 上的 searchContext 的 id，将这两个参数通过 InternalScrollSearchRequest 请求转发到 data 节点上。
 2.  在 data 节点上，从内存中获取到对应的 searchContext，即获取到了用户原来的 query 和上次游标信息 lastEmittedDoc。然后再执行 QueryPhase.execute 时，会将 query 进行改写，如下代码所示。改写后将 lastEmittedDoc 放入 boolQuery 的 filter 中，这就是为什么 scroll 请求可以知道下次请求的数据应该从哪里开始。并且这个 MinDocQuery 的性能是比传统的 rangeQuery 要快很多的，它仅仅匹配 >=after.doc + 1 的文档，可以直接跳过很多无效的扫描。
 
-```
+```java
 final ScoreDoc after = scrollContext.lastEmittedDoc;
 if (after != null) {
     BooleanQuery bq = new BooleanQuery.Builder()
@@ -125,9 +125,9 @@ searchContext.trackTotalHits(false);
 
 SearchScroll 天然支持基于 shard 的并发查询，而 Search 接口想要支持并发查询，需要将 query 进行拆分，虽然也能进行并发查询，但是其背后浪费的集群资源相对较多。  
   
-首先从 API 使用方式上介绍 SearchScroll 的并发，我们用一个简单的例子做说明。Slice 参数是 SearchScroll 控制并发切分的参数，id、max 是其最主要的两个参数，id 取值为 [0,max)，max 取值没有特别的限制，一般不超过 1024，但是推荐 max 取值为小于等于索引 shard 的个数。id、max 两个参数决定了后续在 data 节点如何检索数据。
+首先从 API 使用方式上介绍 SearchScroll 的并发，我们用一个简单的例子做说明。Slice 参数是 SearchScroll 控制并发切分的参数，id、max 是其最主要的两个参数，id 取值为 \[0, max)，max 取值没有特别的限制，一般不超过 1024，但是推荐 max 取值为小于等于索引 shard 的个数。id、max 两个参数决定了后续在 data 节点如何检索数据。
 
-```
+```bash
 GET /bar/_search?scroll=1m
 {
     "slice": {
@@ -239,7 +239,7 @@ SearchScroll 多并发场景下，请求刚到协调节点上，会查询出每�
   
 默认情况下，采用的是随机策略，将所有副本打乱随机拿出一个副本即可。默认的随机策略能够将请求均匀地打散在每一个 shard 上。假如我们的 data 节点处理能力不一致，或者由于一些原因造成某些机器负载较高，那么采用随机策略可能不太适用。Elasticsearch 提供了一个自适应的选择策略，其能够根据当前的每个节点的状态来选择最佳的副本。参考因素有如下源码列出的，包括节点的 client 数、队列长度、响应时间、服务时间等。因此，通过 "cluster.routing.use_adaptive_replica_selection" 参数将副本自适应选择策略打开，能够发挥每一台机器的能力，请求延时能够有效降低，每台机器的负载能够更加均匀。
 
-```
+```java
 ComputedNodeStats(int clientNum, NodeStatistics nodeStats) {
     this(nodeStats.nodeId, clientNum,(int) nodeStats.queueSize.getAverage(), nodeStats.responseTime.getAverage(), nodeStats.serviceTime);
 }

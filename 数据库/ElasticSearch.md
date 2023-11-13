@@ -114,7 +114,7 @@ ES 默认被配置为使用单播发现，以防止节点无意中加入集群�
 
 所以如果某个节点既是数据节点又是主节点，那么主节点产生影响时可能会对从而对整个集群的状态产生影响。因此为了提高集群的健康性，我们应该对 Elasticsearch 集群中的节点做好角色上的划分和隔离。可以使用几个配置较低的机器群作为候选主节点群。
 
-主节点和其他节点之间通过 Ping 的方式互检查，主节点负责 Ping 所有其他节点，判断是否有节点已经挂掉。其他节点也通过 Ping 的方式判断主节点是否处于可用状态。当节点故障后，会将节点移出集群，并自动在其他节点上恢复故障节点上的分片。主分片故障时会提升其中一个副本分片为主分片。其他节点也会探活主节点，当主节点故障后，会触发内置的类 Raft 协议选主，并通过设置最少候选主节点数，避免集群脑裂。
+主节点和其他节点之间通过 Ping 的方式互检查，主节点负责 Ping 所有其他节点，判断是否有节点已经挂掉。其他节点也通过 Ping 的方式判断主节点是否处于可用状态。当节点故障后，会被主节点移出集群，并自动在其他节点上恢复故障节点上的分片。主分片故障时会提升其中一个副本分片为主分片。其他节点也会探活主节点，当主节点故障后，会触发内置的类 Raft 协议选主，并通过设置最少候选主节点数，避免集群脑裂。
 
 ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110128550.png)
 
@@ -164,12 +164,8 @@ Zen Discovery 流程中，master 候选人需要等待多数派节点进行 join
 
 那么什么场景下会投两票呢？比如 NodeB 投 NodeA 一票，但是 NodeA 迟迟不成为 Master，NodeB 等不及了发起了下一轮选主，这时候发现集群里多了个 Node0，Node0 优先级比 NodeA 还高，那 NodeB 肯定就改投 Node0 了。假设 Node0 和 NodeA 都处在等选票的环节，那显然这时候 NodeB 其实发挥了两票的作用，而且投给了不同的人。
 
-```ad-question
-title: 如何解决多次投票的问题呢？
-
-在raft 算法中引入了选举周期 (term) 的概念，保证了每个选举周期中每个成员只能投一票，如果需要再投就会进入下一个选举周期，term+1。假如最后出现两个节点都认为自己是 master，那么肯定有一个 term 要大于另一个的 term，而且因为两个 term 都收集到了多数派的选票，所以多数节点的 term 是较大的那个，保证了 term 小的 master 不可能 commit 任何状态变更(commit 需要多数派节点先持久化日志成功，由于有 term 检测，不可能达到多数派持久化条件)。这就保证了集群的状态变更总是一致的。
-
-```
+> [!question] 如何解决多次投票的问题呢？
+> 在 raft 算法中引入了选举周期 (term) 的概念，保证了每个选举周期中每个成员只能投一票，如果需要再投就会进入下一个选举周期，term+1。假如最后出现两个节点都认为自己是 master，那么肯定有一个 term 要大于另一个的 term，而且因为两个 term 都收集到了多数派的选票，所以多数节点的 term 是较大的那个，保证了 term 小的 master 不可能 commit 任何状态变更(commit 需要多数派节点先持久化日志成功，由于有 term 检测，不可能达到多数派持久化条件)。这就保证了集群的状态变更总是一致的。
 
 “脑裂”问题可能有以下几个原因造成：
 
@@ -196,11 +192,9 @@ title: 如何解决多次投票的问题呢？
 
 节点监控主要用于检测 master 节点及其他节点的状态，可以理解为类似心跳的机制。有两类错误检测，一类是 Master 定期检测集群内其他的 Node，另一类是集群内其他的 Node 定期检测当前集群的 Master。检查的方法就是定期执行 ping 请求。
 
-```ad-quote
-title: ES 的错误检测
-
-There are two fault detection processes running. The first is by the master, to ping all the other nodes in the cluster and verify that they are alive. And on the other end, each node pings to master to verify if its still alive or an election process needs to be initiated.
-```
+> [!quote] ES 的错误检测
+> 
+> There are two fault detection processes running. The first is by the master, to ping all the other nodes in the cluster and verify that they are alive. And on the other end, each node pings to master to verify if its still alive or an election process needs to be initiated.
 
 检测的方式如下：
 1. Master 节点检测其他节点
@@ -249,9 +243,9 @@ PUT _cluster/settings
 
 要管理集群，那么 Master 节点必然需要以某种方式通知其他节点，从而让其他节点执行相应的动作，来完成某些事情。比如建立一个新的 Index 就需要将其 Shard 分配在某些节点上，在这些节点上需要创建出对应 Shard 的目录，并在内存中创建对应 Shard 的一些结构等。
 
-在 ES 中，Master 节点是通过发布 ClusterState 来通知其他节点的。Master 会将新的 ClusterState 发布给其他的所有节点，当节点收到新的 ClusterState 后，会把新的 ClusterState 发给相关的各个模块，各个模块根据新的 ClusterState 判断是否要做什么事情，比如创建 Shard 等。即这是一种通过 Meta 数据来驱动各个模块工作的方式。
+在 ES 中，Master 节点是通过发布 `ClusterState` 来通知其他节点的。Master 会将新的 ClusterState 发布给其他的所有节点，当节点收到新的 ClusterState 后，会把新的 ClusterState 发给相关的各个模块，各个模块根据新的 ClusterState 判断是否要做什么事情，比如创建 Shard 等。即这是一种通过 Meta 数据来驱动各个模块工作的方式。
 
-在 Master 进行 Meta 变更并通知所有节点的过程中，需要考虑 Meta 变更的一致性问题，假如这个过程中 Master 挂掉了，那么可能只有部分节点按照新的 Meta 执行了操作。当选举出新的 Master 后，需要保证所有节点都要按照最新的 Meta 执行操作，不能回退，因为已经有节点按照新的 Meta 执行操作了，再回退就会导致不一致。
+在 Master 进行 Meta 变更并通知所有节点的过程中，需要考虑 Meta 变更的一致性问题，假如这个过程中 Master 挂掉了，那么可能只有部分节点按照新的 Meta 执行了操作。当选举出新的 Master 后，**需要保证所有节点都要按照最新的 Meta 执行操作**，不能回退，因为已经有节点按照新的 Meta 执行操作了，再回退就会导致不一致。
 
 ES 中只要新 Meta 在一个节点上被 commit，那么就会开始执行相应的操作。因此我们要保证一旦新 Meta 在某个节点上被 commit，此后无论谁是 master，都要基于这个 commit 来产生更新的 meta，否则就可能产生不一致。
 
@@ -288,11 +282,11 @@ ES 中的 meta 数据只能由 master 进行更新，并同步给其他节点。
 
 ### 1.3.8. 节点数据的恢复
 
-ES 中每个写操作都会分配两个值，Term 和 SequenceNumber。Term 在每次 Primary 变更时都会加 1，类似于 PacificA 论文中的 Configuration Version。SequenceNumber 在每次操作后加 1，类似于 PacificA 论文中的 Serial Number。由于写请求总是发给 Primary，所以 Term 和 SequenceNumber 会由 Primary 分配，在向 Replica 发送同步请求时，会带上这两个值。
+ES 中每个写操作都会分配两个值，`Term` 和 `SequenceNumber`。Term 在每次 Primary 变更时都会加 1，类似于 PacificA 论文中的 `Configuration Version`。`SequenceNumber` 在每次操作后加 1，类似于 PacificA 论文中的 `Serial Number`。由于写请求总是发给 Primary，所以 `Term` 和 `SequenceNumber` 会由 Primary 分配，在向 Replica 发送同步请求时，会带上这两个值。
 
-LocalCheckpoint 代表本 Shard 中所有小于该值的请求都已经处理完毕。GlobalCheckpoint 代表所有小于该值的请求在所有的 Replica 上都处理完毕。GlobalCheckpoint 会由 Primary 进行维护，每个 Replica 会向 Primary 汇报自己的 LocalCheckpoint，Primary 根据这些信息来提升 GlobalCheckpoint。
+`LocalCheckpoint` 代表本 Shard 中所有小于该值的请求都已经处理完毕。`GlobalCheckpoint` 代表所有小于该值的请求在所有的 Replica 上都处理完毕。`GlobalCheckpoint` 会由 Primary 进行维护，每个 Replica 会向 Primary 汇报自己的 `LocalCheckpoint`，Primary 根据这些信息来提升 `GlobalCheckpoint`。
 
-GlobalCheckpoint 是一个全局的安全位置，代表其前面的请求都被所有 Replica 正确处理了，可以应用在节点故障恢复后的数据回补。另一方面，GlobalCheckpoint 也可以用于 Translog 的 GC，因为之前的操作记录可以不保存了。
+`GlobalCheckpoint` 是一个全局的安全位置，代表其前面的请求都被所有 Replica 正确处理了，可以应用在节点故障恢复后的数据回补。另一方面，`GlobalCheckpoint` 也可以用于 `Translog` 的 GC，因为之前的操作记录可以不保存了。
 
 当一个 Replica 故障时，ES 会将其移除，对于故障节点的处理，分为两种情况：
 1. 故障超过一定时间
@@ -304,7 +298,7 @@ GlobalCheckpoint 是一个全局的安全位置，代表其前面的请求都被
     1. 能够保存故障期间所有的操作以及其顺序
     2. 能够知道从哪个点开始同步数据
     
-    第一个条件可以通过保存一定时间的 Translog 实现，第二个条件可以通过 Checkpoint 实现，所以就能够实现快速的故障恢复。这是 SequenceNumber 和 Checkpoint 的第一个重要应用场景。
+    第一个条件可以通过保存一定时间的 Translog 实现，第二个条件可以通过 Checkpoint 实现，所以就能够实现快速的故障恢复。这是 `SequenceNumber` 和 Checkpoint 的第一个重要应用场景。
 
 ## 1.4. 分片
 
@@ -479,16 +473,14 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
         
         这一步中有个问题是，如何保证 Delete-Then-Add 的原子性，怎么避免中间状态时被 Refresh？答案是在开始 Delete 之前，会加一个 Refresh Lock，禁止被 Refresh，只有等 Add 完后释放了 Refresh Lock 后才能被 Refresh，这样就保证了 Delete-Then-Add 的原子性。
         
-        ```ad-info
-        title: Lucene字段写入过程
-        </br>
+        > [!info] Lucene字段写入过程
+        > </br> Lucene 的 UpdateDocument 接口中就只是处理多个 Field，会遍历每个 Field 逐个处理，处理顺序是 invert index，store field，doc values，point dimension。
         
-        Lucene 的 UpdateDocument 接口中就只是处理多个 Field，会遍历每个 Field 逐个处理，处理顺序是 invert index，store field，doc values，point dimension。
-        ```
     6. Write Translog
         写完 Lucene 的 Segment 后，会以 keyvalue 的形式写 TransLog，Key 是_id，Value 是 Doc 内容。当查询的时候，如果请求是 GetDocByID，则可以直接根据_id 从 TransLog 中读取到，满足 NoSQL 场景下的实时性要去。
         
-        需要注意的是，这里**只是写入到内存的 TransLog**，是否 Sync 到磁盘的逻辑还在后面。这一步的最后，会标记当前 SequenceID 已经成功执行，接着会更新当前 Shard 的 LocalCheckPoint。
+        > [!attention] 注意
+        > </br>这里**只是写入到内存的 TransLog**，是否 Sync 到磁盘的逻辑还在后面。这一步的最后，会标记当前 SequenceID 已经成功执行，接着会更新当前 Shard 的 LocalCheckPoint。
     7. Renew Bulk Request
         重新构造 Bulk Request，原因是前面已经将 UpdateRequest 翻译成了 Index 或 Delete 请求，则后续所有 Replica 中只需要执行 Index 或 Delete 请求就可以了，不需要再执行 Update 逻辑，一是保证 Replica 中逻辑更简单，性能更好，二是保证同一个请求在 Primary 和 Replica 中的执行结果一样。
     8. Flush Translog
@@ -496,21 +488,14 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
     9. Send Requests To Replicas
         将刚才构造的新的 Bulk Request 并行发送给多个 Replica，然后等待 Replica 的返回，这里需要等待所有 Replica 返回后（可能有成功，也有可能失败），Primary Node 才会返回用户。如果某个 Replica 失败了，则 Primary 会给 Master 发送一个 Remove Shard 请求，要求 Master 将该 Replica Shard 从可用节点中移除。
         
-        ```ad-info
-        title: 副本写入的限制
+        > [!info] 副本写入的限制
+        > </br> ES 中有一个参数，叫做 wait_for_active_shards，这个参数是 Index 的一个 setting，也可以在请求中带上这个参数。这个参数的含义是，<b>在每次写入前，该 shard 至少具有的 active 副本数</b>。假设我们有一个 Index，其每个 Shard 有 3 个 Replica，加上 Primary 则总共有 4 个副本。如果配置 wait_for_active_shards 为 3，那么允许最多有一个 Replica 挂掉，如果有两个 Replica 挂掉，则 Active 的副本数不足 3，此时不允许写入。
+        > 
+        > 这个参数默认是 1，即只要 Primary 在就可以写入，起不到什么作用。如果配置大于 1，可以起到一种保护的作用，保证写入的数据具有更高的可靠性。但是这个参数只在写入前检查，并不保证数据一定在至少这些个副本上写入成功，所以并不是严格保证了最少写入了多少个副本。
         
-        </br>
-        ES 中有一个参数，叫做 wait_for_active_shards，这个参数是 Index 的一个 setting，也可以在请求中带上这个参数。这个参数的含义是，<b>在每次写入前，该 shard 至少具有的 active 副本数</b>。假设我们有一个 Index，其每个 Shard 有 3 个 Replica，加上 Primary 则总共有 4 个副本。如果配置 wait_for_active_shards 为 3，那么允许最多有一个 Replica 挂掉，如果有两个 Replica 挂掉，则 Active 的副本数不足 3，此时不允许写入。
+        > [!attention]  副本写入失败的后果
+        > </br> 如果一个 Replica 写失败了，Primary 会将这个信息报告给 Master，然后 Master 会在 Meta 中更新这个 Index 的 InSyncAllocations 配置，将这个 Replica 从中移除，移除后它就不再承担读请求。在 Meta 更新到各个 Node 之前，用户可能还会读到这个 Replica 的数据，但是更新了 Meta 之后就不会了。所以这个方案并不是非常的严格，考虑到 ES 本身就是一个近实时系统，数据写入后需要 refresh 才可见，所以一般情况下，在短期内读到旧数据应该也是可接受的。
         
-        这个参数默认是 1，即只要 Primary 在就可以写入，起不到什么作用。如果配置大于 1，可以起到一种保护的作用，保证写入的数据具有更高的可靠性。但是这个参数只在写入前检查，并不保证数据一定在至少这些个副本上写入成功，所以并不是严格保证了最少写入了多少个副本。
-        ```
-        
-        ```ad-warning
-        title: 副本写入失败的后果
-        </br>
-        
-        如果一个 Replica 写失败了，Primary 会将这个信息报告给 Master，然后 Master 会在 Meta 中更新这个 Index 的 InSyncAllocations 配置，将这个 Replica 从中移除，移除后它就不再承担读请求。在 Meta 更新到各个 Node 之前，用户可能还会读到这个 Replica 的数据，但是更新了 Meta 之后就不会了。所以这个方案并不是非常的严格，考虑到 ES 本身就是一个近实时系统，数据写入后需要 refresh 才可见，所以一般情况下，在短期内读到旧数据应该也是可接受的。
-        ```
     11. Receive Response From Replicas
         Replica 中请求都处理完后，会更新 Primary Node 的 LocalCheckPoint。
 3. Replica Node 执行过程
@@ -547,17 +532,15 @@ Elasticsearch 中每个 Shard 都会有多个 Replica，主要是为了保证数
 
 ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130052812.png)
 
-当查询的时候，从三个节点中根据 Request 中的 preference 参数选择一个节点查询。preference 可以设置 \_local，\_primary，\_replica 以及其他选项。如果选择了 primary，则每次查询都是直接查询 Primary，可以保证每次查询都是最新的。如果设置了其他参数，那么可能会查询到 R1 或者 R2，这时候就有可能查询不到最新的数据。
+当查询的时候，从三个节点中根据 Request 中的 preference 参数选择一个节点查询。preference 可以设置 `_local`，`_primary`，`_replica` 以及其他选项。如果选择了 primary，则每次查询都是直接查询 Primary，可以保证每次查询都是最新的。如果设置了其他参数，那么可能会查询到 R1 或者 R2，这时候就有可能查询不到最新的数据。
 
 Elasticsearch 中通过分区实现分布式，数据写入的时候根据 \_routing 规则将数据写入某一个 Shard 中，这样就能将海量数据分布在多个 Shard 以及多台机器上，以达到分布式的目标。但这样就导致了查询的时候，潜在数据会在当前 index 的所有的 Shard 中，所以 Elasticsearch 查询的时候需要查询所有 Shard，同一个 Shard 的 Primary 和 Replica 选择一个即可，查询请求会分发给所有 Shard，每个 Shard 中都是一个独立的查询引擎，比如需要返回 Top 10 的结果，那么每个 Shard 都会查询并且返回 Top 10 的结果，然后在 Client Node 里面会接收所有 Shard 的结果，然后通过优先级队列二次排序，选择出 Top 10 的结果返回给用户。
 
 ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130053222.png)
 
-```ad-warning
-title: 请求膨胀问题
-
-这里有一个问题就是请求膨胀，用户的一个搜索请求在 Elasticsearch 内部会变成 Shard 个请求。一种优化方式是虽然会产生 Shard 个数量的请求，但是这个 Shard 个数不一定要是当前 Index 中的 Shard 个数，只要是当前查询相关的 Shard 即可，这个需要基于业务和请求内容优化，通过这种方式可以优化请求膨胀数。
-```
+> [!warning]  请求膨胀问题
+>
+>这里有一个问题就是请求膨胀，用户的一个搜索请求在 Elasticsearch 内部会变成 Shard 个请求。一种优化方式是虽然会产生 Shard 个数量的请求，但是这个 Shard 个数不一定要是当前 Index 中的 Shard 个数，只要是当前查询相关的 Shard 即可，这个需要基于业务和请求内容优化，通过这种方式可以优化请求膨胀数。
 
 ##### 2.3.1.5.2. 节点内数据的获取
 
@@ -573,19 +556,17 @@ Elasticsearch 中的查询主要分为两类：Get 请求：通过 ID 查询特�
 
 ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130059187.png)
 
-所有的搜索系统一般都是两阶段查询，第一阶段查询到匹配的 DocID，第二阶段再查询 DocID 对应的完整文档，这种在 Elasticsearch 中称为 query_then_fetch，还有一种是一阶段查询的时候就返回完整 Doc，在 Elasticsearch 中称作 query_and_fetch，一般第二种适用于只需要查询一个 Shard 的请求。
+所有的搜索系统一般都是两阶段查询，第一阶段查询到匹配的 DocID，第二阶段再查询 DocID 对应的完整文档，这种在 Elasticsearch 中称为 `query_then_fetch`，还有一种是一阶段查询的时候就返回完整 Doc，在 Elasticsearch 中称作 `query_and_fetch`，一般第二种适用于只需要查询一个 Shard 的请求。
 
-```ad-info
-title: query_then_fetch 与 query_and_fetch
+> [!info] query_then_fetch 与 query_and_fetch
+> 
+> 在 query_then_fetch 模式下，每个分片返回的是部分结果，这些部分结果包含了匹配查询条件的文档的相关信息（例如文档的 ID、评分等），但不包含完整的文档数据。然后，协调节点会收集所有分片返回的部分结果，并进行合并、排序、去重等操作，以生成最终的搜索结果，最终的搜索结果会包含完整的文档数据。
+> 
+> 对于大型索引或查询结果集较大的情况，query_then_fetch 模式可以减少每个分片返回的数据量，减轻网络传输和内存消耗。而 query_and_fetch 模式则立即从每个分片获取完整的文档数据，可能导致网络开销和内存消耗较高。
 
-在 query_then_fetch 模式下，每个分片返回的是部分结果，这些部分结果包含了匹配查询条件的文档的相关信息（例如文档的 ID、评分等），但不包含完整的文档数据。然后，协调节点会收集所有分片返回的部分结果，并进行合并、排序、去重等操作，以生成最终的搜索结果，最终的搜索结果会包含完整的文档数据。
+除了一阶段，两阶段外，还有一种三阶段查询的情况。搜索里面有一种算分逻辑是根据 TF（Term Frequency）和 DF（Document Frequency）计算基础分，但是 Elasticsearch 中查询的时候，是在每个 Shard 中独立查询的，每个 Shard 中的 TF 和 DF 也是独立的，虽然在写入的时候通过 `_routing` 保证 Doc 分布均匀，但是没法保证 TF 和 DF 均匀，那么就有会导致局部的 TF 和 DF 不准的情况出现，这个时候基于 TF、DF 的算分就不准。
 
-对于大型索引或查询结果集较大的情况，query_then_fetch 模式可以减少每个分片返回的数据量，减轻网络传输和内存消耗。而 query_and_fetch 模式则立即从每个分片获取完整的文档数据，可能导致网络开销和内存消耗较高。
-```
-
-除了一阶段，两阶段外，还有一种三阶段查询的情况。搜索里面有一种算分逻辑是根据 TF（Term Frequency）和 DF（Document Frequency）计算基础分，但是 Elasticsearch 中查询的时候，是在每个 Shard 中独立查询的，每个 Shard 中的 TF 和 DF 也是独立的，虽然在写入的时候通过_routing 保证 Doc 分布均匀，但是没法保证 TF 和 DF 均匀，那么就有会导致局部的 TF 和 DF 不准的情况出现，这个时候基于 TF、DF 的算分就不准。
-
-为了解决这个问题，Elasticsearch 中引入了 DFS 查询，比如 DFS_query_then_fetch，会先收集所有 Shard 中的 TF 和 DF 值，然后将这些值带入请求中，再次执行 query_then_fetch，这样算分的时候 TF 和 DF 就是准确的，类似的有 DFS_query_and_fetch。这种查询的优势是算分更加精准，但是效率会变差。另一种选择是用 BM25 代替 TF/DF 模型。
+为了解决这个问题，Elasticsearch 中引入了 DFS 查询，比如 `DFS_query_then_fetch`，会先收集所有 Shard 中的 TF 和 DF 值，然后将这些值带入请求中，再次执行 `query_then_fetch`，这样算分的时候 TF 和 DF 就是准确的，类似的有 `DFS_query_and_fetch`。这种查询的优势是算分更加精准，但是效率会变差。另一种选择是用 BM25 代替 TF/DF 模型。
 
 ### 2.3.2. 延迟写策略
 
