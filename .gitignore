@@ -22,3 +22,10 @@ bin-release/
 .DS_Store
 学习计划.md
 /Excalidraw/fonts/*
+
+
+
+
+# Ignore Smart Connections folder
+.smart-connections
+/smart-chats
