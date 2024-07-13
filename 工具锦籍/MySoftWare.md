@@ -38,3 +38,11 @@
 - Typora
 - WPS
 - XShell
+
+# 禁止自启动
+
+todesk 关闭后台服务：
+
+```bash
+sudo launchctl load -w com.youqu.todesk.service.plist
+```
