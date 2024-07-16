@@ -23,7 +23,6 @@ create: 2023-11-13 00:44
 *   江湖派：重实践，重个人领悟，以思想体系见长
     
 *   学院派：重规范，重系统训练，以方法体系见长
-    
 
 在技术社区里，热闹程度可谓冰火两重天，江湖一派热热闹闹，追随者众，耳濡目染，无师自通；学院一派则是养在深闺人未识，门可罗雀，亟待挖掘。
 
@@ -42,7 +41,6 @@ create: 2023-11-13 00:44
 *   语言论：基于模型的统一语言。
     
 *   建模论：模型驱动的领域建模。
-    
 
 这个划分，其实体现了本人长期的实践体悟和理论思考，并不是随意为之。王阳明晚年将其毕生所学，浓缩为四句话：
 
@@ -53,7 +51,6 @@ create: 2023-11-13 00:44
 *   知善知恶是良知。
     
 *   为善去恶是格物。
-    
 
 本人将 DDD 概括为四论，不是要盖棺定论，只是希望去掉枝叶保留主干，避免 DDD 逐渐沦为一种坊间流传的野狐禅。
 
@@ -62,7 +59,6 @@ create: 2023-11-13 00:44
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbChZjeaTFlvkEfbEwMcK05WqicAtql7JOpjRanibQ14I4ZrZWrzCLkjkow/640?wx_fmt=png)
 
 *   ### 复杂度
-    
 
 《没有银弹：软件工程的本质性与附属性工作》（No Silver Bullet—Essence and Accidents of Software Engineering），1986 年发表一篇关于软件工程的经典论文，打开了复杂度这个潘多拉魔盒。论文中 brooks 把失控的、复杂的软件项目比作中世纪的狼人，只有银弹才能杀死它。但是由于软件开发的本质复杂性，使得真正的银弹并不存在，即没有任何技术或管理上的进展， 能够独立地许诺十年内使软件系统项目生产率、 可靠性或简洁性获得数量级上的进步。
 
@@ -75,14 +71,12 @@ create: 2023-11-13 00:44
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCRUw173CdJoosrpGtwEl4VhSl3k5UqCHIzR2OoScngMPUugcq4wzTPA/640?wx_fmt=png)
 
 *   ### 应对之道
-    
 
 从我看过的几本经典书籍来看，软件核心复杂性的应对之道，不外乎就是：抓住总体，理清局部。
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCKmZgtlHGmaHAzpc9uFZvycKumNSPkjuCRydZMl1QT3bdoppC7TwHOA/640?wx_fmt=png)
 
 *   ### DDD 与复杂度
-    
 
 DDD 提供了一些应对复杂度的具体方法：
 
@@ -91,28 +85,24 @@ DDD 提供了一些应对复杂度的具体方法：
 *   通过限界上下文将一个大系统切分为若干高内聚低耦合的子领域。
     
 *   通过领域模型对业务领域的知识进行抽象。
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCjFFUs0yrW4EuSRzLTtr24Dzzk1h5OFHSHnshQR6aGqBbHUoEXh9UZA/640?wx_fmt=png)
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCwo92tdESQiaS957POyLLaia0ZFckZP669l9WdjOMefb6bbE3TJGWSGEA/640?wx_fmt=png)
 
 *   ### Domain-Driven Design 还是 Model-Driven Design ？
-    
 
 在《领域驱动设计 · 软件核心复杂性应对之道》这本书里，对什么是 “领域”，只有简单的一句话：“每个软件程序是为了执行用户的某项活动，或是满足用户的某种需求。这些用户应用软件的问题区域就是软件的领域。” 除此之外，讲得更多的是“模型” 或者“领域模型”，纵观全书，“Model-Driven Design” 是其核心概念之一。某种程度上，把 “领域驱动设计” 改为 “模型驱动设计”，一点问题都没有，甚至“模型驱动设计” 更能体现整本书的精髓。
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCwXsZGqhHmdmQRoWonmIf1NuicZCvrEcLcQW0NX70dCfG88yVfdL5OSg/640?wx_fmt=jpeg)
 
 *   ### 领域划分与领域模型
-    
 
 总的来说，“领域”这个词可能承载了太多含义。领域既可以表示整个业务系统，也可以表示其中的某个核心域或者支撑子域。在本书中，我将尽可能地区分这些概念。当谈及到业务系统中的某个方面时，我会使用诸如 “核心域” 或者 “子域” 以示区别。 
 
 由于 “领域模型” 包含了 “领域” 这个词，我们可能会认为应该为整个业务系统创建一个单一的、内聚的、全功能式的模型。然而，这并不是我们使用 DDD 的目标。正好相反，在 DDD 中，一个领域被分为若干子域，领域模型在限界上下文中完成开发。事实上，在开发一个领域模型时，我们关注的通常只是这个业务系统的某个方面。试图创建一个全功能的领域模型是非常困难的，并且很容易导致失败。
 
 *   ### 关于 DDD 的一个野狐禅
-    
 
 本人接触领域驱动大概已有 10 年时间，直到近期才听同事说起过 “贫血模型”，然后在网上一查，原来是 martin fowler 在 2003 年发的一个 blog：AnemicDomainModel。其本意只是指出，很多人其实误用了领域模型，把领域模型的 Model 直接等同于 MVC 的 Model，导致 Model 里只有数据没有逻辑，fowler 给这种情形取了一个名字叫 “Anemic Domain Model”。
 
@@ -125,7 +115,6 @@ Fowler 把这种误用概括为一种反模式 AnemicDomainModel，在流传过�
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCB7Eh9KjpbQdgFlrYsTDx3zI6U6AEQNogCZpTc3OePGniaia3SaqjHCuQ/640?wx_fmt=png)
 
 *   ### 战略建模与战术建模的划分
-    
 
 DDD 相关经典著作，一般都将 DDD 划分为战略设计和战术设计两部分。《领域驱动设计 · 软件核心复杂性应对之道》和《实现领域驱动设计》都明确有战略设计的提法，其他两本书则明确提出了战略设计和战术设计。
 
@@ -140,7 +129,6 @@ DDD 相关经典著作，一般都将 DDD 划分为战略设计和战术设计�
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCZS7b56yEW6DFZ9XaKUyxy5sIIXGeNZ3gVFCBS0PsytnvLS9fIAezTg/640?wx_fmt=png)
 
 *   ### 战略建模  
-    
 
 战略设计原则必须指导设计决策，以便减少各个部分之间的互相依赖，在使设计意图更为清晰的同时而又不失去关键的互操作性和协同性。战略设计原则必须把模型的重点放在捕获系统的概念核心，也就是系统的 “远景” 上。而且在完成这些目标的同时又不能为项目带来麻烦。为了帮助实现这些目标，我们提出了战略设计的 3 大原则：上下文、精炼和大型结构。
 
@@ -153,7 +141,6 @@ DDD 相关经典著作，一般都将 DDD 划分为战略设计和战术设计�
 *   把大型系统从逻辑上切分成若干层，分而治之。
     
 *   把大型系统提炼为一个抽象结构，例如，冯诺依曼计算机 = IO+CPU+Memory。
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbC6ic5KPyFtBG3eLQAZyAdeZfnjS0EBTe3wZxr74AQ4QvSHNEicLlBFudg/640?wx_fmt=jpeg)
 
@@ -172,7 +159,6 @@ DDD 中的上下文（Context）是个让人迷惑的词，从一种比较宽泛
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCR9XzC1WznjKnrMlico3RodpAnpP9MicibIWj8ApRgvcJvzrmOaEaEs0Iw/640?wx_fmt=png)
 
 *   ### 战术建模
-    
 
 战术建模侧重于从微观层面对系统进行建模。DDD 提到的战术建模方法主要是构造块与柔性设计。
 
@@ -191,7 +177,6 @@ DDD 中的上下文（Context）是个让人迷惑的词，从一种比较宽泛
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCfVDoVUp1rdTricKoVHicQk5USW2gUlDxhKU5UNR4qGg2S4F5Qj9QNcog/640?wx_fmt=png)
 
 *   ### DDD 关于开发过程的论述
-    
 
 关于开发过程，《领域驱动设计 · 软件核心复杂性应对之道》这本书第三部分用 6 章的内容重点论述了重构，但对于软件工程，只是简单提及 “敏捷开发过程”。整体而言，作者更倾向于用重构等手段不断迭代，开发人员和业务专家紧密配合，让协作贯穿整个项目的生命周期。本小节从下面三个方面对 DDD 的开发过程作一扩展性论述：
 
@@ -200,14 +185,12 @@ DDD 中的上下文（Context）是个让人迷惑的词，从一种比较宽泛
 *   敏捷开发过程与持续交付
     
 *   引入软件工程的规范方法
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCTxaBl7ngVicib4uPmytrQoHnKKKwo1zPkZXzQLib2Jrf300cP74H4MKZQ/640?wx_fmt=jpeg)
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCALBW4msZ7sibpX4gQXmOFTq0cUZIdeywqnYWXczRyj4KdAVu0hwkWvw/640?wx_fmt=jpeg)
 
 *   ### 通过重构加深理解
-    
 
 领域驱动设计的重点在系统设计阶段，但领域驱动设计同样将重构作为重要内容。《领域驱动设计 · 软件核心复杂性应对之道》这本书第三部分共 6 章的篇幅在介绍重构。看其内容，名为重构，实则仍然是设计，例如概念建模、柔性设计、分析模式、设计模式等等，基本都是一些偏宏观的设计内容。内容上，跟 Martin Fowler 的《重构：改善既有代码的设计》还是有很大区别。
 
@@ -232,7 +215,6 @@ DDD 中的上下文（Context）是个让人迷惑的词，从一种比较宽泛
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbC3wuYEB0Ac2werETFFibkY130gQ2jdnotezTiapXVOzDpkMSn7HCzCDXg/640?wx_fmt=png)
 
 *   ### 敏捷开发与持续交付
-    
 
 在《领域驱动设计》出版的年代（2004），正值敏捷开发和极限编程大行其道的年代，《领域驱动设计》尽管不局限于某种固定的开发过程，但主要还是面向 “敏捷开发过程” 这一新体系。
 
@@ -243,7 +225,6 @@ DDD 中的上下文（Context）是个让人迷惑的词，从一种比较宽泛
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCVp5sCmcvvmQmvOVliafZLe9VbmLTSkQibQGmPgq0qwpTgx7IMNE5NZrg/640?wx_fmt=png)
 
 *   ### 引入软件工程的规范方法
-    
 
 国内最新的一本著作《解构领域驱动设计》，作者试图参考 RUP，给 DDD 建立一种类似的规范过程。
 
@@ -262,21 +243,18 @@ DDD 中的上下文（Context）是个让人迷惑的词，从一种比较宽泛
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCZISbCGamwDtFf1AkBIeA5HzWWSxgLiaqAPkHxO7Q30bCEDeiaISiaZhcw/640?wx_fmt=png)
 
 *   ### 统一语言
-    
 
 UBIQUITOUS LANGUAGE，有的书翻译为通用语言，有的书翻译为统一语言，其核心要点为：
 
 *   一个团队一种语言，语言统一才能沟通
     
 *   将领域模型作为统一语言的核心，基于模型进行沟通
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbC3GpQxgS5Z7BmMz8nPLYMfZibtdX5GL0OuwlWEoOz6sGHvnSNjgRPy2w/640?wx_fmt=jpeg)
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCpvOBCIxicGwsCb2ePwRPDIVHwXmWYHibV4ic4bKictMAvRUj9mrDDqMkFQ/640?wx_fmt=jpeg)
 
 *   ### 业务领域的例子
-    
 
 业务领域有业务领域的语言，不同业务有不同语言。下面是腾讯动漫的一个例子。
 
@@ -285,7 +263,6 @@ UBIQUITOUS LANGUAGE，有的书翻译为通用语言，有的书翻译为统一�
 注：图片来源于内部同事的文章  
 
 *   ### 技术领域的例子
-    
 
 以下是几个技术领域的例子，不同层次有不同层次的语言。
 
@@ -304,14 +281,12 @@ UBIQUITOUS LANGUAGE，有的书翻译为通用语言，有的书翻译为统一�
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCtYENWV4VhnruHC6xSXpT3o9meCMyWTqX1ffkK3wqskUadyXSRSAHlQ/640?wx_fmt=png)
 
 *   ### 江湖派 vs 学院派
-    
 
 尽管在各自的著作中，两派是互不感冒，但在平时的工作中，通常不分派别，哪派管用用哪派。在诊断方法上，中医只能讲出望闻问切，西医能讲的东西就太多太多。在系统建模这个事情上，学院派能讲的东西，无论深度广度还是精度，都远超江湖派。
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCPiblY5V48JEVjYDUWr4hjgpIqGRK4aUQeuqHRZ65TnUU68T4dyGtxicA/640?wx_fmt=png)
 
 *   ### Model 是结合点
-    
 
 DDD、UML 和 Sysml 的底层逻辑全都指向 Model，Model 是三种技术的结合点。
 
@@ -320,7 +295,6 @@ DDD、UML 和 Sysml 的底层逻辑全都指向 Model，Model 是三种技术的
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCZicpz1f4BmdFpKnEM0NXhxcE7EjfVntyQXzged5jkAUwN1vdMf5AM3w/640?wx_fmt=png)
 
 *   ### 限界上下文是理解 DDD 的钥匙
-    
 
 限界上下文（Bounded Context）是 DDD 关键概念之一，同时可能是 DDD 里面最令人迷惑的一个概念。可以说，理解了限界上下文也就理解了 DDD。技术上，我们可以把限界上下文建模为 UML 的 Object/Class，或者是 SysML 的 Block，理解了这一点：Bounded Context = Object/Class = Block ，所有秘密迎刃而解。
 
@@ -331,7 +305,6 @@ DDD、UML 和 Sysml 的底层逻辑全都指向 Model，Model 是三种技术的
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCuccFLd1NY36EVn84z0ZicT06EhsAn1Ziaic1lhLG3Agqhye5hKzHzo3OA/640?wx_fmt=png)
 
 *   ### UML/SysML 是重装备
-    
 
 学院一派，仍在不断精进，从多年前发展起来的 UML，到新近在其基础上发展起来的 SysML，建模技术正在从软件行业逐步拓展到一般技术行业。UML 强绑定于面向对象，SysML 去除了这种绑定，因而可用于更广泛的领域。在软件开发领域，一般学会 UML 就可以了，如果所属业务不采用面向对象开发模式的话，SysML 则是更适合的建模工具。
 
@@ -344,7 +317,6 @@ DDD、UML 和 Sysml 的底层逻辑全都指向 Model，Model 是三种技术的
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97UhKPPSWdtV7eIicicPCNLbCuibITpXe4noBXSgIiaHoSXGU27KicCcbIhmo1QicCVMrCMT3VI9HM1F2Wg/640?wx_fmt=png)
 
 *   ### 架起桥梁
-    
 
 有一段时间，天天在琢磨 DDD/UML/SysML，脑子里各派的技术体系在翻江倒海地打架，偶然有一次把几幅图放在一起，突然间眼前灵光乍现，刹那间顿悟了，那一刻终于找到了解开密码的钥匙。从此困扰自己很久的 DDD 的几个核心概念，终于理清了头绪，完成了整个 DDD 大厦的最后一块拼图，感觉自己终于可以从路的这头走到路的那头，再从路的那头走到路的这头。注意下面这张图中左下角的表格，将 DDD/UML/SysML 之间的核心概念对应起来，三者之间的桥梁得以建立，从此一通百通。
 
@@ -374,13 +346,9 @@ DDD 为什么这么香？其中的奥秘在哪？就 DDD 本身而言，顶多�
 
 📢📢欢迎加入腾讯云开发者社群，社群专享券、大咖交流圈、第一手活动通知、限量鹅厂周边等你来~
 
-  
-
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/Ap0CNBADIU4jiacH4CONuDN4M5kdp8KapCTJxNv9ZM3Qv0JXLD7IIcRib2ZeQWnPpol4WFImUE7JrwOLbs85HJww/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
 （长按图片立即扫码）
-
-  
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97J6SMQXfKJyNSyiaXODfAr6iaEunyQTZpmxY5ryuBSryD0BFgvCHl6ypzicw9bjRwyDjVBlvcHmELBg/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 

@@ -3,6 +3,13 @@ source: https://mp.weixin.qq.com/s/FySv5L0bCdrlb5MoSfQtAA
 create: 2024-06-20 15:30
 read: false
 ---
+
+# 浅析 Spring 中 Async 注解底层异步线程池原理｜得物技术
+
+## 1. 浅析 Spring 中 Async 注解底层异步线程池原理｜得物技术
+
+### 1.1. 浅析 Spring 中 Async 注解底层异步线程池原理｜得物技术
+
 ![](https://mmbiz.qpic.cn/mmbiz_gif/AAQtmjCc74DZeqm2Rc4qc7ocVLZVd8FOASKicbMfKsaziasqIDXGPt8yR8anxPO3NCF4a4DkYCACam4oNAOBmSbA/640?wx_fmt=gif)
 
 **目录**
@@ -48,7 +55,6 @@ Spring 提供了 Async 注解，就可以帮助我们一行代码搞定异步方
 *   Target({ElementType.TYPE, ElementType.METHOD}) 标志 Async 注解可以作用在方法和类上，作用在类上时，类的所有方法可以实现异步调用。
     
 *   String value( ) default "" 是唯一字段属性，用来指定异步线程池，且该字段有缺省值。
-    
 
 **Async 注解异步调用实现原理概述**
 
@@ -101,7 +107,6 @@ Async 注解默认线程池有下面两个方法实现：   
 *   org.springframework.aop.interceptor.AsyncExecutionInterceptor#getDefaultExecutor
     
 *   org.springframework.aop.interceptor.AsyncExecutionAspectSupport#getDefaultExecutor
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/AAQtmjCc74DJT8fRRo8KY2mVXWXewGo527OAeGeuy3rOIx8pQdickjUeAz37jGDVsictTYlt0IMnUia8Xic4yDG09A/640?wx_fmt=png&from=appmsg)
 
@@ -133,15 +138,7 @@ AsyncExecutionAspectSupport#getDefaultExecutor
 
 现在 Async 注解线程池源码已经看的差不多了，下面这张图是 Spring 处理 Async 异步线程池的流程：
 
-  
-
-  
-
 ![](https://mmbiz.qpic.cn/mmbiz_png/AAQtmjCc74DJT8fRRo8KY2mVXWXewGo5cTmFXXUbalSWHNw0WT72E4TVeT4rqOicLe5RFIVhQTSPJPttQwwMlicQ/640?wx_fmt=png&from=appmsg)
-
-  
-
-  
 
 Async 异步线程池获取流程
 
@@ -152,7 +149,6 @@ Async 异步线程池获取流程
 *   Spring 创建一个**核心线程数 = 8、最大线程数 = Integer.MAX_VALUE、队列大小 = Integer.MAX_VALUE 的线程池**来处理 Async 注解的异步任务，**这时候也可能会踩坑，由于线程池参数设置不合理，核心线程数 = 8，队列大小过大，如果有大批量并发任务，可能会出现 OOM**。
     
 *   Spring 创建 **SimpleAsyncTaskExecutor 实例**来处理 Async 注解的异步任务，**SimpleAsyncTaskExecutor 不是一个好的线程池实现类，SimpleAsyncTaskExecutor 根据需要在当前线程或者新线程中执行异步任务。如果当前线程已经有空闲线程可用，任务将在当前线程中执行，否则将创建一个新线程来执行任务。由于这个线程池没有线程管理的能力，每次提交任务都实时创建新线程，所以如果任务量大，会导致性能下降**。
-    
 
 **往期回顾**
 

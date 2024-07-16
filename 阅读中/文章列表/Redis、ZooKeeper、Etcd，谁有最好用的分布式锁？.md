@@ -2,11 +2,10 @@
 source: https://mp.weixin.qq.com/s/yZC6VJGxt1ANZkn0SljZBg
 create: 2024-01-24 16:24
 ---
+
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe94cQiccAo2zibZETiaOnMVLNQAO0Zne2x8KlehRMR8AsOTW90m1pAicBEw5wBJFkQiax8ricKGbKibEKV8gQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
 ![](https://mmbiz.qpic.cn/mmbiz_gif/VY8SELNGe96srmm5CxquJGSP4BbZA8IDLUj8l7F3tzrm8VuILsgUPDciaDLtvQx78DbkrhAqOJicxze5ZUO5ZLNg/640?wx_fmt=gif&wxfrom=5&wx_lazy=1)
-
-  
 
 👉导读
 
@@ -51,7 +50,6 @@ create: 2024-01-24 16:24
 *   业界争论 Redlock，到底在争论什么？哪种观点是对的？
     
 *   分布式锁到底用 Redis 还是 ZooKeeper、Etcd？
-    
 
 这些问题你能清晰回答上来吗？
 
@@ -61,15 +59,7 @@ create: 2024-01-24 16:24
 
 文章有点长，但干货很多，希望你可以耐心读完。
 
-  
-
-  
-
 # 01
-
-  
-
-  
 
 为什么需要分布式锁？
 
@@ -95,15 +85,7 @@ create: 2024-01-24 16:24
 
 在问题分析的过程中，你还会看到分布锁在「分布式系统」下可能会遇到的疑难问题，感受分布式系统的复杂性。
 
-  
-
-  
-
 # 02
-
-  
-
-  
 
 基于 Redis 分布式锁怎么实现？
 
@@ -147,25 +129,16 @@ create: 2024-01-24 16:24
 1.  程序处理业务逻辑异常，没及时释放锁；
     
 2.  进程挂了，没机会释放锁。
-    
 
 这时，这个客户端就会一直占用这个锁，而其它客户端就「永远」拿不到这把锁了（锁饥饿）。
 
 怎么解决这个问题呢？
 
-  
-
-  
-
 # 03
-
-  
-
-  
 
 Redis 分布锁存在的问题
 
-####  3.1 死锁问题
+## 1. 3.1 死锁问题
 
 对于第 1 种情况，程序在处理业务逻辑时发生异常，没及时释放锁，通常我们需要对这块业务代码加上异常处理，保证无论业务逻辑是否异常，都可以把锁释放掉，例如在 Go 的 defer、Java/Python 的 finally 中及时释放锁：
 
@@ -174,7 +147,6 @@ Redis 分布锁存在的问题
 *   Java：try ... catch ... fianlly: redis.del(key)
     
 *   Python：try ... except ... fianlly: redis.del(key)
-    
 
 这个取决于你的业务代码的「健壮性」，比较容易解决。
 
@@ -200,7 +172,6 @@ Redis 分布锁存在的问题
 2.  SETNX 执行成功，Redis 异常宕机，EXPIRE 没有机会执行；
     
 3.  SETNX 执行成功，客户端异常崩溃，EXPIRE 也没有机会执行。
-    
 
 总之，这两条命令不能保证是原子操作（一起成功），就有潜在的风险导致过期时间设置失败，依旧发生「死锁」问题。
 
@@ -225,18 +196,16 @@ OK
 3.  客户端 2 加锁成功，开始操作共享资源；
     
 4.  客户端 1 操作共享资源完成，释放锁（但释放的是客户端 2 的锁）。
-    
 
 看到了么，这里存在两个严重的问题：
 
 1.  锁过期：客户端 1 操作共享资源耗时太久，导致锁被自动释放，之后被客户端 2 持有；
     
 2.  释放别人的锁：客户端 1 操作共享资源完成后，却又释放了客户端 2 的锁。
-    
 
 导致这两个问题的原因是什么？我们一个个来看。
 
-####  3.2 锁过期时间问题
+## 2. 3.2 锁过期时间问题
 
 **第一个问题，可能是我们评估操作共享资源的时间不准确导致的。**
 
@@ -260,8 +229,6 @@ Redisson 是一个 Java 语言实现的 Redis SDK 客户端，在使用分布式
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe96yZISvr8ZedklFt3x5rqtLBibTXt6G1LJBRjaJeMhfG1vtVpg9IP77dgegaA4VS1j9QKXYx3dEaXA/640?wx_fmt=jpeg)
 
-  
-
 除此之外，这个 SDK 还封装了很多易用的功能：
 
 *   可重入锁；
@@ -273,13 +240,12 @@ Redisson 是一个 Java 语言实现的 Redis SDK 客户端，在使用分布式
 *   读写锁；
     
 *   Redlock（红锁，下面会详细讲）。
-    
 
 这个 SDK 提供的 API 非常友好，它可以像操作本地锁的方式，操作分布式锁。如果你是 Java 技术栈，可以直接把它用起来。
 
 这里不重点介绍 Redisson 的使用，你可以看官方 Github 学习如何使用，比较简单。
 
-####  3.3 锁被别人释放问题
+## 3. 3.3 锁被别人释放问题
 
 我们再来看上面提到的第二个问题，这个问题在于，**一个客户端释放了其它客户端持有的锁。**
 
@@ -314,15 +280,12 @@ if redis.get("lock") == $uuid:
 3.  此时，恰好客户端 2 又获取到了这个锁；
     
 4.  之后，客户端 1 在执行 DEL 时，释放的却是客户端 2 的锁（冲突）。
-    
 
 由此可见，这两个命令还是必须要原子执行才行。怎样原子执行呢？
 
 Lua 脚本。我们可以把这个逻辑，写成 Lua 脚本，让 Redis 来执行。因为 Redis 处理每一个请求是「单线程」执行的，在执行一个 Lua 脚本时，其它请求必须等待，直到这个 Lua 脚本处理完成，这样一来，GET + DEL 之间就不会插入其它命令了。
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe96yZISvr8ZedklFt3x5rqtLnicurWXyBX6r1QHiccFu6RiaZN8pwRMK1IqnZrg2jnkpyoiceHDNv1ztUw/640?wx_fmt=jpeg)
-
-  
 
 安全释放锁的 Lua 脚本如下：
 
@@ -336,15 +299,7 @@ else
 end
 ```
 
-  
-
-  
-
 # 04
-
-  
-
-  
 
 Redis 分布锁小结
 
@@ -357,7 +312,6 @@ Redis 分布锁小结
 2.  操作共享资源：没操作完之前，开启守护线程，定期给锁续期；
     
 3.  释放锁：Lua 脚本，先 GET 判断锁是否归属自己，再 DEL 释放锁。
-    
 
 每个问题的解决方案：
 
@@ -366,19 +320,10 @@ Redis 分布锁小结
 *   过期时间评估不好，锁提前过期：守护线程，定时续期；
     
 *   锁被别人释放：锁写入唯一标识，释放锁先检查标识，再释放。
-    
 
 还有哪些问题场景，会危害 Redis 锁的安全性呢？
 
-  
-
-  
-
 # 05
-
-  
-
-  
 
 Redis 主从同步对分布式锁的影响
 
@@ -395,25 +340,14 @@ Redis 主从同步对分布式锁的影响
 2.  此时，主库异常宕机，SET 命令还未同步到从库上（主从复制是异步的）；
     
 3.  从库被哨兵提升为新主库，这个锁在新的主库上，丢失了！
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe96yZISvr8ZedklFt3x5rqtLdQKvL6Df5icLqqXRwW37rcMTLTGJugDr8icOPUZBZyibPbwfphicFzHs4g/640?wx_fmt=jpeg)
-
-  
 
 可见，当引入 Redis 副本后，分布锁还是可能会受到影响。怎么解决这个问题？
 
 为此，Redis 的作者提出一种解决方案，就是我们经常听到的 Redlock（红锁）。它真的可以解决上面这个问题吗？
 
-  
-
-  
-
 # 06
-
-  
-
-  
 
 Redlock 方案
 
@@ -432,15 +366,12 @@ Redlock 的方案基于 2 个前提：
 1.  不再需要部署从库和哨兵实例，只部署主库
     
 2.  但主库要部署多个，官方推荐至少 5 个实例
-    
 
 也就是说，想用使用 Redlock，你至少要部署 5 个 Redis 实例，而且都是主库，它们之间没有任何关系，都是一个个孤立的实例。
 
 注意：不是部署 Redis Cluster，就是部署 5 个简单的 Redis 实例。
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe96yZISvr8ZedklFt3x5rqtLcIibVZfLoW3CwGeVu6CSNxuQPj4XWdiblSgxGb84RIZZAZKVpmmowllg/640?wx_fmt=jpeg)
-
-  
 
 Redlock 具体如何使用呢？
 
@@ -455,7 +386,6 @@ Redlock 具体如何使用呢？
 4.  加锁成功，去操作共享资源（例如修改 MySQL 某一行，或发起一个 API 请求）；
     
 5.  加锁失败，向「全部节点」发起释放锁请求（前面讲到的 Lua 脚本释放锁）。
-    
 
 我简单帮你总结一下，有 4 个重点：
 
@@ -466,7 +396,6 @@ Redlock 具体如何使用呢？
 3.  大多数节点加锁的总耗时，要小于锁设置的过期时间；
     
 4.  释放锁，要向全部节点发起释放锁请求。
-    
 
 第一次看可能不太容易理解，建议你把上面的文字多看几遍，加深记忆。  
 然后，记住这 5 步，非常重要，下面会根据这个流程，剖析各种可能导致锁失效的问题假设。
@@ -503,15 +432,7 @@ Redlock 具体如何使用呢？
 
 好了，明白了 Redlock 的流程和相关问题，看似 Redlock 确实解决了 Redis 节点异常宕机锁失效的问题，保证了锁的「安全性」。但事实真的如此吗？
 
-  
-
-  
-
 # 07
-
-  
-
-  
 
 Redlock 的争论
 
@@ -537,7 +458,7 @@ Redis 作者把这个方案一经提出，就马上受到业界著名的分布�
 
 提醒：后面的信息量极大，可能不宜理解，最好放慢速度阅读。
 
-####  7.1 分布式专家 Martin 对于 Redlock 的质疑
+## 1. 7.1 分布式专家 Martin 对于 Redlock 的质疑
 
 在他的文章中，主要阐述了 4 个论点：
 
@@ -568,7 +489,6 @@ Martin 表示，一个分布式系统，更像一个复杂的「野兽」，存�
 *   P：Process Pause，进程暂停（GC）；
     
 *   C：Clock Drift，时钟漂移。
-    
 
 Martin 用一个进程暂停（GC）的例子，指出了 Redlock 安全性问题：
 
@@ -583,7 +503,6 @@ Martin 用一个进程暂停（GC）的例子，指出了 Redlock 安全性问�
 5.  客户端 1 GC 结束，认为成功获取锁；
     
 6.  客户端 2 也认为获取到了锁，发生「冲突」。
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe96VRo5mzhKG1cF5Sic9XJVEKYicfqE3pIicso9cMI8xEafGNMiawSvL0karThxVyaCXgBd5IZ1ML6ZicMQ/640?wx_fmt=jpeg)
 
@@ -602,7 +521,6 @@ Martin 认为，GC 可能发生在程序的任意时刻，而且执行时间是�
 3.  客户端 2 获取节点 C、D、E 上的锁，由于网络问题，无法访问 A 和 B
     
 4.  客户端 1 和 2 现在都相信它们持有了锁（冲突）；
-    
 
 Martin 觉得，Redlock 必须「强依赖」多个节点的时钟是保持同步的，一旦有节点时钟发生错误，那这个算法模型就失效了。
 
@@ -613,7 +531,6 @@ Martin 继续阐述，机器的时钟发生错误，是很有可能发生的：
 *   系统管理员「手动修改」了机器时钟
     
 *   机器时钟在同步 NTP 时间时，发生了大的「跳跃」
-    
 
 总之，Martin 认为，Redlock 的算法是建立在「同步模型」基础上的，有大量资料研究表明，同步模型的假设，在分布式系统中是有问题的。
 
@@ -630,7 +547,6 @@ Martin 继续阐述，机器的时钟发生错误，是很有可能发生的：
 2.  客户端拿着这个 token 去操作共享资源
     
 3.  共享资源可以根据 token 拒绝「后来者」的请求
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe96VRo5mzhKG1cF5Sic9XJVEKSa1KER8v1adSbKSgXj2BC6BUbmrEyqupib44KgZn4gnQwbnKBge4SEQ/640?wx_fmt=jpeg)
 
@@ -652,7 +568,7 @@ Martin 的结论：
 
 下面我们来看 Redis 作者 Antirez 是如何反驳的。
 
-####  7.2 Redis 作者 Antirez 的反驳
+## 2. 7.2 Redis 作者 Antirez 的反驳
 
 在 Redis 作者的文章中，重点有 3 个：
 
@@ -669,7 +585,6 @@ Redis 作者表示，Redlock 并不需要完全一致的时钟，只需要大体
 1.  **手动修改时钟：**不要这么做就好了，否则你直接修改 Raft 日志，那 Raft 也会无法工作...
     
 2.  **时钟跳跃：**通过「恰当的运维」，保证机器时钟不会大幅度跳跃（每次通过微小的调整来完成），实际上这是可以做到的
-    
 
 为什么 Redis 作者优先解释时钟问题？因为在后面的反驳过程中，需要依赖这个基础做进一步解释。
 
@@ -690,7 +605,6 @@ Redis 作者表示，Redlock 并不需要完全一致的时钟，只需要大体
 5.  客户端 1 GC 结束，认为成功获取锁；
     
 6.  客户端 2 也认为获取到锁，发生「冲突」。
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/VY8SELNGe96VRo5mzhKG1cF5Sic9XJVEKYicfqE3pIicso9cMI8xEafGNMiawSvL0karThxVyaCXgBd5IZ1ML6ZicMQ/640?wx_fmt=jpeg)
 
@@ -707,7 +621,6 @@ Redis 作者反驳到，这个假设其实是有问题的，Redlock 是可以保
 4.  加锁成功，去操作共享资源（例如修改 MySQL 某一行，或发起一个 API 请求）；
     
 5.  加锁失败，向「全部节点」发起释放锁请求（前面讲到的 Lua 脚本释放锁）。
-    
 
 **注意，重点是 1-3，在步骤 3，加锁成功后为什么要重新获取「当前时间戳 T2」？还用 T2 - T1 的时间，与锁的过期时间做比较？**
 
@@ -724,14 +637,12 @@ Redis 作者继续论述，如果对方认为，发生网络延迟、进程 GC �
 3.  此时，锁过期自动释放；
     
 4.  客户端开始操作 MySQL（此时的锁可能会被别人拿到，锁失效）。
-    
 
 Redis 作者这里的结论就是：
 
 *   客户端在拿到锁之前，无论经历什么耗时长问题，Redlock 都能够在第 3 步检测出来
     
 *   客户端在拿到锁之后，发生 NPC，那 Redlock、ZooKeeper 都无能为力
-    
 
 所以，Redis 作者认为 Redlock 在保证时钟正确的基础上，是可以保证正确性的。
 
@@ -773,7 +684,6 @@ Redis 作者只是提到了可以完成 fencing token 类似的功能，但却�
 2.  客户端在操作共享资源之前，先把这个锁的 VALUE，在要操作的共享资源上做标记；
     
 3.  客户端处理业务逻辑，最后，在修改共享资源时，判断这个标记是否与之前一样，一样才修改（类似 CAS 的思路）。
-    
 
 还是以 MySQL 为例，举个例子就是这样的：
 
@@ -784,7 +694,6 @@ Redis 作者只是提到了可以完成 fencing token 类似的功能，但却�
 3.  客户端处理业务逻辑；
     
 4.  客户端修改 MySQL 的这一行数据，把 VALUE 当做 WHERE 条件，再修改。
-    
 
 ```
 UPDATE 
@@ -821,15 +730,7 @@ Redis 作者对于这个问题做了不同的解释，我觉得很有道理，�
 
 好，讲完了双方对于 Redis 分布锁的争论，你可能也注意到了，Martin 在他的文章中，推荐使用 ZooKeeper 实现分布式锁，认为它更安全，确实如此吗？
 
-  
-
-  
-
 # 08
-
-  
-
-  
 
 基于 ZooKeeper 的分布式锁
 
@@ -842,7 +743,6 @@ Redis 作者对于这个问题做了不同的解释，我觉得很有道理，�
 3.  客户端 1 操作共享资源
     
 4.  客户端 1 删除 /lock 节点，释放锁
-    
 
 ZooKeeper 不像 Redis 那样，需要考虑锁的过期时间问题，它是采用了「临时节点」，保证客户端拿到锁后，只要连接不断，就可以一直持有锁。
 
@@ -871,7 +771,6 @@ ZooKeeper 不像 Redis 那样，需要考虑锁的过期时间问题，它是�
 4.  客户端 2 创建临时节点 /lock 成功，拿到了锁；
     
 5.  客户端 1 GC 结束，它仍然认为自己持有锁（冲突）。
-    
 
 可见，即使是使用 ZooKeeper，也无法保证进程 GC、网络延迟异常场景下的安全性。
 
@@ -879,15 +778,7 @@ ZooKeeper 不像 Redis 那样，需要考虑锁的过期时间问题，它是�
 
 那基于 Etcd 实现的分布锁呢？
 
-  
-
-  
-
 # 09
-
-  
-
-  
 
 基于 Etcd 的分布式锁
 
@@ -906,7 +797,6 @@ ZooKeeper 不像 Redis 那样，需要考虑锁的过期时间问题，它是�
 6.  客户端 1 操作共享资源；
     
 7.  客户端 1 删除 /lock 节点，释放锁。
-    
 
 Etcd 虽然没有像 ZooKeeper 提供临时节点的概念，但 Etcd 提供了一个叫「租约」的概念。
 
@@ -929,7 +819,6 @@ Etcd 虽然没有像 ZooKeeper 提供临时节点的概念，但 Etcd 提供了
 5.  客户端 2 创建临时节点 /lock 成功，拿到了锁
     
 6.  客户端 1 GC 结束，它仍然认为自己持有锁（冲突）
-    
 
 可见，基于 Etcd 实现的分布锁，当拿到锁发生 GC、网络延迟问题，依旧可能失效。
 
@@ -943,15 +832,7 @@ Etcd 虽然没有像 ZooKeeper 提供临时节点的概念，但 Etcd 提供了
 
 这个 API 允许客户端「监听」ZooKeeper、Etcd 某个节点的变化，以此实现「公平」的分布式锁，篇幅原因，这里就不展开了，你可以查看文末的参考链接进一步学习。
 
-  
-
-  
-
 # 10
-
-  
-
-  
 
 我对分布式锁的理解
 
@@ -985,15 +866,7 @@ Etcd 虽然没有像 ZooKeeper 提供临时节点的概念，但 Etcd 提供了
 
 两种思路结合，我认为对于大多数业务场景，已经可以满足要求了。
 
-  
-
-  
-
 # 11
-
-  
-
-  
 
 总结
 
@@ -1012,17 +885,8 @@ Etcd 虽然没有像 ZooKeeper 提供临时节点的概念，但 Etcd 提供了
 *   一个严谨的分布式锁模型应该考虑锁租期、锁归属、副本同步、NPC 问题
     
 *   使用 Redis 分布锁可以最大程度把并发请求阻挡在最上层（非常适合高并发场景），但对于数据敏感的业务场景，资源层要做兜底（fencing token 的思路，类似乐观锁），两者结合起来用
-    
-
-  
-
-  
 
 # 12
-
-  
-
-  
 
 后记
 
@@ -1068,8 +932,6 @@ Redis 分布式锁有哪些坑是你踩过的？欢迎评论分享。我们将�
 
 （长按图片立即扫码）
 
-  
-
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe979Bb4KNoEWxibDp8V9LPhyjmg15G7AJUBPjic4zgPw1IDPaOHDQqDNbBsWOSBqtgpeC2dvoO9EdZBQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
 [![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe95yTGCsG3Yo5emBRh7nbAJySpueUGwsDJTrEbRCfZRn3Fnz2yJx0f9905qblXyJMY8rGUBWyNaLmA/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1)](http://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247666793&idx=1&sn=5958628a2928bd59bfa5803d1304294d&chksm=eaa65639ddd1df2f956478faf0742efb9098c7c1f9df7f2fcef9420761186436654782567c41&scene=21#wechat_redirect)
@@ -1077,7 +939,5 @@ Redis 分布式锁有哪些坑是你踩过的？欢迎评论分享。我们将�
 [![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe95yTGCsG3Yo5emBRh7nbAJyIVxcBoaxxS92ic0tiapgerNwpiaxClzjficqf63wgTkureoIu0d78HhNyw/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1)](http://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247666516&idx=1&sn=fe3cdf56cc5753c77e0bd6adfcd34dd0&chksm=eaa65104ddd1d812d3c6c42206f8dd5b796502d3f28dbafa5140c7a75fc9300aa44bd65517d4&scene=21#wechat_redirect)
 
 [![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe95yTGCsG3Yo5emBRh7nbAJywv37W7bDy2gqWwCMibxXpa1DL2ic7JO2f6yyvj2exYobXzv6bbQTtxAg/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1)](http://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247666533&idx=1&sn=5fe27bb4cd36ef2975046db2719e782b&chksm=eaa65135ddd1d82337489e8142a481bf7c3ca301ee8f7aa1e231413ca7c4875b932ed06053e5&scene=21#wechat_redirect)
-
-  
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe95pIHzoPYoZUNPtqXgYG2leyAEPyBgtFj1bicKH2q8vBHl26kibm7XraVgicePtlYEiat23Y5uV7lcAIA/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1)

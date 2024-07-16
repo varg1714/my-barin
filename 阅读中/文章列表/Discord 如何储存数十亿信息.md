@@ -3,10 +3,13 @@ source: https://discord.com/blog/how-discord-stores-billions-of-messages
 create: 2024-02-18 15:45
 read: false
 ---
+
+# Discord 如何储存数十亿信息
+
 Discord continues to grow faster than we expected and so does our user-generated content. With more users comes more chat messages. In July, [we announced 40 million messages a day](https://blog.discordapp.com/11-million-players-in-one-year/), in December [we announced 100 million](http://venturebeat.com/2016/12/08/discord-hits-25-million-users-and-releases-gamebridge-sdk-for-its-voice-chat/), and as of this blog post we are well past 120 million. We decided early on to store all chat history forever so users can come back at any time and have their data available on any device. This is a lot of data that is ever increasing in velocity, size, and must remain available. _How do we do it? Cassandra!_  
 Discord 的增长速度持续快于我们的预期，我们的用户生成内容也是如此。用户越多，聊天消息就越多。 7 月份，我们宣布每天有 4000 万条消息，12 月份我们宣布每天有 1 亿条消息，截至这篇博文，我们已经远远超过了 1.2 亿条。我们很早就决定永久存储所有聊天历史记录，以便用户可以随时返回并在任何设备上获取他们的数据。这些数据的速度和大小都在不断增加，并且必须保持可用。我们该怎么做呢？卡桑德拉！
 
-## What we were doing 我们在做什么
+## 1. What we were doing 我们在做什么
 
 The original version of Discord was built in just under two months in early 2015. Arguably, one of the best databases for iterating quickly is MongoDB. Everything on Discord was stored in a single MongoDB replica set and this was intentional, but we also planned everything for easy migration to a new database (we knew we were not going to use MongoDB sharding because it is complicated to use and not known for stability). This is actually part of our company culture: build quickly to prove out a product feature, but always with a path to a more robust solution.  
 Discord 的原始版本于 2015 年初在不到两个月的时间内构建完成。可以说，快速迭代的最佳数据库之一是 MongoDB。 Discord 上的所有内容都存储在单个 MongoDB 副本集中，这是有意为之，但我们也计划了一切以便轻松迁移到新数据库（我们知道我们不会使用 MongoDB 分片，因为它使用起来很复杂，而且稳定性也不高） ）。这实际上是我们公司文化的一部分：快速构建以证明产品功能，但始终提供更强大的解决方案。
@@ -14,7 +17,8 @@ Discord 的原始版本于 2015 年初在不到两个月的时间内构建完成
 The messages were stored in a MongoDB collection with a single compound index on channel_id and created_at. Around November 2015, we reached 100 million stored messages and at this time we started to see the expected issues appearing: the data and the index could no longer fit in RAM and latencies started to become unpredictable. It was time to migrate to a database more suited to the task.  
 消息存储在 MongoDB 集合中，在channel_id 和created_at 上有单个复合索引。 2015 年 11 月左右，我们存储的消息达到 1 亿条，此时我们开始看到预期的问题出现：数据和索引不再适合 RAM，延迟开始变得不可预测。是时候迁移到更适合该任务的数据库了。
 
-## Choosing the Right Database  
+## 2. Choosing the Right Database  
+
 选择正确的数据库
 
 Before choosing a new database, we had to understand our read/write patterns and why we were having problems with our current solution.  
@@ -55,7 +59,7 @@ Cassandra 是唯一满足我们所有要求的数据库。我们只需添加节�
 Having made the choice, we needed to prove that it would actually work.  
 做出选择后，我们需要证明它确实有效。
 
-## Data Modeling 数据建模
+## 3. Data Modeling 数据建模
 
 The best way to describe Cassandra to a newcomer is that it is a KKV store. The two Ks comprise the primary key. The first K is the partition key and is used to determine which node the data lives on and where it is found on disk. The partition contains multiple rows within it and a row within a partition is identified by the second K, which is the clustering key. The clustering key acts as both a primary key within the partition and how the rows are sorted. You can think of a partition as an ordered dictionary. These properties combined allow for very powerful data modeling.  
 对新手描述 Cassandra 的最好方式就是它是一家 KKV 商店。两个 K 构成主键。第一个 K 是分区键，用于确定数据位于哪个节点以及在磁盘上的位置。分区中包含多行，分区中的一行由第二个 K（集群键）标识。聚集键既充当分区内的主键，又充当行的排序方式。您可以将分区视为有序字典。这些属性相结合可以实现非常强大的数据建模。
@@ -90,7 +94,7 @@ To query for recent messages in the channel we generate a bucket range from curr
 Importing messages into Cassandra went without a hitch and we were ready to try in production.  
 将消息导入 Cassandra 顺利进行，我们已准备好在生产中进行尝试。
 
-## Dark Launch 黑暗发射
+## 4. Dark Launch 黑暗发射
 
 Introducing a new system into production is always scary so it’s a good idea to try to test it without impacting users. We setup our code to double read/write to MongoDB and Cassandra.  
 将新系统引入生产总是令人恐惧的，因此最好在不影响用户的情况下对其进行测试。我们将代码设置为对 MongoDB 和 Cassandra 进行双重读/写。
@@ -98,7 +102,7 @@ Introducing a new system into production is always scary so it’s a good idea t
 Immediately after launching we started getting errors in our bug tracker telling us that author_id was null. _How can it be null? It is a required field!_  
 启动后，我们的错误跟踪器立即开始收到错误，告诉我们author_id为空。怎么可能为空呢？这是必填字段！
 
-## Eventual Consistency 最终一致性
+## 5. Eventual Consistency 最终一致性
 
 Cassandra is an [AP](https://en.wikipedia.org/wiki/CAP_theorem) database which means it trades strong consistency for availability which is something we wanted. It is an anti-pattern to read-before-write (reads are more expensive) in Cassandra and therefore everything that Cassandra does is essentially an upsert even if you provide only certain columns. You can also write to any node and it will resolve conflicts automatically using “last write wins” semantics on a per column basis. _So how did this bite us?_  
 Cassandra 是一个 AP 数据库，这意味着它以强一致性换取可用性，这正是我们想要的。这是 Cassandra 中先读后写的反模式（读取成本更高），因此即使您只提供某些列，Cassandra 所做的一切本质上都是更新插入。您还可以写入任何节点，它将在每列的基础上使用“最后写入获胜”语义自动解决冲突。那么它是如何咬我们的呢？
@@ -125,7 +129,7 @@ While solving this problem, we noticed we were being very inefficient with our w
 Deleting a column and writing null to a column are the exact same thing. They both generate a tombstone. Since all writes in Cassandra are upserts, that means you are generating a tombstone even when writing null for the first time. In practice, our entire message schema contains 16 columns, but the average message only has 4 values set. We were writing 12 tombstones into Cassandra most of the time for no reason. The solution to this was simple: only write non-null values to Cassandra.  
 删除列和向列写入 null 是完全相同的事情。他们都会生成一个墓碑。由于 Cassandra 中的所有写入都是更新插入，这意味着即使第一次写入 null 也会生成墓碑。实际上，我们的整个消息模式包含 16 列，但平均消息只有 4 个值集。大多数时候我们无缘无故地将 12 个墓碑写入 Cassandra。解决方案很简单：只将非空值写入 Cassandra。
 
-## Performance 表现
+## 6. Performance 表现
 
 Cassandra is known to have faster writes than reads and we observed exactly that. Writes were sub-millisecond and reads were under 5 milliseconds. We observed this regardless of what data was being accessed, and performance stayed consistent during a week of testing. _Nothing was surprising, we got exactly what we expected._  
 众所周知，Cassandra 的写入速度比读取速度快，我们也确实观察到了这一点。写入时间低于毫秒，读取时间低于 5 毫秒。无论访问什么数据，我们都观察到这一点，并且在一周的测试期间性能保持一致。没有什么令人惊讶的，我们得到了我们所期望的。
@@ -143,7 +147,7 @@ In line with fast, consistent read performance, here’s an example of a jump to
 _Jumping back one full year of chat  
 回溯一整年的聊天记录_
 
-## The Big Surprise 大惊喜
+## 7. The Big Surprise 大惊喜
 
 Everything went smoothly, so we rolled it out as our primary database and phased out MongoDB within a week . It continued to work flawlessly…for about 6 months until that one day where Cassandra became unresponsive.  
 一切都很顺利，因此我们将其作为我们的主要数据库推出，并在一周内逐步淘汰了 MongoDB。它继续完美地工作......大约 6 个月，直到有一天 Cassandra 变得毫无反应。
@@ -162,26 +166,26 @@ We solved this by doing the following:
 *   We changed our query code to track empty buckets and avoid them in the future for a channel. This meant that if a user caused this query again then at worst Cassandra would be scanning only in the most recent bucket.  
     我们更改了查询代码以跟踪空存储桶并在将来的通道中避免使用它们。这意味着，如果用户再次引发此查询，那么在最坏的情况下，Cassandra 将仅在最近的存储桶中进行扫描。
 
-## The Future 未来
+## 8. The Future 未来
 
 We are currently running a 12 node cluster with a replica factor of 3 and will just continue to add new Cassandra nodes as needed. We believe this will continue to work for a long time but as Discord continues to grow there is a distant future where we are storing billions of messages per day. Netflix and Apple run clusters of hundreds of nodes so we know we can punt thinking too much about this for a while. However we like to have some ideas in our pocket for the future.  
 我们目前正在运行一个副本因子为 3 的 12 节点集群，并将根据需要继续添加新的 Cassandra 节点。我们相信这将持续很长一段时间，但随着 Discord 的不断增长，在遥远的未来我们每天会存储数十亿条消息。 Netflix 和 Apple 运行着由数百个节点组成的集群，因此我们知道我们可以在一段时间内对此进行过多思考。然而，我们希望对未来有一些想法。
 
-### Near term 短期
+### 8.1. Near term 短期
 
 *   Upgrade our message cluster from Cassandra 2 to Cassandra 3. Cassandra 3 has a [new storage format](http://www.datastax.com/2015/12/storage-engine-30) that can reduce storage size by more than 50%.  
     将我们的消息集群从 Cassandra 2 升级到 Cassandra 3。Cassandra 3 具有新的存储格式，可以将存储大小减少 50% 以上。
 *   Newer versions of Cassandra are better at handling more data on a single node. We currently store nearly 1TB of compressed data on each node. We believe we can safely reduce the number of nodes in the cluster by bumping this to 2TB.  
     新版本的 Cassandra 更擅长在单个节点上处理更多数据。目前我们在每个节点上存储了近 1TB 的压缩数据。我们相信，通过将其增加到 2TB，我们可以安全地减少集群中的节点数量。
 
-### Long term 长期
+### 8.2. Long term 长期
 
 *   Explore using [Scylla](http://www.scylladb.com/), a Cassandra compatible database written in C++. During normal operations our Cassandra nodes are actually not using too much CPU, however at non peak hours when we run repairs (an anti-entropy process) they become fairly CPU bound and the duration increases with the amount of data written since the last repair. Scylla advertises significantly lower repair times.  
     使用 Scylla 进行探索，这是一个用 C++ 编写的兼容 Cassandra 的数据库。在正常操作期间，我们的 Cassandra 节点实际上并没有使用太多的 CPU，但是在非高峰时段，当我们运行修复（反熵进程）时，它们会相当受 CPU 限制，并且持续时间随着自上次修复以来写入的数据量而增加。 Scylla 宣称修复时间显着缩短。
 *   Build a system to archive unused channels to flat files on Google Cloud Storage and load them back on-demand. We want to avoid doing this one and don’t think we will have to do it.  
     构建一个系统，将未使用的频道存档到 Google Cloud Storage 上的平面文件中，并按需加载它们。我们想避免这样做，也不认为我们必须这样做。
 
-## 结语
+## 9. 结语
 
 It has now been just over a year since we made the switch and, despite _“the big surprise,”_ it has been smooth sailing. We went from over 100 million total messages to more than 120 million messages a day, with performance and stability staying consistent.  
 自从我们做出转变以来已经过去了一年多的时间，尽管有“巨大的惊喜”，但一切进展顺利。我们每天的消息总数从超过 1 亿条增加到超过 1.2 亿条，并且性能和稳定性保持一致。

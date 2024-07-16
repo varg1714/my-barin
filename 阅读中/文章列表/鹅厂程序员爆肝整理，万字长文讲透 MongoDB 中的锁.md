@@ -3,11 +3,10 @@ source: https://mp.weixin.qq.com/s/FxaUhtRho5YOpCFgmk1Mdg
 create: 2024-02-22 09:45
 read: false
 ---
+
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe94cQiccAo2zibZETiaOnMVLNQAO0Zne2x8KlehRMR8AsOTW90m1pAicBEw5wBJFkQiax8ricKGbKibEKV8gQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
 ![](https://mmbiz.qpic.cn/mmbiz_gif/VY8SELNGe96srmm5CxquJGSP4BbZA8IDLUj8l7F3tzrm8VuILsgUPDciaDLtvQx78DbkrhAqOJicxze5ZUO5ZLNg/640?wx_fmt=gif&wxfrom=5&wx_lazy=1)
-
-  
 
 👉导读
 
@@ -23,15 +22,7 @@ MongoDB 作为世界领先的文档型数据库广受开发者的喜爱，而 Mo
 
 4 浅入：MongoDB 的锁实现
 
-  
-
-  
-
 # 01
-
-  
-
-  
 
 引子：从 MongoDB 的慢日志引入
 
@@ -62,7 +53,6 @@ db.setProfilingLevel(<level>, <options>)
 *   1：开启 profiler 采集慢请求（默认采集 100ms 以上）；
     
 *   2：开启 profiler 采集所有的操作。
-    
 
 options 则包含以下选项：
 
@@ -71,7 +61,6 @@ options 则包含以下选项：
 *   sampleRate：采集慢操作的采样率；
     
 *   filter：采样的过滤规则。
-    
 
 在设置 Profiler 后，满足条件的慢请求将会被记录在 system.profile 表中，该表为一个 capped collection，可以通过 db.system.profile.find() 来过滤与查询慢请求的记录，举个例子：
 
@@ -149,7 +138,6 @@ options 则包含以下选项：
 *   planSummary：如执行 COLLSCAN 全表扫就会比执行 IXSCAN 索引话费更多的资源与时间；
     
 *   execStats：执行计划的具体执行情况，方便得知请求的执行全貌。
-    
 
 从以上几个方面分析，可以大致得知请求的执行情况，用于分析慢请求产生的原因。一般而言，慢请求的产生无非以下几点原因：
 
@@ -162,7 +150,6 @@ options 则包含以下选项：
 *   内存排序：与上述情况类似，未走索引的情况下内存排序导致请求执行慢；
     
 *   但开启分析器 Profiler 是需要一些代价的（如影响内核性能），且一般来说默认关闭，故在处理线上问题时，我们往往只能拿到内核日志中记录的慢日志信息。
-    
 
 一条典型的 MongoDB 慢日志举例如下：
 
@@ -243,23 +230,14 @@ options 则包含以下选项：
 *   MongoDB 中的锁是如何实现的？结构如何？
     
 *   我们带着以上问题开始逐步了解 MongoDB 中的锁。
-    
-
-  
-
-  
 
 # 02
-
-  
-
-  
 
 MongoDB 的锁与资源分类
 
 MongoDB 支持并发读写操作，故需要用锁来确保并发时的数据一致性。在 MongoDB 中，不同的请求会对不同的资源执行请求，故加锁的操作也是在不同的资源上进行加锁。通过对资源进行分层与层级管理，以及使用不同类型的锁执行锁机制来避免并发冲突。
 
-####  2.1 资源分类
+##  2.1 资源分类
 
 在 MongoDB 中对资源进行了层级划分，锁本身的 lock_manager 并不区分自己属于哪个资源，且不同层级的资源之间永不互斥（不会互相影响）。一般而言，MongoDB 中的资源按以下类型进行分类，且从上到下优先级依次降低。
 
@@ -340,7 +318,7 @@ enum class ResourceGlobalId : uint8_t {
 }
 ```
 
-####  2.2 锁分类
+##  2.2 锁分类
 
 MongoDB 中不仅对资源进行了层级划分，还对锁的类型进行了划分，如上文中提到的意向锁、排它锁、共享锁等。本节讲述在同一层级资源中，通过划分不同的锁类型，来高效地解决并发关系。
 
@@ -371,7 +349,6 @@ enum LockMode {
 *   检查 DB1 的库锁是否被其他操作持有；
     
 *   依次检查 DB1 下所有的 collection，确认是否有其他操作持有其中之一的 collection 锁；
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97qw6GEtOGiaVGkukuVv3duPlbB8picicaj4pxtaanEEFWF1SffevhjGN68cibNBSBcvAyes9LZEbnJjw/640?wx_fmt=png)
 
@@ -380,21 +357,12 @@ enum LockMode {
 *   检查 DB1 的库锁是否被其他操作持有；
     
 *   检查 DB1 的意向锁是否被其他操作持有。
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97qw6GEtOGiaVGkukuVv3duPgneGdEuaVUh74b6qQkpiad5icRazCU5Lgib6n0Uq2CgsAOGZg3JibvIicXw/640?wx_fmt=png)
 
 这样在请求上级资源的锁时，只需要 check 上级资源的意向锁是否被占用，如被占用则意味着有次级资源的锁被占用，这里不必再去遍历所有次级资源的锁占用情况，使锁获取的判断更加高效。
 
-  
-
-  
-
 # 03
-
-  
-
-  
 
 MongoDB 的锁矩阵
 
@@ -427,7 +395,6 @@ MongoDB 的锁矩阵如下：
 *   Global：IX 锁与 IS 锁兼容，故可以获取到 Global 的 IX 锁；
     
 *   DB2：X 锁与 IS 锁不兼容，故不能获取到 DB2 的 X 锁，需要等待 DB2 的 IS 锁释放；
-    
 
 故此时操作 B 对 DB2 的 drop 操作将无法执行，因为加锁不成功，会等待
 
@@ -449,15 +416,7 @@ MongoDB 的锁矩阵如下：
 
 以上提到了 Global、Database、Collection 三个资源级别以及对应的锁，而 MongoDB 最小粒度的资源为 Document，而 Document 粒度的锁则使用的是 WT 引擎里的锁，在 MongoDB 中，操作一般为乐观并发控制，如写操作，会先假设没有冲突对数据进行修改，而只有真正修改数据时才会加锁，而 Document 锁加失败时则会遭遇写冲突（WriteConflict），而写冲突时 MongoDB 会自动重试，这里不多做讨论。
 
-  
-
-  
-
 # 04
-
-  
-
-  
 
 浅入：MongoDB 的锁实现
 
@@ -552,7 +511,7 @@ private:
 
 其中 Lock::DBLock 即为 Database 持有的资源锁，在获取 Database 级别的锁之前，首先要获取其中包含的 Global 级别的锁。
 
-####  4.1 锁的分类实现
+##  4.1 锁的分类实现
 
 上述流程中描述了获取低级别的资源锁前需要先获取高级别的资源锁，分别包括：
 
@@ -561,7 +520,6 @@ private:
 *   DBLock：代表着 Database 资源锁；
     
 *   CollectionLock：代表着 Collection 资源锁。
-    
 
 以上锁的定义都在 d_concurrency.h 文件中，我们分别来看其实现：
 
@@ -761,7 +719,6 @@ Lock::DBLock::DBLock(......)
 *   _takeGlobalLockOnly()：仅占用 Global 锁；
     
 *   _takeGlobalAndRSTLLocks()：同时占用 RSTL 与 Global 锁；
-    
 
 同时可以看到还有 _pbwm 锁以及 _fcv 锁，这两个锁均以 ResourceLock 对象的形式实现。
 
@@ -834,7 +791,7 @@ void Lock::GlobalLock::_takeGlobalAndRSTLLocks(LockMode lockMode, Date_t deadlin
 
 可以看到最终还是通过 OperationContext->lockState()->lockGlobal() 接口来获取全局锁。
 
-####  4.2 锁结构
+##  4.2 锁结构
 
 上文可知，无论是 CollectionLock、DBLock、GlobalLock 还是 ResourceLock，其最终都是通过 Locker 类的对象来实现锁的获取与释放。Locker 类定义了锁的获取、释放等行为，以一个虚类的形式存在作为 MongoDB 中 lock 概念的 Interface，其定义在 locker.h 文件中，类的接口比较多，我们挑重点来看：
 
@@ -945,7 +902,6 @@ LockerImpl 实现了 Locker 的接口，同时新增了许多 private 的接口�
 *   _lockComplete：等待锁的获取；
     
 *   _acquireTicket：获取 ticket。
-    
 
 为什么把他们三个单独拎出来，看看 LockerImpl 对于两个重要接口 lockGlobal() 与 lock() 的实现便知：
 
@@ -1003,7 +959,7 @@ Global 锁在获取前还需要调用 _acquireTicket() 来获取 Ticket。
 
 于是我们分别讨论 ticket 与 lockManager。
 
-####  4.3 有关 ticket
+##  4.3 有关 ticket
 
 MongoDB 中有两种类型的 Ticket，一种是开启流控（FlowControl）时，在获取 Global 锁之前，需要调用 getFlowContrlTicket() 来获取流控的 ticket，本质是通过漏桶、令牌桶等方式执行限流操作。另一种则是在获取 Global 锁时，需要先通过 _acquireTicket() 接口获取对应的 ticket，MongoDB 通过 ticket 来控制请求的并发度，理论上大多数请求（除非设置了 skipAcquireTicket）都需要获取 Global 锁（IX、IS、X），故所有请求都需要获取 Ticket，_acquireTicket() 的实现如下：
 
@@ -1134,7 +1090,6 @@ StorageEngine::LastShutdownState initializeStorageEngine(OperationContext* opCtx
 *   SemaphoreTicketHolder：通过信号量控制同时持有 ticket 数目的 TicketHolder，当请求数大于 128 时，未拿到 ticket 的线程将由于信号量控制而阻塞，当有多余资源被释放时则通过信号量中断调用获取资源；
     
 *   FifoTicketHolder：通过 FIFO 队列来控制同时持有 ticket 数目的 TicketHolder，当请求数大于 128 时，未拿到 ticket 的线程将进入一个先进先出的等待队列等待 ticket 释放。
-    
 
 两个 TicketHolder 的 waitForTicket() 接口本质最终都是调用 waitForTicketUntil() 接口，具体可以看 SemaphoreTicketHolder::waitForTicketUntil() 与 FifoTicketHolder::waitForTicketUntil() 的实现，均在 ticketHolder.cpp 文件中。
 
@@ -1142,7 +1097,7 @@ StorageEngine::LastShutdownState initializeStorageEngine(OperationContext* opCtx
 
 通过排队 / 立即获取完 Ticket 后，便可通过 _lockBegin 与 _lockComplete 获取锁。
 
-####  4.4 锁排队 & 防饿死机制
+##  4.4 锁排队 & 防饿死机制
 
 下面我们来一起讨论 _lockBegin() 与 _lockComplete() 两个接口，首先看 _lockBegin()：
 
@@ -1329,7 +1284,6 @@ private:
 *   _lockBuckets：为一个由 _numLockBuckets 定义长度的 LockBucket 数组；
     
 *   _numLockBuckets：定义了 LockBucket 的长度，代码中定死了为 128。
-    
 
 上述共同组成了 LockManager 的结构，可以用如下图来表述
 
@@ -1519,7 +1473,6 @@ static const int LockConflictsTable[] = {
 上述代码解决了意向锁中获取与排队等待的问题，并提高了获取锁的效率。对于一个锁请求，如果与当前 GrantList 中的请求类型无冲突，就将其添加到 GrantList 中加锁成功，否则将其添加到 ConflictList 中，并等待 grantedModes 变更时，从 ConflictList 中选择一批与 grantedModes 兼容的加锁请求进入 GrantList。但是上述策略会有一个问题：
 
 *   试想以下场景：如果 ConflictList 中有 X 锁在等待，而 GrantList 中的 IS/IX 锁请求源源不断的进来，那么 X 锁就会一直无法被调度，即锁会被饿死。 
-    
 
 为了避免这种排它锁被共享锁饿死的情况，在 ConflictList 的 FIFO 队列基础上，引入了排队优先级概念。MongoDB 通过添加 enqueueAtFront 与 compatibleFirst 这两个参数来解决排它锁饿死的问题。其位于在获取 lock 时传入的 LockRequest 中：
 
@@ -1647,7 +1600,6 @@ LockResult LockerImpl::_lockBegin(OperationContext* opCtx, ResourceId resId, Loc
 *   再有新的 IX/IS 请求到达时，由于此时 compatibleFristCount==0，且请求的 IX/IS 类型锁与 ConflictList 中的 Global 的 X 锁类型冲突，导致新的 IX/IS 锁请求也依旧进入 ConflictList 队尾进行等待。
     
 *   由于新的请求不断的进入 ConflictList 进行等待，且 Global 的 X 锁请求位于 ConflictList 的 FIFO 队列第一位，防止了排它锁被源源不断的共享锁饿死。
-    
 
 本文主要从 MongoDB 的慢日志引入，为你详细拆解了 MongoDB 的锁与相关实现问题。在下一篇中，我们将对 MongoDB 的操作和锁使用进行深入的阐述，敬请期待。
 
@@ -1667,8 +1619,6 @@ LockResult LockerImpl::_lockBegin(OperationContext* opCtx, ResourceId resId, Loc
 
 （长按图片立即扫码）
 
-  
-
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe979Bb4KNoEWxibDp8V9LPhyjmg15G7AJUBPjic4zgPw1IDPaOHDQqDNbBsWOSBqtgpeC2dvoO9EdZBQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
 [![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe96lunmNea43Pq8ztPY1mma255ruOibHHOC0ladZmjSzoZDOhsag2II1O1riaxWrl0aFL62OMXibA01QQ/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1)](http://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247667613&idx=1&sn=0cdee77c883d6c009be8431184b63dac&chksm=eaa655cdddd1dcdb6fe5e7f86f6f8e41f3346f19f695995579fe10f0e17426909e53807aa8ca&scene=21#wechat_redirect)
@@ -1676,7 +1626,5 @@ LockResult LockerImpl::_lockBegin(OperationContext* opCtx, ResourceId resId, Loc
 [![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97eUjpvqGvhxJicFatsW9yK1IEFMam0GialiaTtkC5JOX56zVJoRhKXZrmibrC9iayyxCDGxNDPcXYtxjQ/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1)](http://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247667685&idx=1&sn=94959aefedb00fc4bf2d3393dd70e529&chksm=eaa655b5ddd1dca3310c575bc27c972e07f1cc4d409066992e0ffaf91bc9091c3ddd360312a5&scene=21#wechat_redirect)
 
 [![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe95UIoDctnibIfWBcg5zibwfSt1rqAjYSDKngnHcNH9P5HczJjdT9z2lfm5OQ6QBgJQXPOc1gicSMmRwA/640?wx_fmt=png&from=appmsg)](http://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247666014&idx=1&sn=5bf432538452d4b9c05e7571e8072019&chksm=eaa6530eddd1da18244f91ad8859189808cfb087b4af00bae6280f3d4b21e46776684c2e6267&scene=21#wechat_redirect)
-
-  
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe95pIHzoPYoZUNPtqXgYG2leyAEPyBgtFj1bicKH2q8vBHl26kibm7XraVgicePtlYEiat23Y5uV7lcAIA/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1)

@@ -1,7 +1,10 @@
 ---
 create: 2023-11-13 01:20
 ---
-## 0.1. 前言
+
+# Lucene 解析 - 基本概念
+
+## 1. 前言
 
 Apache Lucene 是一个开源的高性能、可扩展的信息检索引擎，提供了强大的数据检索能力。Lucene 已经发展了很多年，其功能越来越强大，架构也越来越精细。它目前不仅仅能支持全文索引，也能够提供多种其他类型的索引方式，来满足不同类型的查询需求。
 
@@ -18,7 +21,7 @@ Lucene 官方对自己的优势总结为几点：
 
 整个分析会基于 Lucene 7.2.1 版本，在读这篇文章之前，需要有一定的知识基础，例如了解基本的搜索和索引原理，知道什么是倒排、分词、相关性等基本概念，了解 Lucene 的基本使用，例如 Directory、IndexWriter、IndexSearcher 等。
 
-## 0.2. 基本概念
+## 2. 基本概念
 
 在深入解读 Lucene 之前，先了解下 Lucene 的几个基本概念，以及这几个概念背后隐藏的一些东西。
 
@@ -60,7 +63,7 @@ Lucene 内最核心的倒排索引，本质上就是 Term 到所有包含该 Ter
 
 DocId 采用一个从 0 开始底层的 Int32 值，是一个比较大的优化，同时体现在数据压缩和查询效率上。例如数据压缩上的 Delta 策略、ZigZag 编码，以及倒排列表上采用的 SkipList 等，这些优化后续会详述。
 
-## 0.3. 索引类型
+## 3. 索引类型
 
 Lucene 中支持丰富的字段类型，每种字段类型确定了支持的数据类型以及索引方式，目前支持的字段类型包括 LongPoint、TextField、StringField、NumericDocValuesField 等。
 
@@ -88,7 +91,7 @@ Lucene 提供的多种不同类型的 Field，本质区别就两个：一是不�
 
 StringFiled 有两种类型索引定义，TYPE_NOT_STORED 和 TYPE_STORED，唯一的区别是这个 Field 是否需要 Store。从其他的几个属性也可以解读出，StringFiled 选择 omitNorms，需要进行倒排索引并且不需要被分词。
 
-## 0.4. Elasticsearch 数据类型
+## 4. Elasticsearch 数据类型
 
 Elasticsearch 内对用户输入文档内 Field 的索引，也是按照 Lucene 能提供的几种模式来提供。除了用户能自定义的 Field，Elasticsearch 还有自己预留的系统字段，用作一些特殊的目的。这些字段映射到 Lucene 本质上也是一个 Field，与用户自定义的 Field 无任何区别，只不过 Elasticsearch 根据这些系统字段不同的使用目的，定制有不同的索引方式。
 
@@ -98,7 +101,7 @@ Elasticsearch 内对用户输入文档内 Field 的索引，也是按照 Lucene 
 
 关于 Elasticsearch 内系统字段全面的解析，可以看下这篇[文章](https://zhuanlan.zhihu.com/p/34680841)。
 
-## 0.5. 总结
+## 5. 总结
 
 1. 这篇文章主要介绍了 Lucene 的一些基本概念以及提供的索引类型。后续我们会有一系列文章来解析 Lucene 提供的 IndexWriter 的写入流程，其 In-Memory Buffer 的结构以及持久化后的索引文件结构，来了解 Lucene 为何能达到如此高效的数据索引性能。也会去解析 IndexSearcher 的查询流程，以及一些特殊的查询优化的数据结构，来了解为何 Lucene 能提供如此高效的搜索和查询。
 2. 这是内容很长的一段话

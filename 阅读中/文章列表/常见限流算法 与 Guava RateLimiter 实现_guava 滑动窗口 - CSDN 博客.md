@@ -3,35 +3,38 @@ source: https://blog.csdn.net/LCBUSHIHAHA/article/details/125954347
 create: 2024-02-19 14:19
 read: false
 ---
-### 0.1.1. 常见的限流算法
 
-#### 0.1.1.1. 固定窗口计数限流、
+# 常见限流算法 与 Guava RateLimiter 实现_guava 滑动窗口 - CSDN 博客
+
+## 1. 常见的限流算法
+
+### 1.1. 固定窗口计数限流、
 
 固定窗口限流是指定一个时间段，规定固定时间段内允许的请求数，这个时间段超过指定请求数后就会开始限流。但是两个窗口临界的地方会出现允许流量暴增的情况。在每分钟允许 100 个请求的情况下，在 1 分钟时间点，发生了 200 个请求。  
 
 ![](https://img-blog.csdnimg.cn/37cf92e79a6244009a65bfed85b42c25.png)
 
-#### 0.1.1.2. 滑动窗口计数限流
+### 1.2. 滑动窗口计数限流
 
 为了解决临界点的问题，使用滑动的窗口来计数。窗口滑动的间隔越短，时间窗口的临界突变问题发生的概率也就越小，不过只要有时间窗口的存在，还是有可能发生时间窗口的临界突变问题。
 
 ![](https://img-blog.csdnimg.cn/b3af5eb2a5b9437d95ef850a1a59668a.png)
 
-#### 0.1.1.3. 漏桶算法
+### 1.3. 漏桶算法
 
 往漏桶中以任意速率流入水，以固定的速率流出水。当水超过桶的容量时，会被溢出，也就是丢弃。因为桶的容量不变，保证了整体的速率。  
 在正常流量下漏铜算法没有问题，**但是面对突发流量，漏铜还是固定速率就不是很合理，这个时候我们是希望系统尽量快的处理请求，提升用户体验**（在不影响系统正常运行的情况下）。  
 
 ![](https://img-blog.csdnimg.cn/2f1c7e04265b4d50bcc548ad5e6abdfe.png)
 
-#### 0.1.1.4. [令牌桶算法](https://so.csdn.net/so/search?q=%E4%BB%A4%E7%89%8C%E6%A1%B6%E7%AE%97%E6%B3%95&spm=1001.2101.3001.7020)
+### 1.4. [令牌桶算法](https://so.csdn.net/so/search?q=%E4%BB%A4%E7%89%8C%E6%A1%B6%E7%AE%97%E6%B3%95&spm=1001.2101.3001.7020)
 
 根据限流大小，以固定的速率往[令牌桶](https://so.csdn.net/so/search?q=%E4%BB%A4%E7%89%8C%E6%A1%B6&spm=1001.2101.3001.7020)中放入令牌。如果令牌桶满了，超过令牌桶容量的限制，就会丢弃。  
 系统接收一个用户的请求，都会先去令牌桶取一个令牌，拿到令牌才会去处理业务逻辑，没有取到则放弃请求。由于令牌桶算法会存储一些令牌，所以可以应对一些突发流量。  
 
 ![](https://img-blog.csdnimg.cn/602b6ab10c3243158845e257e3d3318a.png)
 
-### 0.1.2. [Guava](https://so.csdn.net/so/search?q=Guava&spm=1001.2101.3001.7020) RateLimiter 实现概述
+## 2. [Guava](https://so.csdn.net/so/search?q=Guava&spm=1001.2101.3001.7020) RateLimiter 实现概述
 
 Google Guava 的限流器是**令牌桶算法**实现。  
 设计要点
@@ -39,7 +42,7 @@ Google Guava 的限流器是**令牌桶算法**实现。
 *   令牌生成与存储
 *   突发流量与预热
 
-#### 0.1.2.1. 令牌生成与存储
+### 2.1. 令牌生成与存储
 
 按照令牌桶的算法描述：`以固定的速率往令牌桶中放入令牌`。
 
@@ -57,15 +60,15 @@ RateLimiter 中会记录一下信息：
 
 当获取令牌时，会去计算当前时间与当前存储的`下次发放令牌时间`的差值 /`多久产生一个令牌`得到从上次获取令牌到当前时间一共可以产生多少令牌，然后将可存储的令牌数存储在一个`double`字段。由访问线程去驱动令牌计算，这样就省去了使用专门线程去放令牌，简化了令牌存储方案。
 
-#### 0.1.2.2. 突发流量与预热
+### 2.2. 突发流量与预热
 
 Google 的限流器实现在对原本令牌桶算法进行了一些扩展。对突发流量的支持这个原本令牌桶算法就支持，但是预热没有。Google 的 RateLimiter 这两个功能对应来个实现类`SmoothBursty`和`SmoothWarmingUp`。
 
-##### 0.1.2.2.1. SmoothBursty
+#### 2.2.1. SmoothBursty
 
 SmoothBursty 用来处理突发流量的限流器。它比较简单，就是使用当前存储的一些令牌来应对突发流量。
 
-##### 0.1.2.2.2. SmoothWarmingUp 设计
+#### 2.2.2. SmoothWarmingUp 设计
 
 **SmoothWarmingUp 作用与使用场景**  
 SmoothWarmingUp 用来处理应用启动时，一些缓存还没有生成等导致处理不了正常情况下能抗住的请求量。所以就需要在刚启动应用时每秒发放的令牌数要比正常情况下要小。比如正常可以每秒处理 5000 个请求，但是刚启动时只能处理 500 个，如果这个时候 5000 个请求打过来，应用刚启动就会挂掉。
@@ -127,16 +130,16 @@ public static RateLimiter create(double permitsPerSecond, long warmupPeriod, Tim
   }
 ```
 
-### 0.1.3. Guava RateLimiter 源码分析
+## 3. Guava RateLimiter 源码分析
 
-##### 0.1.3.1.1. RateLimiter 成员变量
+### 3.1. RateLimiter 成员变量
 
 ```
 //用来计时
 private final SleepingStopwatch stopwatch;
 ```
 
-##### 0.1.3.1.2. SmoothRateLimiter 成员变量
+### 3.2. SmoothRateLimiter 成员变量
 
 ```
 //当前令牌桶中存储的令牌数
@@ -151,16 +154,16 @@ private final SleepingStopwatch stopwatch;
 
 `SmoothBursty`和`SmoothWarmingUp`继承了`SmoothRateLimiter`所以它们都有上面的这些成员变量，它们也是实现整个算法的核心。
 
-#### 0.1.3.2. SmoothBursty 源码分析
+## 4. SmoothBursty 源码分析
 
-##### 0.1.3.2.1. 成员变量
+### 4.1. 成员变量
 
 ```
 //存储最大突发秒数，默认是1S，通过这个最大突发秒数计算最大可以存储多少令牌
 final double maxBurstSeconds;
 ```
 
-##### 0.1.3.2.2. 构造函数
+### 4.2. 构造函数
 
 ```
 SmoothBursty(SleepingStopwatch stopwatch, double maxBurstSeconds) {
@@ -171,7 +174,7 @@ SmoothBursty(SleepingStopwatch stopwatch, double maxBurstSeconds) {
  }
 ```
 
-##### 0.1.3.2.3. 创建
+### 4.3. 创建
 
 ```
 static RateLimiter create(double permitsPerSecond, SleepingStopwatch stopwatch) {
@@ -245,11 +248,11 @@ void doSetRate(double permitsPerSecond, double stableIntervalMicros) {
 
 以上的代码就是构建 SmoothBursty 的全部逻辑。可以看到主要是设置了多久发放一个令牌，下次发放令牌的时间初始值，当前存储了多少令牌的初始值以及最大能存储多少令牌。分析完构建后，就再来看看是如何利用这几个参数实现限流的。
 
-##### 0.1.3.2.4. 获取令牌
+### 4.4. 获取令牌
 
 获取令牌有不同的方法：`acquire`，`tryAcquire`。他们各自还有不同的重载，不过实现的主要逻辑差不多。
 
-###### 0.1.3.2.4.1. acquire 方法
+#### 4.4.1. acquire 方法
 
 ```
 public double acquire(int permits) {
@@ -303,7 +306,7 @@ long storedPermitsToWaitTime(double storedPermits, double permitsToTake) {
     }
 ```
 
-###### 0.1.3.2.4.2. tryAcquire 方法获取令牌
+#### 4.4.2. tryAcquire 方法获取令牌
 
 ```
 public boolean tryAcquire() {
@@ -343,7 +346,7 @@ private boolean canAcquire(long nowMicros, long timeoutMicros) {
 
 以上就是`SmoothBursty`获取令牌的全部逻辑，`SmoothWarmingUp`的时间与`SmoothBursty`的逻辑基本一样，只有初始化和从令牌桶获取令牌的逻辑不一样。
 
-#### 0.1.3.3. SmoothWarmingUp 源码分析
+## 5. SmoothWarmingUp 源码分析
 
 在看下面分析前，可以回顾一下上面的函数图象，下面的成员变量以及初始化会和它又很大关系。
 
@@ -366,7 +369,7 @@ private boolean canAcquire(long nowMicros, long timeoutMicros) {
               0 thresholdPermits maxPermits
 ```
 
-##### 0.1.3.3.1. 成员变量
+### 5.1. 成员变量
 
 ```
 //预热时间
@@ -379,7 +382,7 @@ private boolean canAcquire(long nowMicros, long timeoutMicros) {
     private double coldFactor;
 ```
 
-##### 0.1.3.3.2. 构造方法
+### 5.2. 构造方法
 
 ```
 SmoothWarmingUp(
@@ -391,7 +394,7 @@ SmoothWarmingUp(
     }
 ```
 
-##### 0.1.3.3.3. 创建
+### 5.3. 创建
 
 ```
 //创建时会设置预热时间
@@ -449,7 +452,7 @@ SmoothWarmingUp(
     }
 ```
 
-##### 0.1.3.3.4. 获取令牌
+### 5.4. 获取令牌
 
 获取令牌的令牌与 SmoothBursty 基本一致，唯一有区别的地方就是从令牌桶中获取令牌的逻辑。这个方面也有提到，看漏了的可以回看。
 
@@ -476,7 +479,7 @@ SmoothWarmingUp(
     }
 ```
 
-#### 0.1.3.4. 总结
+## 6. 总结
 
 Guava 使用了一种巧妙的方式避免使用额外的线程发放令牌，以及使用额外的容器存放每一个令牌，大大提升了程序的性能。不过 Guava 的限流器只是针对单机，如果需要实现分布式的限流则需要另外的中间件了。
 

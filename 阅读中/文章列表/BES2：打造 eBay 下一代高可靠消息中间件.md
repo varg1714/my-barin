@@ -2,6 +2,9 @@
 source: https://mp.weixin.qq.com/s?__biz=MzA3MDMyNDUzOQ==&mid=2650516484&idx=1&sn=6dfb7bcfc160a06253defda1f6728bd6&chksm=87319450b0461d469a04d0c8458a50657e1128b47cd203e83645b51686d581e9c0487a44ee61&mpshare=1&scene=1&srcid=10204WIBuS9kYkBPxtwNi2FX&sharer_shareinfo=2c9e3bce88259be656a4e09847b62a04&sharer_shareinfo_first=2c9e3bce88259be656a4e09847b62a04#rd
 create: 2023-11-13 17:11
 ---
+
+# BES2：打造 eBay 下一代高可靠消息中间件
+
 ![](https://mmbiz.qpic.cn/sz_mmbiz_jpg/nwwClDeS1mNr8cjDibicO5hHVnIMZic2Ij1tetSF56QibrZlicPATsFnKNiaOSx0nOuNR3HTXqQgswn6HcWO77aibltpg/640?wx_fmt=jpeg)
 
 ![图片](https://mmbiz.qpic.cn/sz_mmbiz_png/nwwClDeS1mNibx8WtVdiacPDib98cJYXBSFlkJUTY9PdHOxGIibtRDWLXKV2zUUtP7MKwkHQQiac5UUPYmBK4QDfEzQ/640?wx_fmt=png)
@@ -53,7 +56,6 @@ Architechture
 *   **Producer**：BES 支持三种类型的生产者。BES1 Producer 生产消息并将其持久化到基于 Oracle 的 BES1 存储组件，同时通过 BES2 Bridge 同步到 BES2 存储。BES2 Producer 生产消息并直接持久化到基于 Kafka 的 BES2 存储组件。NuDocument Producer 支持事务性消息发送，以确保 BES 消息的发送与用户业务文档写入操作的原子性，这些消息同样会通过 BES2 Bridge 同步到 BES2 存储。
     
 *   **Consumer**：BES 支持三种类型的消费者。BES1 Consumer 仅能消费 BES1 消息。BES2 Consumer 具备同时消费 BES1 和 BES2 消息的能力。此外，BES2 还可与 Flink 无缝集成，支持以流式处理的方式消费 BES2 消息。
-    
 
 本章将重点介绍 **BES2 的内部实现机制**，包括消息可靠性、大容量消息重试以及跨数据中心容灾的原理，以帮助读者深入了解 BES2 的内部工作原理。
 
@@ -243,7 +245,6 @@ Ecosystem
 
 **02**
 
-  
 BES2 还实现了与 eBay 内部生态系统的广泛集成，包括支持 NuDocument 类型的事务性消息发送以及使用 Flink SQL/Connector 进行流式消息处理。
 
 **NuDocument 事务消息发送**
@@ -279,7 +280,6 @@ Apache Flink 是 eBay 内部广泛使用的流式数据处理平台，支持从 
 *   **SplitReader**：在 Job Manager 上运行，是实际进行消息拉取的组件。每当 SplitEnumerator 发现新的 Split 后，SplitReader 将创建 BES 消费者实例以拉取对应的 BES 队列中的数据，并将其放入 elementQueue 队列。同时，SplitReader 需要处理消息的确认提交，具体是在快照时将当前已消费但尚未提交的 batchId 作为状态进行持久化，然后在 Checkpoint 完成后提交这些 batchId，以确保数据不会丢失。
     
 *   **RecordEmitter**：在 Job Manager 上运行，负责将接收到的消息序列化为目标类型，并发送给下游算子。消息序列化方式是可配置的，用户可以使用 Flink 原生的 DeserializationSchema 或 TypeInformation 配置目标类型，还可以配置为标准的 BES 事件 POJO，这使得下游处理逻辑可以与普通 BES 消费者完全一致。
-    
 
 在接收到序列化后的消息流后，下游 Flink 算子可以对其进行各种操作，例如聚合、连接等。目前，BES Flink Connector 已经开始支持 eBay 多个业务的实时计算需求，例如 Ads 团队通过 Flink 应用程序消费 BES 中的用户行为数据以发现可能的用户欺诈行为。
 

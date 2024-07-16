@@ -2,6 +2,7 @@
 source: https://mp.weixin.qq.com/s/ssXSwqlXjE0jv-yeq7GX9A
 create: 2023-11-14 09:05
 ---
+
 # 
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7O5pGDH1QmUNa2XCUichFvjlOqV5sfnlHaKRALYlrlRCpZygon1I3PIg/640?wx_fmt=png)
@@ -30,17 +31,9 @@ Tech
 
 注：每一评论者仅可获奖一次，若存在多条评论符合条件则获奖资格顺延；若存在并列情况则由运营者结合评论质量人工选择获奖人；领奖方式将另行通知。
 
-  
-
-  
-
 **01** 
 
 **背景**
-
-  
-
-  
 
 在今年的敏捷团队建设中，我通过 Suite 执行器实现了一键自动化单元测试。Juint 除了 Suite 执行器还有哪些执行器呢？由此我的 Runner 探索之旅开始了！
 
@@ -64,19 +57,9 @@ public void service(Integer id) {
 
 ### 当时通过分析上游问题流量限流解决后，后续找时间又重新分析了下问题发生的根本原因，现将其总结如下：本篇文章会先对 Mysql 中的各种锁进行分析，包括互斥锁、间隙锁和插入意向锁，让大家对各种锁的使用场景有一个了解，然后在此基础上再对本问题进行分析，希望大家未来再碰到相似场景时，能够快速的定位问题。
 
-  
-
-  
-
 **02** 
 
  **Mysql 锁机制**
-
- 
-
-  
-
-  
 
 理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目标页面展示到屏幕。
 
@@ -104,8 +87,6 @@ values
 
 **2.1  Shared and Exclusive Locks**
 
-  
-
 shared(S) lock 表示共享锁，当一个事务持有某行上的 S 锁后可以对该行的数据进行读操作，通过语句 select ... from test lock in share mode 可以添加共享锁，**一般使用的较少**，不做过多阐述。
 
 exclusive(X) lock 表示互斥锁，当一个事务对**某行数据进行 update 或 delete 操作**时都要先获取到该记录上的 X 锁，如果已经有其他事务获取到了该记录上的 X 锁，那么当前事务会阻塞等待直到上一事务释放了对应记录上的 X 锁。
@@ -130,8 +111,6 @@ Record lock, heap no 2 PHYSICAL RECORD: n_fields 3; compact format; info bits 0
 ```
 
 **2.2  Gap Locks**
-
-  
 
 上一小节中介绍了 Exclusive Locks，该锁可以避免多个事务同时对一行记录进行更新操作，**但不能解决幻读的问题**，所谓的幻读就是指一个事务在前后两次查询同一个范围时，后一次查询到了前一次没有的记录。
 
@@ -162,8 +141,6 @@ Record lock, heap no 4 PHYSICAL RECORD: n_fields 4; compact format; info bits 0
 
 **2.3  Next-Key Locks**
 
-  
-
 ‍‍
 
 Next-Key Locks 是 (Shard/Exclusive Locks + Gap Locks) 的结合，当 session A 给某行记录 R 添加了互斥型的 Next-Key Locks 后， 相当于拥有了记录 R 的 X 锁和记录 R 的 Gap Locks。
@@ -189,8 +166,6 @@ Record lock, heap no 2 PHYSICAL RECORD: n_fields 3; compact format; info bits 0
 ```
 
 **2.4  Insert Intention Locks**
-
-  
 
 插入意向锁 (Insert Intention Locks) 也是一种间隙锁，由 INSERT 操作在行数据插入之前获取。
 
@@ -230,21 +205,9 @@ Record lock, heap no 4 PHYSICAL RECORD: n_fields 4; compact format; info bits 0
 
 图 5. 生成的锁记录示意
 
-  
-
-  
-
 **03** 
 
- 
-
-# **线上问题分析**
-
- 
-
-  
-
-  
+# 线上问题分析
 
 理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目标页面展示到屏幕。
 
@@ -263,7 +226,6 @@ public void service(Integer id) {
 *   传入的参数 id 在原数据库中不存在
     
 *   传入的参数 id 在原数据库中存在
-    
 
 本次主要会针对 id 记录在原数据库中不存在进行分析
 
@@ -317,33 +279,17 @@ public void service(Integer id) {
 
 因此对于未来在业务代码中存在相似逻辑的地方，一定要做好防重校验，避免短时间内存在对同一行数据的先更新再插入的并发操作。同时在可重复读隔离别下，更新和删除操作默认都会添加 Next-Key Locks，间隙锁的引入使得死锁问题在并发情况下很容易出现，这也是在业务逻辑实现上需要考虑的问题。
 
-  
-
-  
-
 **04** 
 
  **总结** 
-
-  
-
-  
 
 理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目
 
 本文以一个线上问题为背景，对 Mysql 中的各种锁机制进行了详细的总结，分析了各个锁的加锁时机和具体使用场景，其中特别要注意间隙锁的使用，因间隙锁和间隙锁之间不互斥，当多个事务之间并发执行时很容易形成死锁。
 
-  
-
-  
-
 **05** 
 
  **写留言 赢福利** 
-
-  
-
-  
 
 理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目
 
@@ -371,11 +317,7 @@ public void service(Integer id) {
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7rUiaXg1tNeElo6pVnvsQhGsVMSiaLn7bT6icNKw0caXsV9icVXUbRQ3S7A/640?wx_fmt=png)
 
-  
-
 ![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7rUiaXg1tNeElo6pVnvsQhGsVMSiaLn7bT6icNKw0caXsV9icVXUbRQ3S7A/640?wx_fmt=png)
-
-  
 
 **推荐阅读**
 

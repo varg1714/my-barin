@@ -3,6 +3,9 @@ source: https://mp.weixin.qq.com/s/mppfRPxGALSOWdP9vXplUg
 create: 2024-07-09 15:38
 read: false
 ---
+
+# 深入理解 RDMA 的软硬件交互机制
+
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naLVh71ZDmDFTJJwHEd9mTyHJ8zAuW5wThdgmKRnUhGsUPAvgkE9cNHiadf3CIAG9de63mzKv42y4bQ/640?wx_fmt=jpeg)
 
 阿里妹导读
@@ -38,7 +41,6 @@ RDMA (Remote Direct Memory Access) 技术全称远程直接内存访问，是为
 8.  内核拷贝数据至用户态程序的 buffer 中
     
 9.  系统调用结束
-    
 
 可以发现，上述流程有**三次上下文切换**（中断上下文切换、用户态与内核态上下文切换），有**一次内存拷贝**。虽然内核有一些优化手段，比如通过 NAPI 机制减少中断数量，但是在高性能场景下， Kernel TCP 的延迟和吞吐的表现依然不佳。
 
@@ -53,7 +55,6 @@ RDMA (Remote Direct Memory Access) 技术全称远程直接内存访问，是为
 4.  用户态程序 polling 完成事件
     
 5.  用户态程序处理 buffer
-    
 
 上述流程**没有上下文切换，没有数据拷贝，没有协议栈的处理逻辑**（卸载到了 RDMA 网卡内），也没有内核的参与。CPU 可以专注处理数据和业务逻辑，不用花大量的 cycles 去处理协议栈和内存拷贝。
 
@@ -64,9 +65,7 @@ RDMA 的软件架构
 ![](https://mmbiz.qpic.cn/mmbiz_png/Z6bicxIx5naJ4220uaic4iaKcYUPkzKleItH4ibrv321nIrNoYbZVrHV4Sld9XcOXJGcxV3mP2EmD22DF5Nqeo9vzA/640?wx_fmt=png&from=appmsg)
 
 1. 用户态驱动（libibverbs、libmlx5 等）：这些库都属于 rdma-core 项目（https://github.com/linux-rdma/rdma-core）。为用户提供各种 Verbs API，另外也有一些厂商的特有 API。之所以这层被称为 “用户态驱动”，是因为 RDMA 要在用户态直接和硬件打交道，传统在内核态实现 HAL 的方式不满足 RDMA 的需求，因此需要在用户态感知硬件细节。
-
 2. 内核态 IB 软件栈：内核态的一层抽象，对应用提供统一的接口。这些接口不仅用户态可以调用，内核态也可以调用。
-
 3. 内核态驱动：各个厂商实现的网卡驱动，直接和硬件交互。
 
 RDMA 的内存管理
@@ -78,14 +77,12 @@ RDMA 的内存管理
 2.  地址映射问题：用户态程序使用的是虚拟地址，实际的物理地址是操作系统管理的。网卡怎么知道**虚拟地址和物理地址**的映射关系？
     
 3.  地址映射会变化：操作系统可能会对内存做 swap、压缩，操作系统还有一些复杂的机制，比如 Copy-On-Write。这些情况下，怎么保证网卡访问的**地址的正确性**？
-    
 
 为了解决上述问题，RDMA 引入了两个概念：
 
 1.  PD（Protection Domain）：在 RDMA 中，PD 是一个容纳了各种资源的 “容器”，类似一个租户 ID，将这些资源纳入自己的保护范围内，避免他们被未经授权的访问。一个进程中可以创建多个 PD，各个 PD 所容纳的资源彼此隔离，无法一起使用。
     
 2.  MR（Memory Registration）：RDMA 中对内存保护的一种措施，只有将要操作的内存注册到 MR 中，这段内存才能被 RDMA 使用。MR 包括了 PD、lkey、rkey、地址、长度、权限这几个属性。PD 是这个 MR 所属的保护域，其他保护域的上下文是不能访问这个 MR 的（避免了暴力遍历内存访问其他进程内存的可能）。lkey、rkey 统称为 mkey 是一个访问内存的凭据（分别对应本地访问和远程访问），RDMA 的所有操作都要有 mkey 才能进行。
-    
 
 这样讲可能会有一些抽象，以一个实际的例子来看看 RDMA 是怎么注册内存的：
 
@@ -185,7 +182,6 @@ mlx5_get_next_cqe:565: dump cqe for cqn 0x4c2:
 1.  用户态程序调用 ibv_reg_mr，通过 uverbs 接口发到内核（实际用的系统调用为 ioctl 或者 write），操作的文件是 /dev/infiniband/uverbsX
     
 2.  经过 uverbs 层的转换后，最终调用到设备驱动的代码，NVIDIA 网卡上是 mlx5_ib_reg_user_mr 这个函数：
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/Z6bicxIx5naJ4220uaic4iaKcYUPkzKleIthavE1sdRcbUZ2SBhSwvM3xFVoYCCZk6ovbYS3s4c8VMECh4Xru5Rvg/640?wx_fmt=png&from=appmsg)
 
@@ -210,17 +206,14 @@ reg_create 会按照网卡开发手册定义的命令格式，发送创建 mkey 
 现在可以回答上面的问题了：
 
 1.  安全问题：用户态程序能否利用网卡读写任意物理内存？
-    
 
 不能，RDMA 通过 PD 和 MR 机制做了严格的内存保护。
 
 2.  地址映射问题：用户态程序使用的是虚拟地址，实际的物理地址是操作系统管理的。网卡怎么知道虚拟地址和物理的映射关系？
-    
 
 驱动会告诉网卡映射关系，后续数据流中，网卡自己转换。
 
 3.  地址映射会变化：操作系统可能会对内存做 swap、压缩，操作系统还有一些复杂的机制，比如 Copy-On-Write。这些情况下，怎么保证网卡访问的地址的正确性？
-    
 
 通过驱动调用 pin_user_pages_fast 保障。另外，用户态驱动会给注册的内存打上 DONT_FORK 的标志，避免 Copy-On-Write 发生。
 
@@ -245,7 +238,6 @@ RDMA 的软硬交换的基础单元是 Work Queue。Work Queue 是一个单生�
 6.  软件 Polling CQ
     
 7.  软件读取硬件更新后的 CQE，得知 WQE 完成
-    
 
 还是以一个实际的例子进行分析，这样才能深入理解全流程：
 
@@ -285,7 +277,6 @@ uint32_t send_demo(struct ibv_qp *qp, struct ibv_mr *mr)
 2.  ibv_sge 是数据的抽象，包含 （addr，len，lkey） 三个字段
     
 3.  ibv_wc 是 CQE 的抽象，通过 wr_id 和 ibv_send_wr 对应起来
-    
 
 把 rdma-core 的 debug 打开，可以看到这样的两条日志：
 
@@ -314,7 +305,6 @@ mlx5_get_next_cqe:565: dump cqe for cqn 0x4c2:
 1.  把 ibv_send_wr 翻译为 NVIDIA 网卡的 WQE 格式
     
 2.  Doorbell 通知网卡
-    
 
 **填充 WQE**
 
@@ -392,7 +382,7 @@ gdb 中可以看到这个 bf->reg 看起来是一个平平无奇的虚拟地址�
 
 至此，RDMA 基本的工作原理和软硬件交互的机制就介绍完了。RDMA 技术的出发点很简单，就是能不能饶过一切限制，直接把数据送到用户手中。在此之上，做了非常多的工作，成为了一个非常复杂的技术。RDMA 也不是银弹，有着编程复杂、调试复杂、硬件依赖重、不能长传等问题。对于 IO 密集型的业务，RDMA 可以节约很多 CPU，获得高吞吐低延迟的性能；而对于计算密集的业务，或者追求硬件无关的业务，TCP 是更合适的选择。
 
-# **参考资料：**
+## 1. 参考资料：
 
 1、IB 规范：
 
