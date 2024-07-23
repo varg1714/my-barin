@@ -4,12 +4,6 @@ create: 2024-07-16 10:02
 read: false
 ---
 
-# 图解 Kafka：架构设计、消息可靠、数据持久、高性能背后的底层原理
-
-![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe94cQiccAo2zibZETiaOnMVLNQAO0Zne2x8KlehRMR8AsOTW90m1pAicBEw5wBJFkQiax8ricKGbKibEKV8gQ/640?wx_fmt=other&wxfrom=5&wx_lazy=1&wx_co=1&tp=webp)
-
-![](https://mmbiz.qpic.cn/mmbiz_gif/VY8SELNGe96srmm5CxquJGSP4BbZA8IDLUj8l7F3tzrm8VuILsgUPDciaDLtvQx78DbkrhAqOJicxze5ZUO5ZLNg/640?wx_fmt=gif&wxfrom=5&wx_lazy=1&tp=webp)
-
 👉目录
 
 1 引言
