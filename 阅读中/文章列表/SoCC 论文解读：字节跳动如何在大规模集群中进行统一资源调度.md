@@ -3,6 +3,11 @@ source: https://mp.weixin.qq.com/s/1nLD3QykR1eLuV9umyOCYg
 create: 2024-05-07 12:06
 read: false
 ---
+
+# SoCC 论文解读：字节跳动如何在大规模集群中进行统一资源调度
+
+## 1. SoCC 论文解读：字节跳动如何在大规模集群中进行统一资源调度
+
 作为字节跳动在离线混部场景中最核心的调度系统，Gödel 提供丰富的资源 QoS 管理能力，可以统一调度在线和离线应用，极大提升资源利用率。
 
 开源 | github.com/kubewharf/godel-scheduler  
@@ -17,8 +22,6 @@ read: false
 
 目前，该调度系统支持管理着数万节点的超大规模集群，提供包括微服务、batch、流式任务、AI 在内的多种类型任务的资源并池能力。自 2022 年开始在字节跳动内部各数据中心批量部署，Gödel 调度器已经被验证可以在高峰期提供 **>60%** **的 CPU 利用率**和 **>95%** **的 GPU 利用率**，峰值调度吞吐率接近 **5,000 pods/sec**。
 
-  
-
 **引言**
 
 在过去的几年里，随着字节跳动各业务线的高速发展，公司内部的业务种类也越来越丰富，包括微服务、推广搜（推荐 / 广告 / 搜索）、大数据、机器学习、存储等业务规模迅速扩大，其所需的计算资源体量也在飞速膨胀。
@@ -26,8 +29,6 @@ read: false
 早期字节跳动的在线业务和离线业务有独立的资源池，业务之间采用分池管理。为了应对重要节日和重大活动时在线业务请求的爆炸性增长，基础设施团队往往需要提前做预案，将部分离线业务的资源拆借到在线业务的资源池中。虽然这种方法可以应对一时之需，但不同资源池之间的资源拆借流程长，操作复杂，效率很低。同时，独立的资源池导致在离线业务之间混部成本很高，资源利用率提升的天花板也非常有限。
 
 为了应对这一问题，论文中提出了在离线统一调度器 Gödel，旨在使用同一套调度器来统一调度和管理在离线业务，实现资源并池，从而在提升资源利用率和资源弹性的同时，优化业务成本和体验，降低运维压力。Gödel 调度器基于 Kubernetes 平台，可以无缝替换 Kubernetes 的原生调度器，在性能和功能上优于 Kubernetes 原生调度器和社区中其他调度器。
-
-  
 
 **开发动机**
 
@@ -42,38 +43,30 @@ read: false
 *   CNCF 社区的 Volcano 是一款主要针对离线业务的调度器，可以满足离线业务（e.g. batch, offline training 等）的调度需求（e.g. Gang scheduling）。但是其调度吞吐率也比较低，而且不能同时支持在线业务。
     
 *   YARN 是另一款比较流行的集群资源管理工具，在过去很长一段时间一直是离线业务调度的首选。它不仅对 batch、offline training 等离线业务所需的调度语义有很好的支持，而且调度吞吐率也很高，可以支持很大规模的集群。但其主要弊端是对微服务等在线业务的支持不好，不能同时满足在线和离线业务的调度需求。
-    
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/FMhibf6tm6dDSqIcz8JExf8hmTib2Nwk830LoL0qCzd6tT5auoaVLQySuLnwl2usibA91dYsr5AbOpvTZicTVpRFfA/640?wx_fmt=png&from=appmsg)
 
 因此，字节跳动希望能够开发一款结合 **Kubernetes 和 YARN** 优点的调度器来打通资源池、统一管理所有类型的业务。基于上述讨论，该调度器被期望具有下述特点：
 
 *   **Unified Resource Pool**
-    
 
 集群中的所有计算资源对在线和离线的各种任务均可见、可分配。降低资源碎片率，和集群的运维成本。
 
 *   **Improved Resource Utilization**
-    
 
 在集群和节点维度混部不同类型、不同优先级的任务，提高集群资源的利用率。
 
 *   **High Resource Elasticiy**
-    
 
 在集群和节点维度，计算资源可以在不同优先级的业务之间灵活且迅速地流转。在提高资源利用率的同时，任何时候都保证高优业务的资源优先分配权和 SLA。
 
 *   **High Scheduling Throughput**
-    
 
 相比于 Kubernetes 原生调度器和社区的 Volcano 调度器，不论是在线还是离线业务都要大幅提高调度吞吐率。满足 > 1000 pods/sec 的业务需求。
 
 *   **Topology-aware Scheduling**
-    
 
 在做调度决策时而不是 kubelet admit 时就识别到候选节点的资源微拓扑，并根据业务需求选择合适的节点进行调度。
-
-  
 
 **Gödel 介绍**
 
@@ -82,8 +75,6 @@ Gödel Scheduler 是一个应用于 Kubernetes 集群环境、能统一调度在
 如下图所示，Gödel Scheduler 和 Kubernetes 原生调度器的结构类似，由三个组件组成：Dispatcher、Scheduler 和 Binder。不一样的是，为了支持更大规模的集群和提供更高的调度吞吐，它的 Scheduler 组件可以是多实例的，采用乐观并发调度， Dispatcher 和 Binder 则是单实例运行。
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/FMhibf6tm6dAHjNX0uhWAtPicibMZK2sxWvLG5xUCCCib1zv06w5YjeU5tQwGQLKs8uqKVmOFBDaDWWicv6PU2hOia5A/640?wx_fmt=png&from=appmsg)
-
-  
 
 **核心组件**
 
@@ -98,14 +89,12 @@ Dispatcher 是整个调度流程的入口，主要负责任务排队、任务分
 *   **Node Shuffler**：主要负责基于 Scheduler 实例个数，对集群节点进行 Partition 分片。每个节点只能在一个 Partition 里面。每个 Scheduler 实例对应一个 Partition，一个 Scheduler 实例工作的时候会优先选择自己 Partition 内的节点，没有找到符合要求的节点时才会去找其他 Partition 的节点。如果集群状态发生变化，例如增加或者删除节点，又或者 Scheduler 个数改变，node shuffle 会基于实际情况重新划分节点。
     
 *   **Scheduler Maintainer**：主要负责对每个 Scheduler 实例状态进行维护，包括 Scheduler 实例健康状况、负载情况、Partition 节点数等。
-    
 
 Scheduler 从 Dispatcher 接收任务请求，负责为任务做出具体的调度和抢占决策，但是不真正执行。和 Kubernetes 原生调度器一样，Gödel 的 Scheduler 也是通过一系列不同环节上的 plugins 来决定一个调度决策，例如通过下面两个 plugins 来寻找符合要求的节点。
 
 *   Filtering plugins：基于任务的资源请求，过滤掉不符合要求的节点；
     
 *   Scoring plugins：对上面筛选出来的节点进行打分，选出最合适的节点。
-    
 
 和 Kubernetes 原生调度器不同的是，Gödel 的 Scheduler 允许多实例**分布式运行**。对于超大规模的集群和对高吞吐有要求的场景，我们可以配置多个 scheduler 实例来满足需求。此时每个 scheduler 实例独立、并行地进行调度，选择节点时，优先从该实例所属的 partition 中选择，这样性能更好，但只能保证局部最优；本地 partition 没有合适的节点时，会从其他实例的 partition 中选择节点，但这可能会引起 conflict，即多个 scheduler 实例同时选中同一个节点，scheduler 实例数量越多，发生 conflict 的几率越大。因此，要合理设置实例的数量，不是越多越好。
 
@@ -118,8 +107,6 @@ Scheduler 从 Dispatcher 接收任务请求，负责为任务做出具体的调�
 相比于只使用 topology-manager 的原生 Kubernetes，使用 CNR 可以避免将 Pod 调度到不满足 topology 限制的节点上时 kubelet 碰到的 scheduling failure。如果一个 Pod 成功地在节点上创建，CNR 将会被隶属于 [Katalyst](http://mp.weixin.qq.com/s?__biz=Mzk0NDMzNjkxNw==&mid=2247485561&idx=1&sn=c5a10a4f5e692568a60f76fb3bab67c2&chksm=c3277103f450f815423288c62b7f66d0a86a67f3820950c77acbf241cad0e2b56f1e0461bb5f&scene=21#wechat_redirect) 的 node agent 更新。
 
 相关阅读：《[Katalyst：字节跳动云原生成本优化实践](http://mp.weixin.qq.com/s?__biz=Mzk0NDMzNjkxNw==&mid=2247485561&idx=1&sn=c5a10a4f5e692568a60f76fb3bab67c2&chksm=c3277103f450f815423288c62b7f66d0a86a67f3820950c77acbf241cad0e2b56f1e0461bb5f&scene=21#wechat_redirect)》
-
-  
 
 **两层调度**
 
@@ -135,14 +122,11 @@ Scheduler 从 Dispatcher 接收任务请求，负责为任务做出具体的调�
 
 当面向诸如 Batch、offline training 等需要 Gang 语义的离线业务时，Min_Member 的值等于 Running Unit/Pod 的个数（有些业务也可以根据实际需求调整为 1 到 Number of Running Units 之间的某个值），即所有 Pod 都能满足资源请求时才开始调度。Min_Member 的值会根据业务类型和业务部署 template 中的参数被自动设置。
 
-  
-
 **性能优化**
 
 因为字节跳动自身业务的需求，对调度吞吐的要求很高。Gödel 的设计目标之一就是提供高吞吐。为此，Gödel 调度器把最耗时的筛选节点部分放在可并发运行的多实例 Scheduler 中。一方面因为多实例会碰到 conflict 的原因，Schduler 的实例数量不是越多越好；另一方面仅仅多实例带来的性能提高不足以应对字节单一集群上晚高峰 1000 - 2000 pods/s 的吞吐要求。为了进一步提高调度效率，Gödel 在以下几个方面做了进一步优化。
 
 *   **缓存候选节点**
-    
 
 在筛选节点的过程中，Filter 和 Prioritize 是最耗时的两个部分。前者根据资源请求筛选可用的节点，后者给候选节点打分寻找最适宜的节点。如果这两个部分的运行速度能够提高，则整个调度周期会被大幅压缩。
 
@@ -155,22 +139,18 @@ Scheduler 从 Dispatcher 接收任务请求，负责为任务做出具体的调�
 因此，Gödel 调度器会在调度第一个 Pod 后缓存候选节点，并在下一轮调度中优先从缓存中搜索可用的节点。除非集群状态发生变化（增加或删除节点）或者碰到不同资源诉求的 Pod，不需要每一轮都重新扫描集群中的节点。在调度的过程中没有资源可分配的节点会被移除缓存，并根据集群状态调整排序。这一优化可以明显优化节点筛选的过程，当调度同一个业务用户的一组 Pod 时，理想情况下可以把时间**复杂度从 O(n) 降低到 O(1)**。
 
 *   **降低扫描节点的比例**
-    
 
 虽然上述优化可以降低候选节点的构建过程，但是如果集群状态或者资源申请发生变化，还是要重新扫描集群所有节点。
 
 为了进一步降低时间开销，Gödel 调整了候选列表的扫描比例，用局部最优解作为全局最优解的近似替代。因为调度过程中需要为所有 Running Units/Pods 找到足够的候选节点，Gödel 至少会扫描 # of Running Units 个数的节点，根据历史数据的分析，Gödel 默认扫描 # of Running Units + 50 个节点来寻找候选节点。如果没有找到合适的，会再扫描相同的个数。该方法结合候选节点缓存，会大大降低调度器为 Pod 寻找合适节点的时间开销。
 
 *   **优化数据结构和算法**
-    
 
 除了上述两个优化外，Gödel 调度器还不断对数据结构和算法进行优化：
 
 为了可以低成本地维护候选节点列表，避免频繁重建节点列表产生的开销。Gödel **重构了原生 Kubernetes 调度器的 NodeList 维护机制**，通过离散化节点列表的方式解决了超大规模生产集群出现的性能问题，并以更低的开销获得了更好的节点离散效果；
 
 为了提高整体资源利用率，字节跳动将高优的在线任务和低优的离线任务混合部署。由于业务的潮汐特点，晚高峰时伴随着大量在线业务的返场，往往需要高频地抢占低优的离线业务。抢占过程涉及到大量的搜索计算，频繁抢占严重地影响了调度器的整体工作效率。为了解决这一问题，Gödel 调度器引入了基于 Pod 和 Nodes 的**多维剪枝策略**，使得抢占吞吐能够快速回升、抢占时延大幅降低。
-
-  
 
 **实验结果**
 
@@ -195,8 +175,6 @@ Scheduler 从 Dispatcher 接收任务请求，负责为任务做出具体的调�
 下面左图描述的是某集群在某段时间内在线任务和离线任务的资源分配情况。开始阶段，在线任务消耗的资源不多，大量计算资源被分配给优先级较低的离线任务。当在线任务由于某个特殊事件（突发事件、热搜等）导致资源需求激增后，Gödel 立刻把资源分配给在线任务，离线任务的资源分配量迅速减少。当高峰过后，在线任务开始降低资源请求，调度器再次把资源转向离线任务。通过在离线并池和动态资源流转，字节跳动可以一直维持较高的资源利用率。晚高峰时间，集群的平均资源率达到 **60% 以上**，白天波谷阶段也可以维持在 40% 左右。
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/FMhibf6tm6dAHjNX0uhWAtPicibMZK2sxWvDb6QpO7sCA8IibduZiaa3qia4nl2tguhzNibpdAUMvJUtDmQfIJ7kGsicGg/640?wx_fmt=png&from=appmsg)
-
-  
 
 **总结及未来展望**
 

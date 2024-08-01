@@ -3,9 +3,10 @@ source: https://mp.weixin.qq.com/s/VGgT1faRKGnUuQ-HHQ3Q5g
 create: 2024-02-22 09:47
 read: false
 ---
-![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naLnBYxbldhCha20Xz6dtLa5iaaMURWN2lYBjNCKz3ibtUUVlBMtN9uY6EJOFichlBWXIFHIicCY48vGBg/640?wx_fmt=jpeg&from=appmsg)
 
-  
+# 奇思妙想的 SQL｜兼顾性能的数据倾斜处理新姿势
+
+![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naLnBYxbldhCha20Xz6dtLa5iaaMURWN2lYBjNCKz3ibtUUVlBMtN9uY6EJOFichlBWXIFHIicCY48vGBg/640?wx_fmt=jpeg&from=appmsg)
 
 阿里妹导读
 
@@ -27,7 +28,6 @@ SQL 作为目前最通用的数据库查询语言，其功能和特性复杂度�
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/Z6bicxIx5naLnBYxbldhCha20Xz6dtLa5uoCwn1srnZ9ibgSfxyVbREWCnS77XjOBktP5K3pNJCg1DUHqISkuDiag/640?wx_fmt=png&from=appmsg)
 
-  
 如上图所示，数据重分发过程中，按照 Join Key（即卖家 ID）进行 Shuffle，大部分交易数据记录分发至处理节点 1，导致三个并发处理节点中，处理节点 1 需要处理的数据量远大于其他两个处理节点，从而造成数据处理的不均匀，即数据倾斜。
 
 二、常见的优化方法
@@ -48,7 +48,6 @@ ON base.dim_key = dim.dim_key
 *   特殊值 / 空值场景也比较普遍，比如主表中有个属性字段在某些场景下为空或为一些无业务含义的特殊字符串（如 DEFAULT），然后此属性字段本身对应了一张数据量较大的维表，需要关联打宽补全。此时做数据关联，由于两张表需要按照关联 key 进行 shuffle，就会导致主表中该字段为空 / 相同特殊字符串的数据记录 shuffle 到同一节点上，从而导致数据倾斜。
     
 *   此类场景也好解决，对特殊值 / 空值在关联时转为随机值就行。
-    
 
 ```
 SELECT * 
@@ -62,7 +61,6 @@ ON IF(COALESCE(base.dim_key,'')='',CONCAT('HIVE_',RAND()),base.dim_key) = dim.di
 *   此类方法使用较少，核心在于对于主表附加一个随机值（比如 1～10）字段，记为 ext_a 字段，然后对应被关联维表数据按照对应倍数进行复制膨胀，并依次赋予 1～10 的编号，记为 ext_b 字段，然后在关联两张表时把 ext_a、ext_b 两个字段也作为关联字段之一。
     
 *   此方法适用于被关联表远比主表小，但又因数据大小超过内存容量而无法使用 Mapjoin，且主表的数据倾斜程度不大（即极值对应的数据行数相较于值平均对应行数，倍数差距不太大）的情况下可以使用，但整体上此方案只能对数据热点成倍数的削弱一些。
-    
 
 ```
 SELECT * 
@@ -87,7 +85,6 @@ AND base.ext_a   = dim.ext_b
 *   热点数据单独处理的方案的核心点在于将热点数据提取出来单独处理，热点数据可以用 Mapjoin 的方式完成关联维表热点记录行，非热点则使用普通的 shuffle 模式的 join 方案完成关联。
     
 *   具体操作主要分三个部分：基于主表统计获得 Top 热点的属性值；用热点属性值将被关联维表拆成热点小表和非热点表，同时也将主表拆成热点主表和非热点主表；热点小表通过 Mapjoin 与热点主表 join，非热点表与非热点主表 join，最终两部分再 Union 到一起，完成数据关联。
-    
 
 ```
 -- Step01:热点数据记录提取
@@ -141,7 +138,6 @@ ON a11.dim_shop_id = a13.dim_shop_id
 ```
 
 *   整个步骤稍有些复杂，这里也可以直接用平台的 skewjoin 参数完成倾斜处理，skew 的核心思路就是上面提到的热点数据单独处理，只是做了平台级别的集成，方便用户一键解决数据倾斜问题。详细用法和详细原理可参考《阿里云 - SKEWJOIN HINT》[1]。
-    
 
 ```
 INSERT OVERWRITE TABLE final_result_table PARTITION (dt = '${bizdate}')
@@ -163,7 +159,6 @@ ON    a1.dim_shop_id = a2.dim_shop_id
 *   不难发现，上面几种方案核心都是在围绕解决数据重分发（即 shuffle）导致的热点问题，一种是想方设法采用 Mapjoin 的方式避免热点数据重分发，一种是让数据重分发过程中尽可能得均匀。
     
 *   不管是哪种思路，问题核心都还是在解决 shuffle 导致的数据分布不均匀的问题。所以，一切的 “罪魁祸首” 就是 **shuffle****、****shuffle****、****shuffle**～
-    
 
 三、一种新的思路 WithDistmapjoin～
 

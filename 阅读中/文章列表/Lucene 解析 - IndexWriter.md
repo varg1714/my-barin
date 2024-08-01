@@ -1,11 +1,14 @@
 ---
 create: 2023-11-13 01:20
 ---
-## 0.1. 前言
+
+# Lucene 解析 - IndexWriter
+
+## 1. 前言
 
 在上一篇文章我们介绍了 Lucene 的基本概念，在本篇文章我们将深入 Lucene 中最核心的类之一 IndexWriter，来探索 Lucene 中数据写入和索引构建的整个过程。
 
-## 0.2. IndexWriter
+## 2. IndexWriter
 
 ```java
 // initialization
@@ -26,7 +29,9 @@ writer.commit();
 1.  初始化
     初始化 IndexWriter 必要的两个元素是 Directory 和 IndexWriterConfig，Directory 是 Lucene 中数据持久层的抽象接口，通过这层接口可以实现很多不同类型的数据持久层，例如本地文件系统、网络文件系统、数据库或者是分布式文件系统。
     
+
     IndexWriterConfig 内提供了很多可配置的高级参数，提供给高级玩家进行性能调优和功能定制，它提供的几个关键参数后面会细说。
+
 2.  构造文档
     Lucene 中文档由 Document 表示，Document 由 Field 构成。Lucene 提供多种不同类型的 Field，其 FiledType 决定了它所支持的索引模式，当然也支持自定义 Field，具体方式可参考上一篇文章。
 3.  写入文档
@@ -34,7 +39,7 @@ writer.commit();
 
 以上就是 Lucene 的一个简明的数据写入流程，核心是 IndexWriter，整个过程被抽象的非常简洁明了。一个设计优良的库的最大特点，就是可以让普通玩家以非常小的代价学习和使用，同时又照顾高级玩家能够提供可调节的性能参数和功能定制能力。
 
-## 0.3. IndexWriterConfig
+## 3. IndexWriterConfig
 
 IndexWriterConfig 内提供了一些供高级玩家做性能调优和功能定制的核心参数，我们列几个主要的看下：
 
@@ -61,7 +66,7 @@ IndexWriterConfig 内提供了一些供高级玩家做性能调优和功能定�
 *   **Analyzer**
     即分词器，这个通常是定制化最多的，特别是针对不同的语言。
 
-## 0.4. 核心操作
+## 4. 核心操作
 
 IndexWriter 提供很简单的几种操作接口，这一章节会做一个简单的功能和用途解释，下一个章节会对其内部实现做一个详细的剖析。IndexWrite 的提供的核心 API 如下：
 
@@ -72,7 +77,7 @@ IndexWriter 提供很简单的几种操作接口，这一章节会做一个简�
 *   prepareCommit/commit/rollback：commit 后数据才可被搜索，commit 是一个二阶段操作，prepareCommit 是二阶段操作的第一个阶段，也可以通过调用 commit 一步完成，rollback 提供了回滚到 last commit 的操作。
 *   maybeMerge/forceMerge：maybeMerge 触发一次 MergePolicy 的判定，而 forceMerge 则触发一次强制 merge。
 
-## 0.5. 数据路径
+## 5. 数据路径
 
 上面几个章节介绍了 IndexWriter 的基本流程、配置和核心接口，非常简单和易理解。这一章节，我们将深入 IndexWriter 内部，来探索其内核实现。
 
@@ -80,7 +85,7 @@ IndexWriter 提供很简单的几种操作接口，这一章节会做一个简�
 
 如上是 IndexWriter 内部核心流程架构图，接下来我们将以 add/update/delete/commit 这些主要操作来讲解 IndexWriter 内部的数据路径。
 
-## 0.6. 并发模型
+## 6. 并发模型
 
 IndexWriter 提供的核心接口都是线程安全的，并且内部做了特殊的并发优化来优化多线程写入的性能。IndexWriter 内部为每个线程都会单独开辟一个空间来写入，这块空间由 DocumentsWriterPerThread 来控制。整个多线程数据处理流程为：
 
@@ -94,7 +99,7 @@ IndexWriter 提供的核心接口都是线程安全的，并且内部做了特�
 
 在搜索场景中，全量构建索引的阶段，基本是纯新增文档式的写入，而在后续增量索引阶段（特别是数据源是数据库时），会涉及大量的 update 和 delete 操作。从原理上来分析，一个最佳实践是包含相同唯一主键 Term 的文档分配相同的线程来处理，使数据更新发生在一个独立线程空间内，避免跨线程。
 
-## 0.7. add & update
+## 7. add & update
 
 add 接口用于新增文档，update 接口用于更新文档。但 Lucene 的 update 和数据库的 update 不太一样。数据库的更新是查询后更新，Lucene 的更新是查询后删除再新增，不支持更新文档内部分列。流程是先 delete by term，后 add document。
 
@@ -113,7 +118,7 @@ long updateDocument(final Iterable<? extends IndexableField> doc, final Analyzer
 
 关于 delete 操作的细节在下一小结详细说，add 操作会直接将文档写入 DWPT 内的 In-memory buffer。
 
-## 0.8. delete
+## 8. delete
 
 delete 相对 add 和 update 来说，是完全不同的一个数据路径。而且 update 和 delete 虽然内部都会执行数据删除，但这两者又是不同的数据路径。文档删除不会直接影响 In-memory buffer 内的数据，而是会有另外的方式来达到删除的目的。
 
@@ -135,21 +140,21 @@ DWPT Pending Updates 里的删除操作什么时候会真正作用于数据呢�
 
 还有一点要注意的是，live docs 只影响倒排，所以在 live docs 里被标记删除的文档没有办法通过倒排索引检索出，但是还能够通过 doc id 查询到 store fields。当然文档数据最终是会被真正物理删除，这个过程会发生在 merge 时。
 
-## 0.9. flush
+## 9. flush
 
 flush 是将 DWPT 内 In-memory buffer 里的数据持久化到文件的过程，flush 会在每次新增文档后由 FlushPolicy 判定自动触发，也可以通过 IndexWriter 的 flush 接口手动触发。
 
 每个 DWPT 会 flush 成一个 segment 文件，flush 完成后这个 segment 文件是不可被搜索的，只有在 commit 之后，所有 commit 之前 flush 的文件才可被搜索。
 
-## 0.10. commit
+## 10. commit
 
 commit 时会触发数据的一次强制 flush，commit 完成后再此之前 flush 的数据才可被搜索。commit 动作会触发生成一个 commit point，commit point 是一个文件。Commit point 会由 IndexDeletionPolicy 管理，lucene 默认配置的策略只会保留 last commit point，当然 lucene 提供其他多种不同的策略供选择。
 
-## 0.11. merge
+## 11. merge
 
 merge 是对 segment 文件合并的动作，合并的好处是能够提高查询的效率以及回收一些被删除的文档。Merge 会在 segment 文件 flush 时触发 MergePolicy 来判定自动触发，也可通过 IndexWriter 进行一次 force merge。
 
-## 0.12. IndexingChain
+## 12. IndexingChain
 
 前面几个章节主要介绍了 IndexWriter 内部各个关键操作的流程，本小节会介绍最核心的 DWPT 内部对文档进行索引构建的流程。Lucene 内部索引构建最关键的概念是 IndexingChain，顾名思义，链式的索引构建。为啥是链式的？这个和 Lucene 的整个索引体系结构有关系，Lucene 提供了各种不同类型的索引类型，例如倒排、正排（列存）、StoreField、DocValues 等。每个不同的索引类型对应不同的索引算法、数据结构以及文件存储，有些是列级别的，有些是文档级别的。所以一个文档写入后，需要被这么多种不同索引处理，有些索引会共享 memory-buffer，有些则是完全独立的。基于这个架构，理论上 Lucene 是提供了扩展其他类型索引的可能性，顶级玩家也可以去尝试。
 
@@ -167,6 +172,6 @@ merge 是对 segment 文件合并的动作，合并的好处是能够提高查�
 
 这一章节主要了解 IndexingChain 内部的文档索引处理流程，核心是链式分阶段的索引，并且不同类型索引支持 Codec 可配置。
 
-## 0.13. 总结
+## 13. 总结
 
 这篇文章主要从一个全局视角来讲解 IndexWriter 的配置、接口、并发模型、核心操作的数据路径以及索引链，在之后的文章中，会再深入索引链中每种不同类型索引的构建流程，探索其 memory-buffer 的实现、索引算法以及数据存储格式。

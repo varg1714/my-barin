@@ -3,20 +3,22 @@ source: https://www.cnblogs.com/codelogs/p/17659370.html
 create: 2024-04-25 15:18
 read: false
 ---
+
+# 一次 Java 内存占用高的排查案例，解释了我对内存问题的所有疑问
+
 原创：扣钉日记（微信公众号 ID：codelogs），欢迎分享，非公众号转载保留此声明。
 
-### 0.1.1. 问题现象
+## 1. 问题现象
 
 7 月 25 号，我们一服务的内存占用较高，约 13G，容器总内存 16G，占用约 85%，触发了内存报警 (阈值 85%)，而我们是按容器内存 60%(9.6G) 的比例配置的 JVM 堆内存。看了下其它服务，同样的堆内存配置，它们内存占用约 70%~79%，此服务比其它服务内存占用稍大。  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194513986-459406901.png)
 
-  
 那为什么此服务内存占用稍大呢，它存在内存泄露吗？
 
-### 0.1.2. 排查步骤
+## 2. 排查步骤
 
-#### 0.1.2.1. 检查 Java 堆占用与 gc 情况
+### 2.1. 检查 Java 堆占用与 gc 情况
 
 ```
 jcmd 1 GC.heap_info
@@ -30,37 +32,32 @@ jstat -gcutil 1 1000
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194513860-239703561.png)
 
-  
 可见堆使用情况正常。
 
-#### 0.1.2.2. 检查非堆占用情况
+### 2.2. 检查非堆占用情况
 
 查看监控仪表盘，如下：  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194513914-529877791.png)
 
-  
 arthas 的 memory 命令查看，如下：  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194513964-403482102.png)
 
-  
 可见非堆内存占用也正常。
 
-#### 0.1.2.3. 检查 native 内存
+### 2.3. 检查 native 内存
 
 Linux 进程的内存布局，如下：  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194513953-866086044.png)
 
-  
 linux 进程启动时，有代码段、数据段、堆 (Heap)、栈(Stack) 及内存映射段，在运行过程中，应用程序调用 malloc、mmap 等 C 库函数来使用内存，C 库函数内部则会视情况通过 brk 系统调用扩展堆或使用 mmap 系统调用创建新的内存映射段。
 
 而通过 pmap 命令，就可以查看进程的内存布局，它的输出样例如下：  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514188-1347437324.png)
 
-  
 可以发现，进程申请的所有虚拟内存段，都在 pmap 中能够找到，相关字段解释如下：
 
 *   Address：表示此内存段的起始地址
@@ -81,7 +78,6 @@ pmap -x 1 | sort -nrk3 | less
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514200-888963692.png)
 
-  
 可以发现我们进程有非常多的 64M 的内存块，而我同时看了看其它 java 服务，发现 64M 内存块则少得多。
 
 2.  检查一段时间后新增了哪些内存段，或哪些变大了，如下：  
@@ -110,25 +106,24 @@ tail -c +$((0x00007face0000000+1)) /proc/1/mem|head -c $((11616*1024))|strings|l
 1.  Linux 将进程内存虚拟为伪文件 / proc/$pid/mem，通过它即可查看进程内存中的数据。
 2.  tail 用于偏移到指定内存段的起始地址，即 pmap 的第一列，head 用于读取指定大小，即 pmap 的第二列。
 3.  strings 用于找出内存中的字符串数据，less 用于查看 strings 输出的字符串。  
-    
+
     ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514352-975557602.png)
-    
-      
+
     通过查看各个可疑内存段，发现有不少类似我们一自研消息队列的响应格式数据，通过与消息队列团队合作，找到了相关的消息 topic，并最终与相关研发确认了此 topic 消息最近刚迁移到此服务中。
 
-#### 0.1.2.4. 检查发 http 请求代码
+### 2.4. 检查发 http 请求代码
 
 由于发送消息是走 http 接口，故我在工程中搜索调用 http 接口的相关代码，发现一处代码中创建的流对象没有关闭，而 GZIPInputStream 这个类刚好会直接分配到 native 内存。  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514298-75120771.png)
 
-### 0.1.3. 其它方法
+## 3. 其它方法
 
 本次问题，通过检查内存中的数据找到了问题，还是有些碰运气的。这需要内存中刚好有一些非常有代表性的字符串，因为非字符串的二进制数据，基本无法分析。
 
 如果查看内存数据无法找到关键线索，还可尝试以下几个方法：
 
-#### 0.1.3.1. 开启 JVM 的 NMT 原生内存追踪功能
+### 3.1. 开启 JVM 的 NMT 原生内存追踪功能
 
 添加 JVM 参数`-XX:NativeMemoryTracking=detail`开启，使用 jcmd 查看，如下：
 
@@ -138,10 +133,9 @@ jcmd 1 VM.native_memory
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514184-72852827.png)
 
-  
 NMT 只能观察到 JVM 管理的内存，像通过 JNI 机制直接调用 malloc 分配的内存，则感知不到。
 
-#### 0.1.3.2. 检查被 glibc 内存分配器缓存的内存
+### 3.2. 检查被 glibc 内存分配器缓存的内存
 
 JVM 等原生应用程序调用的 malloc、free 函数，实际是由基础 C 库 libc 提供的，而 linux 系统则提供了 brk、mmap、munmap 这几个系统调用来分配虚拟内存，所以 libc 的 malloc、free 函数实际是基于这些系统调用实现的。
 
@@ -151,7 +145,6 @@ JVM 等原生应用程序调用的 malloc、free 函数，实际是由基础 C �
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514324-1434448836.png)
 
-  
 **malloc_stats 函数**  
 通过如下命令，可以确认 glibc 库缓存的内存量，如下：
 
@@ -162,7 +155,6 @@ gdb -q -batch -ex 'call malloc_stats()' -p 1
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514264-37454319.png)
 
-  
 如上，Total (incl. mmap) 表示 glibc 分配的总体情况 (包含 mmap 分配的部分)，其中 system bytes 表示 glibc 从操作系统中申请的虚拟内存总大小，in use bytes 表示 JVM 正在使用的内存总大小 (即调用 glibc 的 malloc 函数后且没有 free 的内存)。
 
 可以发现，glibc 缓存了快 500m 的内存。
@@ -179,16 +171,13 @@ gdb -q -batch -ex 'call malloc_trim(0)' -p 1
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514308-1915031030.png)
 
-  
-
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514395-251059570.png)
 
-  
 可以发现，执行 malloc_trim 后，RSS 减少了约 250m 内存，可见内存占用高并不是因为 glibc 缓存了内存。
 
 注：通过 gdb 调用 C 函数，会有一定概率造成 jvm 进程崩溃，需谨慎执行。
 
-#### 0.1.3.3. 使用 tcmalloc 或 jemalloc 的内存泄露检测工具
+### 3.3. 使用 tcmalloc 或 jemalloc 的内存泄露检测工具
 
 glibc 的默认内存分配器为 ptmalloc2，但 Linux 提供了 LD_PRELOAD 机制，使得我们可以更换为其它的内存分配器，如业内比较成熟的 tcmalloc 或 jemalloc。
 
@@ -205,14 +194,12 @@ pprof --pdf /path/to/java heap.log.xx.heap > test.pdf
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514467-506028906.png)
 
-  
 tcmalloc 下载地址：[https://github.com/gperftools/gperftools](https://github.com/gperftools/gperftools)
 
 如上，可以发现内存泄露点来自 Inflater 对象的 init 和 inflateBytes 方法，而这些方法是通过 JNI 调用实现的，它会申请 native 内存，经过检查代码，发现 GZIPInputStream 确实会创建并使用 Inflater 对象，如下：  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514313-1269363047.png)
 
-  
 而它的 close 方法，会调用 Inflater 的 end 方法来归还 native 内存，由于我们没有调用 close 方法，故相关联的 native 内存无法归还。  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514224-1507484609.png)
@@ -226,7 +213,7 @@ profiler execute 'start,event=Java_java_util_zip_Inflater_inflateBytes,alluser'
 profiler execute 'start,event=malloc,alluser'
 ```
 
-### 0.1.4. 如果代码不修复，内存会一直涨吗？
+## 4. 如果代码不修复，内存会一直涨吗？
 
 经过查看代码，发现 Inflater 实现了 finalize 方法，而 finalize 方法调用了 end 方法。
 
@@ -234,7 +221,6 @@ profiler execute 'start,event=malloc,alluser'
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514361-2083495578.png)
 
-  
 但我发现一个有趣现象，我通过 jcmd 强行触发了一次 Full GC，如下：
 
 ```
@@ -245,21 +231,20 @@ jcmd 1 GC.run
 
 于是我再执行了一次 malloc_trim，强制 glibc 归还缓存的内存，发现进程的 rss 降了下来。
 
-### 0.1.5. 编码最佳实践
+## 5. 编码最佳实践
 
 这个问题是由于 InputStream 流对象未关闭导致的，在 Java 中流对象 (FileInputStream)、网络连接对象(Socket) 一般都关联了原生资源，记得在 finally 中调用 close 方法归还原生资源。
 
 而 GZIPInputstream、Inflater 是 JVM 堆外内存泄露的常见问题点，review 代码发现有使用这些类时，需要保持警惕。
 
-### 0.1.6. JVM 内存常见疑问
+## 6. JVM 内存常见疑问
 
-#### 0.1.6.1. 为什么我设置了 - Xmx 为 10G，top 中看到的 rss 却大于 10G？
+### 6.1. 为什么我设置了 - Xmx 为 10G，top 中看到的 rss 却大于 10G？
 
 根据上面的介绍，JVM 内存占用分布大概如下：  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514265-1591903902.png)
 
-  
 可以发现，JVM 内存占用主要包含如下部分：
 
 1.  Java 堆，-Xmx 选项限制的就是 Java 堆的大小，可通过 jcmd 命令观测。
@@ -273,7 +258,7 @@ jcmd 1 GC.run
 -XX:MaxRAMPercentage=65.0 -XX:InitialRAMPercentage=65.0 -XX:MinRAMPercentage=65.0
 ```
 
-#### 0.1.6.2. top 中 VIRT 与 RES 是什么区别？
+### 6.2. top 中 VIRT 与 RES 是什么区别？
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514322-1702552118.png)
 
@@ -286,22 +271,16 @@ top 中可以通过 f 交互指令，将 mMin、mMaj 列显示出来。
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514355-1443712251.png)
 
-  
-
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514288-1866367413.png)
-
-  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514396-217260209.png)
 
-  
 minflt 表示轻微缺页，即 Linux 分配了一个内存页给进程，而 majflt 表示主要缺页，即 Linux 除了要分配内存页外，还需要从磁盘中读取数据到内存页，一般是内存 swap 到了磁盘后再访问，或使用了内存映射技术读取文件。
 
-#### 0.1.6.3. 为什么 top 中 JVM 进程的 VIRT 列 (虚拟内存) 那么大？
+### 6.3. 为什么 top 中 JVM 进程的 VIRT 列 (虚拟内存) 那么大？
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514365-1978403257.png)
 
-  
 可以看到，我们一 Java 服务，申请了约 30G 的虚拟内存，比 RES 实际内存 5.6G 大很多。
 
 这是因为 glibc 为了解决多线程内存申请时的锁竞争问题，创建了多个内存分配区 Arena，然后每个 Arena 都有一把锁，特定的线程会 hash 到特定的 Arena 中去竞争锁并申请内存，从而减少锁开销。
@@ -312,37 +291,33 @@ minflt 表示轻微缺页，即 Linux 分配了一个内存页给进程，而 ma
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514368-1962709515.png)
 
-  
 然后 JVM 是直接通过 mmap 申请的堆、MetaSpace 等内存区域，不走 glibc 的内存分配器，这些加起来大约 14G，与走 glibc 申请的 16G 虚拟内存加起来，总共申请虚拟内存 30G！
 
 当然，不必惊慌，这些只是虚拟内存而已，它们多一些并没有什么影响，毕竟 64 位进程的虚拟内存空间有 2^48 字节那么大！
 
-#### 0.1.6.4. 为什么 jvm 启动后一段时间内内存占用越来越多，存在内存泄露吗？
+### 6.4. 为什么 jvm 启动后一段时间内内存占用越来越多，存在内存泄露吗？
 
 如下，是我们一服务重启后运行快 2 天的内存占用情况，可以发现内存一直从 45% 涨到了 62%，8G 的容器，上涨内存大小为 1.36G！  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514366-332827220.png)
 
-  
 但我们这个服务其实没有内存泄露问题，因为 JVM 为堆申请的内存是虚拟内存，如 4.8G，但在启动后 JVM 一开始可能实际只使用了 3G 内存，导致 Linux 实际只分配了 3G。
 
 然后在 gc 时，由于会复制存活对象到堆的空闲部分，如果正好复制到了以前未使用过的区域，就又会触发 Linux 进行内存分配，故一段时间内内存占用会越来越多，直到堆的所有区域都被 touch 到。  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514377-1068982994.png)
 
-  
 而通过添加 JVM 参数`-XX:+AlwaysPreTouch`，可以让 JVM 为堆申请虚拟内存后，立即把堆全部 touch 一遍，使得堆区域全都被分配物理内存，而由于 Java 进程主要活动在堆内，故后续内存就不会有很大变化了，我们另一服务添加了此参数，内存表现如下：  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514283-503639924.png)
 
-  
 可以看到，内存上涨幅度不到 2%，无此参数可以提高内存利用度，加此参数则会使应用运行得更稳定。
 
 如我们之前一服务一周内会有 1 到 2 次 GC 耗时超过 2s，当我添加此参数后，再未出现过此情况。这是因为当无此参数时，若 GC 访问到了未读写区域，会触发 Linux 分配内存，大多数情况下此过程很快，但有极少数情况下会较慢，在 GC 日志中则表现为 sys 耗时较高。  
 
 ![](https://img2023.cnblogs.com/blog/2792815/202308/2792815-20230826194514361-1454953680.png)
 
-### 0.1.7. 参考文章
+## 7. 参考文章
 
 [https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/](https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/)  
 [https://juejin.cn/post/7078624931826794503](https://juejin.cn/post/7078624931826794503)  
