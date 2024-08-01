@@ -1,41 +1,8 @@
 ---
 source: https://mp.weixin.qq.com/s/ssXSwqlXjE0jv-yeq7GX9A
 create: 2023-11-14 09:05
+read: true
 ---
-
-# 
-
-![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7O5pGDH1QmUNa2XCUichFvjlOqV5sfnlHaKRALYlrlRCpZygon1I3PIg/640?wx_fmt=png)
-
-Tech
-
-## 京东技术双十一，参与互动领福利！
-
-双十一京东技术也来**送福利**啦！今天起将不定时发布三篇注有【京东技术双十一】的 “福利文章”，参与对应活动，即有机会获得丰厚福利。本篇文章是第一篇哦~
-
-获奖**基本条件**：**关注**京东技术公众号并**转发**本文至朋友圈
-
-**截至 11 月 20 日 10：00**
-
-在本文下留言超过 15 字，分享您与京东双十一的故事 / 感悟，或针对本文的问题 / 想法等
-
-点赞量 **1—2 名**将获 **SKG 颈部按摩器**
-
-**第 4、6、8 名**将获**罗技无线鼠标**
-
-**第 9、10 名，第 12 名 - 23 名**将获**京东京造保温杯**
-
-**第 24 名 - 50 名**将获 JOY 毛绒**公仔**
-
-**第 3、5、7、11 名**将获得**京东 20 周年纪念鼠标垫 + 京东技术定制文化衫**
-
-注：每一评论者仅可获奖一次，若存在多条评论符合条件则获奖资格顺延；若存在并列情况则由运营者结合评论质量人工选择获奖人；领奖方式将另行通知。
-
-**01** 
-
-**背景**
-
-在今年的敏捷团队建设中，我通过 Suite 执行器实现了一键自动化单元测试。Juint 除了 Suite 执行器还有哪些执行器呢？由此我的 Runner 探索之旅开始了！
 
 最近双十一开门红期间组内出现了一次因 Mysql 死锁导致的线上问题，当时从监控可以看到数据库活跃连接数飙升，导致应用层数据库连接池被打满，后续所有请求都因获取不到连接而失败。
 
@@ -55,13 +22,13 @@ public void service(Integer id) {
 
 图 1. 数据库实例监控示意
 
-### 当时通过分析上游问题流量限流解决后，后续找时间又重新分析了下问题发生的根本原因，现将其总结如下：本篇文章会先对 Mysql 中的各种锁进行分析，包括互斥锁、间隙锁和插入意向锁，让大家对各种锁的使用场景有一个了解，然后在此基础上再对本问题进行分析，希望大家未来再碰到相似场景时，能够快速的定位问题。
+当时通过分析上游问题流量限流解决后，后续找时间又重新分析了下问题发生的根本原因，现将其总结如下：本篇文章会先对 Mysql 中的各种锁进行分析，包括互斥锁、间隙锁和插入意向锁，让大家对各种锁的使用场景有一个了解，然后在此基础上再对本问题进行分析，希望大家未来再碰到相似场景时，能够快速的定位问题。
 
 **02** 
 
  **Mysql 锁机制**
 
-理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目标页面展示到屏幕。
+目标页面展示到屏幕。
 
 在 Mysql 中为了解决对同一行记录并发写的问题，引入了行锁机制，多个事务不能同时对一行数据进行修改操作，当需要对数据库中的一行数据进行修改时，会首先判断该行数据是否加锁，如果没加锁，那么当前事务加锁成功，可以进行后续的修改操作；但如果该行数据已经被其他事务加锁，则当前事务只有等待加锁的事务释放锁后才能加锁成功，继续执行修改操作。
 
@@ -207,9 +174,9 @@ Record lock, heap no 4 PHYSICAL RECORD: n_fields 4; compact format; info bits 0
 
 **03** 
 
-# 线上问题分析
+## 2. 线上问题分析
 
-理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目标页面展示到屏幕。
+目标页面展示到屏幕。
 
 在对 Mysql 中的各种锁结构有了一个清晰的了解之后，回过头来再看看前面的线上问题：
 
@@ -283,76 +250,6 @@ public void service(Integer id) {
 
  **总结** 
 
-理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目
+目
 
 本文以一个线上问题为背景，对 Mysql 中的各种锁机制进行了详细的总结，分析了各个锁的加锁时机和具体使用场景，其中特别要注意间隙锁的使用，因间隙锁和间隙锁之间不互斥，当多个事务之间并发执行时很容易形成死锁。
-
-**05** 
-
- **写留言 赢福利** 
-
-理解，首先 MCube 会依据模板缓存状态判断是否需要网络获取最新模板，当获取到模板后进行模板加载，加载阶段会将产物转换为视图树的结构，转换完成后将通过表达式引擎解析表达式并取得正确的值，通过事件解析引擎解析用户自定义事件并完成事件的绑定，完成解析赋值以及事件绑定后进行视图的渲染，最终将目
-
-再次介绍本篇文章的福利获取方式
-
-**基本条件**：**关注**京东技术公众号并**转发**本文至朋友圈
-
-**截至 11 月 20 日 10：00**
-
-在本文下留言超过 15 字，分享您与京东双十一的故事 / 感悟，或针对本文的问题 / 想法等
-
-点赞量 **1—2 名**将获 **SKG 颈部按摩器**
-
-**第 4、6、8 名**将获**罗技无线鼠标**
-
-**第 9、10 名，第 12 名 - 23 名**将获**京东京造保温杯**
-
-**第 24 名 - 50 名**将获 JOY 毛绒**公仔**
-
-**第 3、5、7、11 名**将获得**京东 20 周年纪念鼠标垫 + 京东技术定制文化衫**
-
-注：每一评论者仅可获奖一次，若存在多条评论符合条件则获奖资格顺延；若存在并列情况则由运营者结合评论质量人工选择获奖人；领奖方式将另行通知。
-
-![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1WEuMK1kkKL7dBvicoSicrcZ9ibrNNGHwwibHictpUXhiaX27k1OicfaS8Bzz6TggseMnv6XGibksgaiavic4Bw/640?wx_fmt=png)
-
-![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7rUiaXg1tNeElo6pVnvsQhGsVMSiaLn7bT6icNKw0caXsV9icVXUbRQ3S7A/640?wx_fmt=png)
-
-![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1UibHPAanTaZmNVW2yn5bYF7rUiaXg1tNeElo6pVnvsQhGsVMSiaLn7bT6icNKw0caXsV9icVXUbRQ3S7A/640?wx_fmt=png)
-
-**推荐阅读**
-
-[【稳定性】关于缩短 MTTR 的探索](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493207&idx=1&sn=b268933b4b25e0a50e99791362f42d6d&chksm=fbf456b8cc83dfae722c408950ad279561a3b8f56759013b920d54a33ee0c5fcc4fde448fc76&scene=21#wechat_redirect)  
-
-[千万级数据深分页查询 SQL 性能优化实践](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493199&idx=1&sn=6a28e9b7b3bfa49a1d500f313d2a6368&chksm=fbf456a0cc83dfb630b6b145c51e9a672e8f26f38e36cda88f84bf4bce5f4287631028fd76a9&scene=21#wechat_redirect)  
-
-[LangChain：打造自己的 LLM 应用](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493179&idx=1&sn=b389c412064c2a9d8e64f9d9f32fef60&chksm=fbf456d4cc83dfc2cecfa62f9331f3b2fa75d2081fd47961600fd0605aadff80a2dd5e0660af&scene=21#wechat_redirect)  
-
-[移动端 APP 组件化架构实践](http://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247493160&idx=1&sn=446b1eab80c65fb072c04fdde2aa732e&chksm=fbf456c7cc83dfd199cf7d63f2a16de695c379f6672b19af7f95e7b271ed3baae53bcd20f7ad&scene=21#wechat_redirect)
-
-![图片](https://mmbiz.qpic.cn/mmbiz_gif/RQv8vncPm1VL0uNianzSL1R3qHJCic0U7JlfFONOvicc7sVBAHKPC51fqfgaYkzibqkJzaD20NricYham9rhBuxvyqA/640?wx_fmt=gif)
-
-**求分享**
-
-![图片](https://mmbiz.qpic.cn/mmbiz_gif/RQv8vncPm1VL0uNianzSL1R3qHJCic0U7JlfFONOvicc7sVBAHKPC51fqfgaYkzibqkJzaD20NricYham9rhBuxvyqA/640?wx_fmt=gif)
-
-**求点赞**
-
-![图片](https://mmbiz.qpic.cn/mmbiz_gif/RQv8vncPm1VL0uNianzSL1R3qHJCic0U7JlfFONOvicc7sVBAHKPC51fqfgaYkzibqkJzaD20NricYham9rhBuxvyqA/640?wx_fmt=gif)
-
-**求在看**
-
-‍
-
-打造 SAAS 化服务的会员徽章体系，可以作为标准的产品化方案统一对外输出。结合现有平台的通用能力，实现会员行为全路径覆盖，并能结合企业自身业务特点，规划相应的会员精准营销活动，提升会员忠诚度和业务的持续增长。
-
-▪
-
-底层能力：维护用户基础数据、行为数据建模、用户画像分析、精准营销策略的制定
-
-▪功能支撑：会员成长体系、等级计算策略、权益体系、营销底层能力支持
-
-▪用户活跃：会员关怀、用户触达、活跃活动、业务线交叉获客、拉新促活
-
-‍
-
-‍
