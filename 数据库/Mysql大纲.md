@@ -146,7 +146,7 @@ NLJ 通过索引查询被驱动表，效率对比无索引的情况已经好很�
 
 `read_rnd_buffer` 的大小是由 `read_rnd_buffer_size` 参数控制的。如果步骤 1 中，`read_rnd_buffer` 放满了，就会先执行完步骤 2 和 3，然后清空 `read_rnd_buffer`。之后继续找索引 a 的下个记录，并继续循环。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220515173810.png)
+![](https://r2.129870.xyz/img/20220515173810.png)
 
 有了以上概念，我们就可以优化 NLJ 算法了。MySQL 在 5.6 版本后开始引入的 Batched Key Access (BKA) 算法了。这个 BKA 算法，其实就是对 NLJ 算法的优化。
 
@@ -265,7 +265,7 @@ SELECT * FROM t, (SELECT id FROM t ORDER BY key1 LIMIT 5000, 1) AS d
 
 例如语句 `select v from ht where k >= M order by t_modified desc limit 100;` 通过 proxy 层无法很好的实现查询的需求，因此一种做法可以是从多个分库中查到数据汇聚到一个临时表中，然后利用生成的临时表执行该语句。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220515194528.png)
+![](https://r2.129870.xyz/img/20220515194528.png)
 
 ## 2.4. 内存表
 
@@ -292,7 +292,7 @@ SELECT * FROM t, (SELECT id FROM t ORDER BY key1 LIMIT 5000, 1) AS d
 
 ### 2.4.3. 内存的组织结构
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220515215434.png)
+![](https://r2.129870.xyz/img/20220515215434.png)
 
 内存表的数据部分以数组的方式单独存放，而主键 id 索引里，存的是每个数据的位置。主键 id 是 hash 索引，可以看到索引上的 key 并不是有序的。
 
@@ -383,7 +383,7 @@ SELECT * FROM t, (SELECT id FROM t ORDER BY key1 LIMIT 5000, 1) AS d
 
 ## 2.6. Mysql 授权语句
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220516124736.png)
+![](https://r2.129870.xyz/img/20220516124736.png)
 授权语句的变化情况如上所示，注意，在 MySQL 里面，用户名 (user)+ 地址 (host) 才表示一个用户，因此 ua@ip1 和 ua@ip2 代表的是两个不同的用户。
 
 `flush privileges` 使用场景：当未通过授权语句 grant 或者 revoke 进行授权，而直接更改了授权表的数据时，需要手动刷新授权数据。当然不建议直接更改数据库当数据！
@@ -586,13 +586,13 @@ SELECT * FROM s1 WHERE key1 > 'z' AND key1 LIKE '%a';
 - `const`
 	通过主键或者唯一二级索引列与常数的等值比较来定位一条记录的访问方法定义为：`const`，意思是常数级别的，代价是可以忽略不计的。
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209080844435.png)
+	![](https://r2.129870.xyz/img/202209080844435.png)
 - `eq_ref`
 	在 const 的基础上，在连接查询中对被驱动表使用主键值或者唯一二级索引列的值进行等值查找的查询执行方式称之为：`eq_ref`。
 - `ref`
 	二级索引列与常数等值比较，采用二级索引来执行查询的访问方法称为：`ref`。由于普通二级索引并不限制索引列值的唯一性，所以可能找到多条对应的记录，也就是说使用二级索引来执行查询的代价取决于等值匹配到的二级索引记录条数。
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209080845837.png)
+	![](https://r2.129870.xyz/img/202209080845837.png)
 	- 二级索引值为 null 的情况
 		**不论是普通的二级索引，还是唯一二级索引，它们的索引列对包含 `NULL` 值的数量并不限制**，所以我们采用 `key IS NULL` 这种形式的搜索条件最多只能使用 `ref` 的访问方法，而不是 `const` 的访问方法。
 	- 联合索引左边连续列是常数的等值比较
@@ -619,7 +619,7 @@ SELECT * FROM s1 WHERE key1 > 'z' AND key1 LIKE '%a';
 
     当使用二级索引而不是全表扫描的方式执行该查询时，这种类型的查询使用的访问方法就称为 `ref_or_null`，这个 `ref_or_null` 访问方法的执行过程如下：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209080849362.png)
+    ![](https://r2.129870.xyz/img/202209080849362.png)
 - `range`
     上面介绍的几种访问方法都是在对索引列与某一个常数进行等值比较的时候才可能使用到（`ref_or_null` 比较奇特，还计算了值为 `NULL` 的情况），但是有时候我们面对的搜索条件更复杂，比如下边这个查询：
     ```sql
@@ -793,7 +793,7 @@ SELECT * FROM single_table WHERE key1 < 'a' OR key3 > 'z';
 
 ## 4.2. SQL 语句在 Mysql 内部的执行过程
 
- ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220508232841.png)
+ ![](https://r2.129870.xyz/img/20220508232841.png)
 
 1. 取得数据库连接器
 2. 查询缓存
@@ -806,7 +806,7 @@ SELECT * FROM single_table WHERE key1 < 'a' OR key3 > 'z';
 
 ## 4.3. 数据流转过程
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220515155935.png)
+![](https://r2.129870.xyz/img/20220515155935.png)
 
 数据是一个**边读边发**的过程：
 1. 获取一行数据，将其写入到 `net_buffer` 中。这块内存的大小是由参数 `net_buffer_length` 定义的，默认是 16k。**该区域每个线程独有**。
@@ -896,7 +896,7 @@ MVCC 的规则如下：
         
         表级锁类型兼容性总结在以下矩阵：
         
-        ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202307231407272.png)
+        ![image.png](https://r2.129870.xyz/img/202307231407272.png)
         
         意向锁不会阻止除全表请求（例如 `LOCK TABLES ... WRITE` ）之外的任何内容。意向锁的主要目的是表明有人正在锁定一行，或者将要锁定表中的一行。
     - Gap 锁
@@ -958,7 +958,7 @@ MVCC 的规则如下：
 
 那么这些记录的锁就可以被放到一个 `锁结构` 中：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209200027113.png)
+![](https://r2.129870.xyz/img/202209200027113.png)
 
 我们看看这个结构里边的各种信息都是干嘛的：
 
@@ -978,7 +978,7 @@ MVCC 的规则如下：
 - `type_mode`
     这是一个 32 位的数，被分成了 `lock_mode`、`lock_type` 和 `rec_lock_type` 三个部分：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209200030219.png)
+    ![](https://r2.129870.xyz/img/202209200030219.png)
 
     - 锁的模式（`lock_mode`），占用低 4 位，可选的值如下：
         - `LOCK_IS`（十进制的 `0`）：表示共享意向锁，也就是 `IS锁`。
@@ -1004,7 +1004,7 @@ MVCC 的规则如下：
 - 一堆比特位
 	如果是 `行锁结构` 的话，在该结构末尾还放置了一堆比特位，比特位的数量是由上边提到的 `n_bits` 属性表示的。我们前边唠叨 InnoDB 记录结构的时候说过，页面中的每条记录在[[Mysql的存储结构#2.1.1.3. 记录头信息|记录头信息]]中都包含一个 `heap_no` 属性，伪记录 `Infimum` 的 `heap_no` 值为 `0`，`Supremum` 的 `heap_no` 值为 `1`，之后每插入一条记录，`heap_no` 值就增 1。`锁结构` 最后的一堆比特位就对应着一个页面中的记录，一个比特位映射一个 `heap_no`。
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209200036066.png)
+	![](https://r2.129870.xyz/img/202209200036066.png)
 
 ## 6.6. 加锁过程
 
@@ -1067,7 +1067,7 @@ MVCC 的规则如下：
     - 事务 A 执行 `select c from t where c > 5 for update;`，而后事务 B 先执行 `update t set c = 1 where c = 5`，之后再执行 `update t set c = 5 where c = 1;`
         首先 A 执行时会对二级索引 c 加 (5, 10], (10, 15], (15, 20], (20, 25], (25, supermum) 锁。事务 B 执行第一条语句时，c=5 列无锁，因此可以执行。但是执行后事务 A 的锁范围蔓延了，会变成 (1, 10)。之后事务 B 再次执行时，将 c=1 改为 c=5，更新操作其实是一个先删后增的操作，因此增加 c=5 这一列时就会被阻塞。
     - 死锁的例子
-        ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220513130251.png)
+        ![](https://r2.129870.xyz/img/20220513130251.png)
         事务 A 加了 (5, 10]和 (10, 15) 的锁，事务 B 加 (5, 10]的锁时失败阻塞，事务 A 再次插入时进入死锁状态。
         
         原因如下：本质是因为 next-key 锁实际上是由间隙锁+行锁组成的。
@@ -1092,7 +1092,7 @@ MVCC 的规则如下：
 
 ## 7.1. 主备模式
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514143924.png)
+![](https://r2.129870.xyz/img/20220514143924.png)
 
 在状态 1 中，虽然节点 B 没有被直接访问，但是依然建议把节点 B（也就是备库）设置成只读（readonly）模式。这样做，有以下几个考虑：
 
@@ -1104,7 +1104,7 @@ MVCC 的规则如下：
 
 主备的流程：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514144050.png)
+![](https://r2.129870.xyz/img/20220514144050.png)
 
 主库接收到客户端的更新请求后，执行内部事务的更新逻辑，同时写 binlog。备库 B 跟主库 A 之间维持了一个长连接。主库 A 内部有一个线程，专门用于服务备库 B 的这个长连接。
 
@@ -1139,7 +1139,7 @@ MVCC 的规则如下：
 
 ## 7.3. 主备切换策略
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514154847.png)
+![](https://r2.129870.xyz/img/20220514154847.png)
 
 ### 7.3.1. 可靠性优先策略
 
@@ -1212,8 +1212,8 @@ MVCC 的规则如下：
 
 现在的数据库架构大多都是一主多从架构，那么这些从库如何拉取主库的数据呢？在主库发生切换的时候，从库基于什么规则拉取才能做到数据一致呢？
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514175012.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514175033.png)
+![](https://r2.129870.xyz/img/20220514175012.png)
+![](https://r2.129870.xyz/img/20220514175033.png)
 
 ### 7.5.1. 基于 binlog 的 position 拉取
 
@@ -1250,7 +1250,7 @@ MVCC 的规则如下：
 
 ## 7.6. 读写分离保证读数据准确性
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514205909.png)
+![](https://r2.129870.xyz/img/20220514205909.png)
 
 ### 7.6.1. 读写分离的方案
 
@@ -1314,7 +1314,7 @@ MVCC 的规则如下：
 3. 如果返回值 >= 0，就在从库上执行该查询。
 4. 否则到主库查询。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514211034.png)
+![](https://r2.129870.xyz/img/20220514211034.png)
 
 #### 7.6.2.6. 等主库 GTID 方案
 
@@ -1357,7 +1357,7 @@ Mysql 使用 LRU 算法进行内存缓冲区的管理，淘汰最近最少使用
 
 因此 Mysql 针对 LRU 算法做了一些特殊的处理：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220515160901.png)
+![](https://r2.129870.xyz/img/20220515160901.png)
 
 在 InnoDB 实现上，按照 5 : 3 的比例把整个 LRU 链表分成了 young 区域和 old 区域。图中 LRU_old 指向的就是 old 区域的第一个位置，是整个链表的 5/8 处。也就是说，靠近链表头部的 5/8 是 young 区域，靠近链表尾部的 3/8 是 old 区域。
 

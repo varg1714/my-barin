@@ -30,7 +30,7 @@ INSERT INTO hero VALUES (1, 'l刘备', '蜀'),
 
 然后现在 `hero` 表就有了两个索引（一个二级索引，一个聚簇索引），示意图如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131229.jpeg)
+![](https://r2.129870.xyz/img/20210414131229.jpeg)
 # 语句加锁分析
 
 其实啊，“XXX 语句该加什么锁” 本身就是个伪命题，一条语句需要加的锁受到很多条件制约，比方说：
@@ -111,7 +111,7 @@ INSERT INTO hero VALUES (1, 'l刘备', '蜀'),
     
     这个语句执行时只需要访问一下聚簇索引中 `number` 值为 `8` 的记录，所以只需要给它加一个 `S型正经记录锁` 就好了，如图所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131237.jpeg)
+    ![](https://r2.129870.xyz/img/20210414131237.jpeg)
 *   使用 `SELECT ... FOR UPDATE` 来为记录加锁，比方说：
     
     ```sql
@@ -120,7 +120,7 @@ INSERT INTO hero VALUES (1, 'l刘备', '蜀'),
     
     这个语句执行时只需要访问一下聚簇索引中 `number` 值为 `8` 的记录，所以只需要给它加一个 `X型正经记录锁` 就好了，如图所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131241.jpeg)
+    ![](https://r2.129870.xyz/img/20210414131241.jpeg)
     
     > 小贴士： 为了区分 S 锁和 X 锁，我们之后在示意图中就把加了 S 锁的记录染成蓝色，把加了 X 锁的记录染成紫色。
     
@@ -147,7 +147,7 @@ INSERT INTO hero VALUES (1, 'l刘备', '蜀'),
     
     画个图就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131245.jpeg)
+![](https://r2.129870.xyz/img/20210414131245.jpeg)
 
 > 小贴士： 我们用带圆圈的数字来表示为各条记录加锁的顺序。
 
@@ -195,7 +195,7 @@ INSERT INTO hero VALUES (1, 'l刘备', '蜀'),
 
 但是这个过程有个问题，就是当找到 `number` 值为 `8` 的那条记录的时候，还得向后找一条记录（也就是 `number` 值为 `15` 的记录），在存储引擎读取这条记录的时候，也就是上述的第 `1` 步中，就得为这条记录加锁，然后在第 3 步时，判断该记录不符合 `number <= 8` 这个条件，又要释放掉这条记录的锁，这个过程导致 `number` 值为 `15` 的记录先被加锁，然后把锁释放掉，过程就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131250.jpeg)
+![](https://r2.129870.xyz/img/20210414131250.jpeg)
 
 这个过程有意思的一点就是，如果你先在事务 `T1` 中执行：
 
@@ -221,7 +221,7 @@ SELECT * FROM hero WHERE number >= 8 LOCK IN SHARE MODE;
 
 这个语句的执行过程其实和我们举的上一个例子类似。也是先到聚簇索引中定位到满足 `number >= 8` 这个条件的第一条记录，也就是 `number` 值为 `8` 的记录，然后就可以沿着由记录组成的单向链表一路向后找，每找到一条记录，就会为其加上锁，然后判断该记录符不符合范围查询的边界条件，不过这里的边界条件比较特殊：`number >= 8`，只要记录不小于 8 就算符合边界条件，所以判断和没判断是一样一样的。最后把这条记录返回给 `server层`，`server层` 再判断 `number >= 8` 这个条件是否成立，如果成立的话就发送给客户端，否则的话就结束查询。不过 `InnoDB` 存储引擎找到索引中的最后一条记录，也就是 `Supremum` 伪记录之后，在存储引擎内部就可以立即判断这是一条伪记录，不必要返回给 `server层` 处理，也没必要给它也加上锁（也就是说在第 1 步中就压根儿没给这条记录加锁）。整个过程会给 `number` 值为 `8` 、 `15` 、 `20` 这三条记录加上 `S型正经记录锁`，画个图表示一下就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131256.jpeg)
+![](https://r2.129870.xyz/img/20210414131256.jpeg)
 
 * 使用 `SELECT ... FOR UPDATE` 语句来为记录加锁：
 
@@ -261,7 +261,7 @@ SELECT * FROM hero WHERE number >= 8 LOCK IN SHARE MODE;
 
 画个图就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131302.jpeg)
+![](https://r2.129870.xyz/img/20210414131302.jpeg)
 
 如果是下边这个语句：
 
@@ -298,7 +298,7 @@ UPDATE hero SET namey = '汉' WHERE number <= 8;
     
     这个语句的执行过程是先通过二级索引 `idx_name` 定位到满足 `name = 'c曹操'` 条件的二级索引记录，然后进行回表操作。所以先要对二级索引记录加 `S型正经记录锁`，然后再给对应的聚簇索引记录加 `S型正经记录锁`，示意图如下：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131307.jpeg)
+    ![](https://r2.129870.xyz/img/20210414131307.jpeg)
     
     
     这里需要再次强调一下这个语句的加锁顺序：
@@ -355,7 +355,7 @@ UPDATE hero SET name = '曹操' WHERE number = 8;
     
     这个语句的执行过程其实是先到二级索引中定位到满足 `name >= 'c曹操'` 的第一条记录，也就是 `name` 值为 `c曹操` 的记录，然后就可以沿着这条记录的链表一路向后找，从二级索引 `idx_name` 的示意图中可以看出，所有的用户记录都满足 `name >= 'c曹操'` 的这个条件，所以所有的二级索引记录都会被加 `S型正经记录锁`，它们对应的聚簇索引记录也会被加 `S型正经记录锁`。不过需要注意一下加锁顺序，对一条二级索引记录加锁完后，会接着对它相应的聚簇索引记录加锁，完后才会对下一条二级索引记录进行加锁，以此类推～ 画个图表示一下就是这样：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131315.jpeg)
+    ![](https://r2.129870.xyz/img/20210414131315.jpeg)
     
     再来看下边这个语句：
     
@@ -365,7 +365,7 @@ UPDATE hero SET name = '曹操' WHERE number = 8;
     
     这个语句的加锁情况就有点儿有趣了。前边说在使用 `number <= 8` 这个条件的语句中，需要把 `number` 值为 `15` 的记录也加一个锁，之后又判断它不符合边界条件而把锁释放掉。而对于查询条件 `name <= 'c曹操'` 的语句来说，执行该语句需要使用到二级索引，而与二级索引相关的条件是可以使用 `索引条件下推` 这个特性的。设计 `InnoDB` 的大叔规定，如果一条记录不符合 `索引条件下推` 中的条件的话，直接跳到下一条记录（这个过程根本不将其返回到 `server层` ），如果这已经是最后一条记录，那么直接向 `server层` 报告查询完毕。但是这里头有个问题呀：先对一条记录加了锁，然后再判断该记录是不是符合索引条件下推的条件，如果不符合直接跳到下一条记录或者直接向 server 层报告查询完毕，这个过程中并没有把那条被加锁的记录上的锁释放掉呀！！！。本例中使用的查询条件是 `name <= 'c曹操'`，在为 `name` 值为 `'c曹操'` 的二级索引记录以及它对应的聚簇索引加锁之后，会接着二级索引中的下一条记录，也就是 `name` 值为 `'l刘备'` 的那条二级索引记录，由于该记录不符合 `索引条件下推` 的条件，而且是范围查询的最后一条记录，会直接向 `server层` 报告查询完毕，重点是这个过程中并不会释放 `name` 值为 `'l刘备'` 的二级索引记录上的锁，也就导致了语句执行完毕时的加锁情况如下所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131319.jpeg)
+    ![](https://r2.129870.xyz/img/20210414131319.jpeg)
     
     这样子会造成一个尴尬情况，假如 `T1` 执行了上述语句并且尚未提交，`T2` 再执行这个语句：
     
@@ -397,7 +397,7 @@ UPDATE hero SET name = '曹操' WHERE number = 8;
     
     我们前边说的 `索引条件下推` 这个特性只适用于 `SELECT` 语句，也就是说 `UPDATE` 语句中无法使用，那么这个语句就会为 `name` 值为 `'c曹操'` 和 `'l刘备'` 的二级索引记录以及它们对应的聚簇索引进行加锁，之后在判断边界条件时发现 `name` 值为 `'l刘备'` 的二级索引记录不符合 `name <= 'c曹操'` 条件，再把该二级索引记录和对应的聚簇索引记录上的锁释放掉。这个过程如下图所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131325.jpeg)
+    ![](https://r2.129870.xyz/img/20210414131325.jpeg)
 *   使用 `DELETE ...` 来为记录加锁，比方说：
     
     ```sql
@@ -423,7 +423,7 @@ SELECT * FROM hero WHERE country  = '魏' LOCK IN SHARE MODE;
 
 由于 `country` 列上未建索引，所以只能采用全表扫描的方式来执行这条查询语句，存储引擎每读取一条聚簇索引记录，就会为这条记录加锁一个 `S型正常记录锁`，然后返回给 `server层`，如果 `server层` 判断 `country = '魏'` 这个条件是否成立，如果成立则将其发送给客户端，否则会释放掉该记录上的锁，画个图就像这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131331.jpeg)
+![](https://r2.129870.xyz/img/20210414131331.jpeg)
 
 使用 `SELECT ... FOR UPDATE` 进行加锁的情况与上边类似，只不过加的是 `X型正经记录锁`，就不赘述了。
 
@@ -448,7 +448,7 @@ SELECT * FROM hero WHERE country  = '魏' LOCK IN SHARE MODE;
     
     我们知道主键具有唯一性，如果在一个事务中第一次执行上述语句时将得到的结果集中包含一条记录，第二次执行上述语句前肯定不会有别的事务插入多条 `number` 值为 `8` 的记录（主键具有唯一性），也就是说一个事务中两次执行上述语句并不会发生幻读，这种情况下和 `READ UNCOMMITTED／READ COMMITTED` 隔离级别下一样，我们只需要为这条 `number` 值为 `8` 的记录加一个 `S型正经记录锁` 就好了，如图所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504184930.jpeg)
+    ![](https://r2.129870.xyz/img/20210504184930.jpeg)
     
     但是如果我们要查询主键值不存在的记录，比方说：
     
@@ -458,7 +458,7 @@ SELECT * FROM hero WHERE country  = '魏' LOCK IN SHARE MODE;
     
     由于 `number` 值为 `7` 的记录不存在，为了禁止 `幻读` 现象（也就是避免在同一事务中下一次执行相同语句时得到的结果集中包含 `number` 值为 `7` 的记录），在当前事务提交前我们需要预防别的事务插入 `number` 值为 `7` 的新记录，所以需要在 `number` 值为 `8` 的记录上加一个 `gap锁`，也就是不允许别的事务插入 `number` 值在 `(3, 8)` 这个区间的新记录。画个图表示一下：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504184942.jpeg)
+    ![](https://r2.129870.xyz/img/20210504184942.jpeg)
     
     如果在 `READ UNCOMMITTED／READ COMMITTED` 隔离级别下一样查询了一条主键值不存在的记录，那么什么锁也不需要加，因为在 `READ UNCOMMITTED／READ COMMITTED` 隔离级别下，并不需要禁止 `幻读` 问题。
     
@@ -482,7 +482,7 @@ SELECT * FROM hero WHERE country  = '魏' LOCK IN SHARE MODE;
 
 画个图就是这样子：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504184946.jpeg)
+![](https://r2.129870.xyz/img/20210504184946.jpeg)
 
 > 小贴士： 为什么不给 Supremum 记录加 gap 锁，而要加 next-key 锁呢？其实设计 InnoDB 的大叔在处理 Supremum 记录上加的 next-key 锁时就是当作 gap 锁看待的，只不过为了节省锁结构（我们前边说锁的类型不一样的话不能被放到一个锁结构中）才这么做的而已，大家不必在意。
 
@@ -494,7 +494,7 @@ SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
 
 这个语句的执行过程我们在之前唠叨过，在 `READ UNCOMMITTED/READ COMMITTED` 隔离级别下，这个语句会为 `number` 值为 `1` 、 `3` 、 `8` 、 `15` 这 4 条记录都加上 `S型正经记录锁`，然后由于 `number` 值为 `15` 的记录不满足边界条件 `number <= 8`，随后便把这条记录的锁释放掉。在 `REPEATABLE READ` 隔离级别下的加锁过程与之类似，不过会为 `1` 、 `3` 、 `8` 、 `15` 这 4 条记录都加上 `S型next-key锁`，但是有一点需要大家十分注意：REPEATABLE READ 隔离级别下，在判断 number 值为 15 的记录不满足边界条件 number <= 8 后，并不会去释放加在该记录上的锁！！！ 所以在 `REPEATABLE READ` 隔离级别下，该语句的加锁示意图就如下所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504184950.jpeg)
+![](https://r2.129870.xyz/img/20210504184950.jpeg)
 
 这样如果别的事务想要插入的新记录的 `number` 值在 `(-∞, 1]` 、 `(1, 3]` 、 `(3, 8]` 、 `(8, 15]` 之间的话，是会进入等待状态的。
 
@@ -540,7 +540,7 @@ SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
     
     对聚簇索引记录加锁的情况和 `SELECT ... FOR UPDATE` 语句一致，也就是对 `number` 值为 `8` 的聚簇索引记录加 `X型正经记录锁`，对 `number` 值 `15` 、 `20` 的聚簇索引记录以及 `Supremum` 记录加 `X型next-key锁`。但是因为也要更新二级索引 `idx_name`，所以也会对 `number` 值为 `8` 、 `15` 、 `20` 的聚簇索引记录对应的 `idx_name` 二级索引记录加 `X型正经记录锁`，画个图表示一下：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504184956.jpeg)
+    ![](https://r2.129870.xyz/img/20210504184956.jpeg)
     
     如果是下边这个语句：
     
@@ -550,7 +550,7 @@ SELECT * FROM hero WHERE number <= 8 LOCK IN SHARE MODE;
     
     则会对 `number` 值为 `1` 、 `3` 、 `8` 、 `15` 的聚簇索引记录加 `X型next-key`，其中 `number` 值为 `15` 的聚簇索引记录不满足 `number <= 8` 的边界条件，虽然在 `REPEATABLE READ` 隔离级别下不会将它的锁释放掉<font style = "color:orange">(在 mysql8.17 版本中是不会对记录 15 加锁的, [[超全面Mysql语句加锁分析#锁定读的语句#REPEATABLE READ 隔离级别下#对于使用主键进行范围查询的情况|原理同上]])</font>，但是也并不会对这条聚簇索引记录对应的二级索引记录加锁，也就是说只会为 `number` 值为 `1` 、 `3` 、 `8` 的聚簇索引记录对应的 `idx_name` 二级索引记录加 `X型正经记录锁`，加锁示意图如下所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185000.jpeg)
+    ![](https://r2.129870.xyz/img/20210504185000.jpeg)
 *   使用 `DELETE ...` 来为记录加锁，比方说：
     
     ```sql
@@ -582,7 +582,7 @@ ALTER TABLE hero DROP INDEX idx_name, ADD UNIQUE KEY uk_name (name);
     
     由于唯一二级索引具有唯一性，如果在一个事务中第一次执行上述语句时将得到一条记录，第二次执行上述语句前肯定不会有别的事务插入多条 `name` 值为 `'c曹操'` 的记录（二级索引具有唯一性），也就是说一个事务中两次执行上述语句并不会发生幻读，这种情况下和 `READ UNCOMMITTED／READ COMMITTED` 隔离级别下一样，我们只需要为这条 `name` 值为 `'c曹操'` 的二级索引记录加一个 `S型正经记录锁`，然后再为它对应的聚簇索引记录加一个 `S型正经记录锁` 就好了，我们画个图看看：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185004.jpeg)
+    ![](https://r2.129870.xyz/img/20210504185004.jpeg)
     
     注意加锁顺序，是先对二级索引记录加锁，再对聚簇索引加锁。
     
@@ -594,7 +594,7 @@ ALTER TABLE hero DROP INDEX idx_name, ADD UNIQUE KEY uk_name (name);
     
     为了禁止幻读，所以需要保证别的事务不能再插入 `name` 值为 `'g关羽'` 的新记录。在唯一二级索引 `uk_name` 中，键值比 `'g关羽'` 大的第一条记录的键值为 `l刘备`，所以需要在这条二级索引记录上加一个 `gap锁`，如图所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185008.jpeg)
+    ![](https://r2.129870.xyz/img/20210504185008.jpeg)
     
     注意，这里只对二级索引记录进行加锁，并不会对聚簇索引记录进行加锁。
     
@@ -621,7 +621,7 @@ ALTER TABLE hero DROP INDEX idx_name, ADD UNIQUE KEY uk_name (name);
     
     这个语句的执行过程其实是先到二级索引中定位到满足 `name >= 'c曹操'` 的第一条记录，也就是 `name` 值为 `c曹操` 的记录，然后就可以沿着由记录组成的单向链表一路向后找。从二级索引 `idx_name` 的示意图中可以看出，所有的用户记录都满足 `name >= 'c曹操'` 的这个条件，所以所有的二级索引记录都会被加 `S型next-key锁`，它们对应的聚簇索引记录也会被加 `S型正经记录锁`，二级索引的最后一条 `Supremum` 记录也会被加 `S型next-key锁`。不过需要注意一下加锁顺序，对一条二级索引记录加锁完后，会接着对它响应的聚簇索引记录加锁，完后才会对下一条二级索引记录进行加锁，以此类推～ 画个图表示一下就是这样：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185012.jpeg)
+    ![](https://r2.129870.xyz/img/20210504185012.jpeg)
     
     稍等一下，不是说 `uk_name` 是唯一二级索引么？唯一二级索引本身就能保证其自身的值是唯一的，那为啥还要给 `name` 值为 `'c曹操'` 的记录加上 `S型next-key锁`，而不是 `S型正经记录锁` 呢？这里唯一二级索引会加上 `S型正经记录锁`，和聚簇索引是不同的。
     
@@ -633,7 +633,7 @@ ALTER TABLE hero DROP INDEX idx_name, ADD UNIQUE KEY uk_name (name);
     
     这个语句先会为 `name` 值为 `'c曹操'` 的二级索引记录加 `S型next-key锁` 以及它对应的聚簇索引记录加 `S型正经记录锁`。然后还要给 `name` 值为 `'l刘备'` 的二级索引记录加 `S型next-key锁`，`name` 值为 `'l刘备'` 的二级索引记录不满足索引条件下推的 `name <= 'c曹操'` 条件，压根儿不会释放掉该记录的锁就直接报告 `server层` 查询完毕了。这样可以禁止其他事务插入 `name` 值在 `('c曹操', 'l刘备')` 之间的新记录，从而防止幻读产生。所以这个过程的加锁示意图如下：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185016.jpeg)
+    ![](https://r2.129870.xyz/img/20210504185016.jpeg)
     
     这里大家要注意一下，设计 `InnoDB` 的大叔在这里给 `name` 值为 `'l刘备'` 的二级索引记录加的是 `S型next-key锁`，而不是简单的 `gap锁`。
     
@@ -655,7 +655,7 @@ ALTER TABLE hero DROP INDEX idx_name, ADD UNIQUE KEY uk_name (name);
     
     我们前边说的 `索引条件下推` 这个特性只适用于 `SELECT` 语句，也就是说 `UPDATE` 语句中无法使用，无法使用 `索引条件下推` 这个特性时需要先进行回表操作，那么这个语句就会为 `name` 值为 `'c曹操'` 和 `'l刘备'` 的二级索引记录加 `X型next-key锁`，对它们对应的聚簇索引记录进行加 `X型正经记录锁`。不过之后在判断边界条件时，虽然 `name` 值为 `'l刘备'` 的二级索引记录不符合 `name <= 'c曹操'` 的边界条件，但是在 REPEATABLE READ 隔离级别下并不会释放该记录上加的锁 (8.20 版本已不会对刘备列进行加锁了)，整个过程的加锁示意图就是：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185020.jpeg)
+    ![](https://r2.129870.xyz/img/20210504185020.jpeg)
 *   使用 `DELETE ...` 来为记录加锁，比方说：
     
     ```sql
@@ -694,7 +694,7 @@ ALTER TABLE hero DROP INDEX uk_name, ADD INDEX idx_name (name);
 
 所以整个加锁示意图就如下所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185024.jpeg)
+![](https://r2.129870.xyz/img/20210504185024.jpeg)
 
 如果对普通二级索引等值查询的值并不存在，比如：
 
@@ -731,7 +731,7 @@ SELECT * FROM hero WHERE country  = '魏' LOCK IN SHARE MODE;
 
 由于 `country` 列上未建索引，所以只能采用全表扫描的方式来执行这条查询语句，存储引擎每读取一条聚簇索引记录，就会为这条记录加锁一个 `S型next-key锁`，然后返回给 `server层`，如果 `server层` 判断 `country = '魏'` 这个条件是否成立，如果成立则将其发送给客户端，否则会向 `InnoDB` 存储引擎发送释放掉该记录上的锁的消息，不过在 REPEATABLE READ 隔离级别下，InnoDB 存储引擎并不会真正的释放掉锁，所以聚簇索引的全部记录都会被加锁，并且在事务提交前不释放。画个图就像这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210504185029.jpeg)
+![](https://r2.129870.xyz/img/20210504185029.jpeg)
 
 大家看到了么：全部记录都被加了 next-key 锁！此时别的事务别说想向表中插入啥新记录了，就是对某条记录加 `X` 锁都不可以，这种情况下会极大影响访问该表的并发事务处理能力，所以如果可能的话，尽可能为表建立合适的索引吧～
 

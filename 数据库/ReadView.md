@@ -25,7 +25,7 @@
 ## 2：MVCC 多版本机制
 ------------
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131400.png)
+![](https://r2.129870.xyz/img/20210414131400.png)
 
 为了实现上面的数据库的隔离级别，mvcc 应运而生，mysql 怎么实现 mvcc，这依赖于 mysql 的隐藏列，trx_id 事务 id，
 
@@ -33,19 +33,19 @@ roll_pointer 回滚指针，row_id 主键，这个主键是表不存在主键和
 
 ### 2.1：insert
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131404.png)
+![](https://r2.129870.xyz/img/20210414131404.png)
 
 当插入的是一条新数据时，roll_pointer 指向 insert 的 undo 日志，事务提交之后就没有意义了。
 
 ###  2.2：update
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131408.png)
+![](https://r2.129870.xyz/img/20210414131408.png)
 
 每次对记录进行改动，都会记录一条 undo 日志，每条 undo 日志也都有一个 roll_pointer 属性 (INSERT 操作对应的 undo 日志没有该属性，因为该记录并没有更早的版本)，可以将这些 undo 日志都连起来，串成一个链表
 
 ### 2.3：delete
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131413.png)
+![](https://r2.129870.xyz/img/20210414131413.png)
 
  delete 语句和 update 基本上没有区别，只是把记录的 delete_mask 置成删除，在后面 purge 的时候，加入到删除的数据页当中去。
 
@@ -53,7 +53,7 @@ roll_pointer 回滚指针，row_id 主键，这个主键是表不存在主键和
 
 有了多版本之后，不知道怎么用也不行啊，mvcc 真正使用的地方是 readview，readview 包含四个内容。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131417.png)
+![](https://r2.129870.xyz/img/20210414131417.png)
 
 m_ids: 表示在生成 ReadView 时当前系统中活跃的读写事务的事务 id 列表。
 
@@ -80,7 +80,7 @@ UPDATE hero SET name = '张飞' WHERE number = 1;
 # 更新了一些别的表的记录 ...
 ```
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131422.png)
+![](https://r2.129870.xyz/img/20210414131422.png)
 
 假设现在有一个使用 READ COMMITTED 隔离级别的事务开始执行:
 
@@ -121,7 +121,7 @@ UPDATE hero SET name = '赵云' WHERE number = 1;
 UPDATE hero SET name = '诸葛亮' WHERE number = 1;
 ```
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131428.png)
+![](https://r2.129870.xyz/img/20210414131428.png)
 
 然后再到刚才使用 READ COMMITTED 隔离级别的事务中继续查找这个 number 为 1 的记录，如下:
 
@@ -153,7 +153,7 @@ UPDATE hero SET name = '张飞' WHERE number = 1;
 # 更新了一些别的表的记录 ...
 ```
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131433.png) 
+![](https://r2.129870.xyz/img/20210414131433.png) 
 
  假设现在有一个使用 REPEATABLE READ 隔离级别的事务开始执行:
 
@@ -189,7 +189,7 @@ UPDATE hero SET name = '赵云' WHERE number = 1; UPDATE hero SET name = '诸葛
 
  此刻，表 hero 中 number 为 1 的记录的版本链就长这样:
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131438.png)
+![](https://r2.129870.xyz/img/20210414131438.png)
 
 然后再到刚才使用 REPEATABLE READ 隔离级别的事务中继续查找这个 number 为 1 的记录，如下:
 
@@ -218,13 +218,13 @@ SELECT * FROM hero WHERE number = 1; # 得到的列name的值仍为'刘备'
 ## 3：explain 简单使用
 --------------
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131451.png)![](https://img-blog.csdnimg.cn/20200808200404203.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTQyNzQzMjQ=,size_16,color_FFFFFF,t_70)
+![](https://r2.129870.xyz/img/20210414131451.png)![](https://img-blog.csdnimg.cn/20200808200404203.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTQyNzQzMjQ=,size_16,color_FFFFFF,t_70)
 
 ```
 EXPLAIN SELECT age,name from test where age > 11 and age < 15
 ```
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131455.png)
+![](https://r2.129870.xyz/img/20210414131455.png)
 
 id: 选择标识符   select_type: 表示查询的类型   table: 输出结果集的表   partitions: 匹配的分区   type: 表示表的连接类型  
 possible_keys: 表示查询时，可能使用的索引  key: 表示实际使用的索引   key_len: 索引字段的长度   ref: 列与索引的比较  
@@ -236,41 +236,41 @@ rows: 扫描出的行数 (估算的行数)   filtered: 按表条件过滤的�
 
 **type:system** 当表中只有一条记录并且该表使用的存储引擎的统计数据是精确的，比如 MyISAM、Memory，那么对该表的访问方法就是 system。比方说我们新建一个 MyISAM 表，并为其插入一条记录:
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131459.png)
+![](https://r2.129870.xyz/img/20210414131459.png)
 
 **type:const** 当我们根据主键或者唯一二级索引列与常数进行等值匹配时，对单表的访问方法就是 const
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131503.png)
+![](https://r2.129870.xyz/img/20210414131503.png)
 
 **type:eq_ref** 在连接查询时，如果被驱动表是通过主键或者唯一二级索引列等值匹配的方式进行访问的 (如果该主键或者唯一二级索引是联合索引的话，所有的索引列都必须进行等值比较)，则对该被驱动表的 访问方法就是 eq_ref
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131506.png)
+![](https://r2.129870.xyz/img/20210414131506.png)
 
 **type:ref** 当通过普通的二级索引列与常量进行等值匹配时来查询某个表，那么对该表的访问方法就可能是 ref
 
 **type:ref_or_null** 当对普通二级索引进行等值匹配查询，该索引列的值也可以是 NULL 值时，那么对该表的访问方法就可能是 ref_or_null
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131510.png)
+![](https://r2.129870.xyz/img/20210414131510.png)
 
 **type:range** 如果使用索引获取某些范围区间的记录，那么就可能使用到 range 访问方法
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131514.png)
+![](https://r2.129870.xyz/img/20210414131514.png)
 
 **type:index** 当我们可以使用索引覆盖，但需要扫描全部的索引记录时，该表的访问方法就是 index
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131517.png)**type:all** 最熟悉的全表扫描
+![](https://r2.129870.xyz/img/20210414131517.png)**type:all** 最熟悉的全表扫描
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131521.png)
+![](https://r2.129870.xyz/img/20210414131521.png)
 
 ### 3.2：extra 属性
 
 **extra:Using index** 当我们的查询列表以及搜索条件中只包含属于某个索引的列，也就是在可以使用索引覆盖的情况下，在 Extra 列将会提示该额外信息
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131527.png)
+![](https://r2.129870.xyz/img/20210414131527.png)
 
  **extra:Using where** 当我们使用全表扫描来执行对某个表的查询，并且该语句的 WHERE 子句中有针对该表的搜索条件时，在 Extra 列中会提示上述额外信息
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131531.png)
+![](https://r2.129870.xyz/img/20210414131531.png)
 
 **extra:Using index condition**
 
@@ -286,6 +286,6 @@ SELECT * FROM s1 WHERE key1 > 'z' AND key1 LIKE '%a';
 先根据 key1 > 'z'这个条件，定位到二级索引 idx_key1 中对应的二级索引记录。  
 对于指定的二级索引记录，先不着急回表，而是先检测一下该记录是否满足 key1 LIKE '%a'这个条件，如果这个条件不满足，则该二级索引记录压根儿就没必要回表。 对于满足 key1 LIKE '%a'这个条件的二级索引记录执行回表操作。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210414131536.png)
+![](https://r2.129870.xyz/img/20210414131536.png)
 
 **extra:using index & using where** 查找使用了索引，但是需要的数据都在索引列中能找到，所以不需要回表查询数据，这个和上面的相对，select 后面的列在索引上都有，不需要回表，而上面的有部分列没有，需要回表。

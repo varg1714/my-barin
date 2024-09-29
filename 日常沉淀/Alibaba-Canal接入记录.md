@@ -7,7 +7,7 @@
 基于Mysql的主从复制协议。
 
 - Mysql主从复制实现
-	![image-20201015180818351](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20201015180818.png)
+	![image-20201015180818351](https://r2.129870.xyz/img/20201015180818.png)
 
 复制遵循三步过程：
 1. 主服务器将更改记录到binlog中（这些记录称为binlog事件，可以通过来查看`show binary events`）
@@ -16,7 +16,7 @@
 
 Canal将自己伪装成Slave与Mysql进行交互，订阅Mysql的binlog日志记录：
 
-![image-20201015180941023](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20201015180941.png)
+![image-20201015180941023](https://r2.129870.xyz/img/20201015180941.png)
 
 1. Canal模拟MySQL从站的交互协议，伪装成MySQL从站，然后将转储协议发送到MySQL主服务器。
 2. MySQL Master接收到转储请求，并开始将二进制日志推送到slave（即Canal）。
@@ -45,7 +45,7 @@ Canal将自己伪装成Slave与Mysql进行交互，订阅Mysql的binlog日志记
 | DDL日志（元数据日志） | 元数据操作由DDL语句执行                                      |
 
 - binlog结构
-	  ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20201015181356.png)
+	  ![](https://r2.129870.xyz/img/20201015181356.png)
 
 	binlog中主要包含以下部分：
 	
@@ -93,7 +93,7 @@ Canal将自己伪装成Slave与Mysql进行交互，订阅Mysql的binlog日志记
 
 最终实现的方案如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20201015184803.png)
+![](https://r2.129870.xyz/img/20201015184803.png)
 
 #### 1.1.2.4. Canal数据处理方式
 

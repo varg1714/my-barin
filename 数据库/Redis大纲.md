@@ -2,9 +2,9 @@
 
 # 1. Redis 大纲
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220517160132.png)
+![](https://r2.129870.xyz/img/20220517160132.png)
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220517160149.png)
+![](https://r2.129870.xyz/img/20220517160149.png)
 
 # 2. 使用篇
 
@@ -20,7 +20,7 @@
 
 ## 2.2. Redis 支持的数据结构
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308040028860.png)
+![image.png](https://r2.129870.xyz/img/202308040028860.png)
 
 - String
 - List
@@ -31,7 +31,7 @@
 - Hyperloglogs
 - Geospatial
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518231920.png)
+![](https://r2.129870.xyz/img/20220518231920.png)
 
 ## 2.3. Redis 实现消息队列
 
@@ -60,7 +60,7 @@ Streams 是 Redis 专门为消息队列设计的数据类型，它提供了丰�
 - XREADGROUP：按消费组形式读取消息。
 - XPENDING 和 XACK：XPENDING 命令可以用来查询每个消费组内所有消费者已读取但尚未确认的消息，而 XACK 命令用于向消息队列确认消息处理已完成。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519121100.png)
+![](https://r2.129870.xyz/img/20220519121100.png)
 
 ## 2.4. Redis 实现分布式锁
 
@@ -141,7 +141,7 @@ Martin Kleppmann 在 2016-02-08 这一天发表了一篇 blog，名字叫” [Ho
 
 **即使我们拥有一个完美实现的分布式锁（带自动过期功能），在没有共享资源参与进来提供某种 fencing 机制的前提下，我们仍然不可能获得足够的安全性。**
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521192441.png)
+![](https://r2.129870.xyz/img/20220521192441.png)
 
 在上面的时序图中，假设锁服务本身是没有问题的，它总是能保证任一时刻最多只有一个客户端获得锁。上图中出现的 lease 这个词可以暂且认为就等同于一个带有自动过期功能的锁。
 
@@ -151,7 +151,7 @@ Martin Kleppmann 在 2016-02-08 这一天发表了一篇 blog，名字叫” [Ho
 
 Martin 给出了一种方法，称为 `fencing token`。`fencing token` 是一个单调递增的数字，当客户端成功获取锁的时候它随同锁一起返回给客户端。而客户端访问共享资源的时候带着这个 `fencing token`，这样提供共享资源的服务就能根据它进行检查，拒绝掉延迟到来的访问请求（避免了冲突）。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521192853.png)
+![](https://r2.129870.xyz/img/20220521192853.png)
 
 在上图中，客户端 1 先获取到的锁，因此有一个较小的 fencing token，等于 33，而客户端 2 后获取到的锁，有一个较大的 fencing token，等于 34。客户端 1 从 GC pause 中恢复过来之后，依然是向存储服务发送访问请求，但是带了 fencing token = 33。存储服务发现它之前已经处理过 34 的请求，所以会拒绝掉这次 33 的请求。这样就避免了冲突。
 
@@ -210,7 +210,7 @@ ZooKeeper 是怎么检测出某个客户端已经崩溃了呢？实际上，每�
 
 ## 2.7. Redis 变慢的可能原因
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519164941.png)
+![](https://r2.129870.xyz/img/20220519164941.png)
 
 `redis-cli` 命令提供了 `–intrinsic-latency` 选项，可以用来监测和统计测试期间内的最大延迟。
 
@@ -437,11 +437,11 @@ Redis 中的多线程：
 
 ## 3.3. Redis 的数据类型
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308040028860.png)
+![image.png](https://r2.129870.xyz/img/202308040028860.png)
 
 ### 3.3.1. String
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050037475.png)
+![image.png](https://r2.129870.xyz/img/202308050037475.png)
 
 String 是最基本的 key-value 结构，key 是唯一标识，value 是具体的值，value 其实不仅是字符串，也可以是数字（整数或浮点数），value 最多可以容纳的数据长度是 512M。
 
@@ -454,20 +454,20 @@ String 类型的底层的数据结构实现主要是 int 和 SDS（简单动态�
     因为 SDS 在拼接字符串之前会检查 SDS 空间是否满足要求，如果空间不够会自动扩容，所以不会导致缓冲区溢出的问题。
 
 字符串对象的内部编码（encoding）有 3 种 ：**int、raw 和 embstr**。
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050040746.png)
+![image.png](https://r2.129870.xyz/img/202308050040746.png)
 
 - int
     如果一个字符串对象保存的是整数值，并且这个整数值可以用 `long` 类型来表示，那么字符串对象会将整数值保存在字符串对象结构的 `ptr` 属性里面（将 `void*` 转换成 long），并将字符串对象的编码设置为 `int`。
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050040178.png)
+    ![image.png](https://r2.129870.xyz/img/202308050040178.png)
 - raw
     如果字符串对象保存的是一个字符串，并且这个字符串的长度大于 44 字节（redis 5.0 版本），那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串，并将对象的编码设置为 `raw`。
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050059181.png)
+    ![image.png](https://r2.129870.xyz/img/202308050059181.png)
 - embstr
     如果字符串对象保存的是一个字符串，并且这个字符申的长度小于等于 44 字节（redis 5.0 版本），那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串，并将对象的编码设置为 `embstr`， `embstr` 编码是专门用于保存短字符串的一种优化编码方式。
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050058207.png)
+    ![image.png](https://r2.129870.xyz/img/202308050058207.png)
 
 可以看到 `embstr` 和 `raw` 编码都会使用 `SDS` 来保存值，但不同之处在于 **`embstr` 会通过一次内存分配函数来分配一块连续的内存空间来保存 `redisObject` 和 `SDS`**，而 **`raw` 编码会通过调用两次内存分配函数来分别分配两块空间来保存 `redisObject` 和 `SDS`**。Redis 这样做会有很多好处：
 
@@ -479,7 +479,7 @@ String 类型的底层的数据结构实现主要是 int 和 SDS（简单动态�
 
 ### 3.3.2. List
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050045916.png)
+![image.png](https://r2.129870.xyz/img/202308050045916.png)
 
 List 列表是简单的字符串列表，**按照插入顺序排序**，可以从头部或尾部向 List 列表添加元素。列表的最大长度为 `2^32 - 1`，也即每个列表支持超过 `40 亿` 个元素。
 
@@ -491,7 +491,7 @@ List 类型的底层数据结构是由**双向链表或压缩列表**实现的�
 
 ### 3.3.3. Hash
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050046281.png)
+![image.png](https://r2.129870.xyz/img/202308050046281.png)
 
 Hash 是一个键值对（key - value）集合，其中 value 的形式如： `value=[{field1，value1}，...{fieldN，valueN}]`。Hash 特别适合用于存储对象。
 
@@ -504,7 +504,7 @@ Hash 类型的底层数据结构是由**压缩列表或哈希表**实现的：
 
 ### 3.3.4. Set
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050047921.png)
+![image.png](https://r2.129870.xyz/img/202308050047921.png)
 Set 类型是一个无序并唯一的键值集合，它的存储顺序不会按照插入的先后顺序进行存储。一个集合最多可以存储 `2^32-1` 个元素。概念和数学中个的集合基本类似，可以交集，并集，差集等等，所以 Set 类型除了支持集合内的增删改查，同时还支持多个集合取交集、并集、差集。
 
 Set 类型的底层数据结构是由**哈希表或整数集合**实现的：
@@ -514,7 +514,7 @@ Set 类型的底层数据结构是由**哈希表或整数集合**实现的：
 
 ### 3.3.5. Zset
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050049665.png)
+![image.png](https://r2.129870.xyz/img/202308050049665.png)
 
 Zset 类型（有序集合类型）相比于 Set 类型多了一个排序属性 score（分值），对于有序集合 ZSet 来说，每个存储元素相当于有两个值组成的，一个是有序集合的元素值，一个是排序值。有序集合保留了集合不能有重复成员的特性（分值可以重复），但不同的是，有序集合中的元素可以排序。
 
@@ -538,7 +538,7 @@ Zset 对象在执行数据插入或是数据更新的过程中，会依次在跳
 
 ### 3.3.6. BitMap
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050050075.png)
+![image.png](https://r2.129870.xyz/img/202308050050075.png)
 
 Bitmap，即位图，是一串连续的二进制数组（0 和 1），可以通过偏移量（offset）定位元素。BitMap 通过最小的单位 bit 来进行 `0|1` 的设置，表示某个元素的值或者状态，时间复杂度为 O (1)。
 
@@ -586,7 +586,7 @@ Stream 消息队列操作命令：
 
 对于 Redis 的数据，不同数据类型都有些相同的元数据要记录（比如最后一次访问的时间、被引用的次数等），所以 Redis 会用一个 `RedisObject` 结构体来统一记录这些元数据，同时存储一个指针指向实际数据。因此对于存储在 Redis 中的对象，其结构如下：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050103546.png)
+![image.png](https://r2.129870.xyz/img/202308050103546.png)
 
 对象结构里包含的成员变量：
 - type，标识该对象是什么类型的对象（String 对象、 List 对象、Hash 对象、Set 对象和 Zset 对象）。
@@ -601,7 +601,7 @@ Redis 是使用了一个哈希表保存所有键值对，哈希表的最大好�
 
 哈希桶存放的是指向键值对数据的指针（dictEntry*），这样通过指针就能找到键值对数据，然后因为键值对的值可以保存字符串对象和集合数据类型的对象，所以键值对的数据结构中并不是直接保存值本身，而是保存了 key 和 value 指针，分别指向了实际的键对象和值对象，这样一来，即使值是集合数据，也可以通过 value 指针找到。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308050107112.png)
+![image.png](https://r2.129870.xyz/img/202308050107112.png)
 
 
 - RedisDb 结构：表示 Redis 数据库的结构，结构体里存放了指向了 dict 结构的指针。
@@ -647,13 +647,13 @@ dict 结构体里定义了两个哈希表，之所以定义了 2 个哈希表，
 
 Redis 自己设计了一个字符串存储结构的原因是由于 C 语言的字符串存在以下问题：
 - 字符串的结尾是以 “\0” 字符标识，字符串里面不能包含有 “\0” 字符，因此不能保存二进制数据。
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051532570.png)
+    ![image.png](https://r2.129870.xyz/img/202308051532570.png)
 - 操作字符串时间复杂度为 O（N）。
 - 字符串操作函数不高效且不安全，比如有缓冲区溢出的风险，有可能会造成程序运行终止。
 
 字符串类型在 Redis 中的实现为 `简单动态字符串 (Simple Dynamic String，SDS)` 格式，其存储结构如下（Redis5.0 版本）：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051533706.png)
+![image.png](https://r2.129870.xyz/img/202308051533706.png)
 
 - len：记录了字符串长度
     这样获取字符串长度的时候，只需要返回这个成员变量值就行，时间复杂度只需要 O（1）。
@@ -673,7 +673,7 @@ Redis 自己设计了一个字符串存储结构的原因是由于 C 语言的�
     
     除了设计不同类型的结构体，Redis 在编程上还**使用了专门的编译优化来节省内存空间**，即在 struct 声明了 `__attribute__ ((packed))` ，它的作用是：**告诉编译器取消结构体在编译过程中的优化对齐，按照实际占用字节数进行对齐**。
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051541865.png)
+    ![image.png](https://r2.129870.xyz/img/202308051541865.png)
 
 - buf\[]：字节数组，用来保存实际数据。
     不仅可以保存字符串，也可以保存二进制数据。
@@ -682,7 +682,7 @@ Redis 自己设计了一个字符串存储结构的原因是由于 C 语言的�
 
 ### 3.4.3. 链表
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051545038.png)
+![image.png](https://r2.129870.xyz/img/202308051545038.png)
 
 list 结构为链表提供了链表头指针 head、链表尾节点 tail、链表节点数量 len、以及可以自定义实现的 dup、free、match 函数。
 
@@ -705,7 +705,7 @@ Redis 的链表实现优点如下：
 
 压缩列表是 Redis 为了节约内存而开发的，它是**由连续内存块组成的顺序型数据结构**，有点类似于数组。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051549499.png)
+![image.png](https://r2.129870.xyz/img/202308051549499.png)
 
 压缩列表在表头有三个字段：
 - zlbytes：记录整个压缩列表占用对内存字节数。
@@ -719,7 +719,7 @@ Redis 的链表实现优点如下：
 
 #### 3.4.4.2. 压缩列表的存储
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051552740.png)
+![image.png](https://r2.129870.xyz/img/202308051552740.png)
 
 压缩列表之所以能节省内存，在于它是用一系列连续的 `entry` 保存数据。每个 `entry` 的元数据包括下面几部分：
 - `prev_len`，表示前一个 entry 的长度。
@@ -736,7 +736,7 @@ Redis 的链表实现优点如下：
     
     当我们往压缩列表中插入数据时，压缩列表就会根据数据类型是字符串还是整数，以及数据的大小，会使用不同空间大小的 prevlen 和 encoding 这两个元素里保存的信息，**这种根据数据大小和类型进行不同的空间大小分配的设计思想，正是 Redis 为了节省内存而采用的**。
 
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051557263.png)
+    ![image.png](https://r2.129870.xyz/img/202308051557263.png)
     - 如果**当前节点的数据是整数**，则 encoding 会使用 **1 字节的空间**进行编码，也就是 encoding 长度为 1 字节。通过 encoding 确认了整数类型，就可以确认整数数据的实际大小了，比如如果 encoding 编码确认了数据是 int16 整数，那么 data 的长度就是 int16 的大小。
     - 如果**当前节点的数据是字符串，根据字符串的长度大小**，encoding 会使用 **1 字节/2 字节/5 字节的空间**进行编码，encoding 编码的前两个 bit 表示数据的类型，后续的其他 bit 标识字符串数据的实际长度，即 data 的长度。
 - `data` ：保存实际数据。
@@ -749,7 +749,7 @@ Redis 的链表实现优点如下：
 
 压缩列表是每个元素紧凑排列，而且每个元素存储了上一个元素的长度，所以**当修改其中一个元素超过一定大小时，会引发多个元素的级联调整**（前面一个元素发生大的变动，后面的元素都要重新排列位置，重新分配内存），这也会引发性能问题，需要注意。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051601572.png)
+![image.png](https://r2.129870.xyz/img/202308051601572.png)
 
 采用压缩列表方式存储时，虽然可以节省内存空间，但是在查询指定元素时，都要遍历整个列表才能找到指定的元素。所以使用压缩列表方式存储时，虽然可以利用 CPU 高速缓存，但也不适合存储过多的数据（`hash-max-ziplist-entries` 和 `zset-max-ziplist-entries` 不宜设置过大），否则查询性能就会下降比较厉害。
 
@@ -772,7 +772,7 @@ typedef struct dictht {
 
 哈希表是一个 dictEntry 数组，数组的每个元素是一个指向哈希表节点 dictEntry 的指针：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051604922.png)
+![image.png](https://r2.129870.xyz/img/202308051604922.png)
 
 哈希表节点的结构如下：
 
@@ -824,7 +824,7 @@ typedef struct intset {
 
 整数集合升级的过程不会重新分配一个新类型的数组，而是在原本的数组上扩展空间，然后在将每个元素按间隔类型大小分割，例如若 encoding 属性值为 INTSET_ENC_INT16，则每个元素的间隔就是 16 位。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051618161.png)
+![image.png](https://r2.129870.xyz/img/202308051618161.png)
 
 整数集合按照数据类型的最大值占用长度来存储数据。因此，整数集合升级的好处是**节省内存资源**。但需要注意的是，整数集合并**不支持降级操作**，一旦对数组进行了升级，就会一直保持升级后的状态。
 
@@ -836,7 +836,7 @@ typedef struct intset {
 
 下图展示了一个层级为 3 的跳表：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051626408.png)
+![image.png](https://r2.129870.xyz/img/202308051626408.png)
 
 可以看到，这个查找过程就是在多个层级上跳来跳去，最后定位到元素。当数据量很大时，跳表的查找复杂度就是 O(logN)。
 
@@ -867,7 +867,7 @@ Zset 对象要同时保存元素和元素的权重，对应到跳表节点结构
 
 level 数组中的每一个元素代表跳表的一层，也就是由 zskiplistLevel 结构体表示，比如 leve\[0] 就表示第一层，leve\[1] 就表示第二层。zskiplistLevel 结构体里定义了指向下一个跳表节点的指针和跨度两个属性，跨度时用来记录两个节点之间的距离。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051630117.png)
+![image.png](https://r2.129870.xyz/img/202308051630117.png)
 
 跳表结构体如下：
 
@@ -890,7 +890,7 @@ typedef struct zskiplist {
 - 如果当前节点的权重等于要查找的权重时，并且当前节点的 SDS 类型数据小于要查找的数据时，跳表就会访问该层上的下一个节点。
 - 如果上面两个条件都不满足，或者下一个节点为空时，跳表就会使用目前遍历到的节点的 level 数组里的下一层指针，然后沿着下一层指针继续查找，这就相当于跳到了下一层接着查找。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051633026.png)
+![image.png](https://r2.129870.xyz/img/202308051633026.png)
 
 如果要查找{元素：abcd，权重：4}的节点，查找的过程是这样的：
 
@@ -903,7 +903,7 @@ typedef struct zskiplist {
 
 **跳表的相邻两层的节点数量最理想的比例是 2:1，查找复杂度可以降低到 O (logN)**。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051637984.png)
+![image.png](https://r2.129870.xyz/img/202308051637984.png)
 
 那怎样才能维持相邻两层的节点数量的比例为 2 : 1 呢？如果采用新增节点或者删除节点时，来调整跳表节点以维持比例的方法的话，会带来额外的开销。
 
@@ -930,7 +930,7 @@ Redis 则采用一种巧妙的方法是，**跳表在创建节点的时候，随
 
 quicklist 解决办法：**通过控制每个链表节点中的压缩列表的大小或者元素个数，来规避连锁更新的问题。因为压缩列表元素越少或越小，连锁更新带来的影响就越小，从而提供了更好的访问性能。**
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051647183.png)
+![image.png](https://r2.129870.xyz/img/202308051647183.png)
 
 quicklistNode 结构体里包含了前一个节点和下一个节点指针，这样每个 quicklistNode 形成了一个双向链表。但是**链表节点的元素不再是单纯保存元素值，而是保存了一个压缩列表**，所以 quicklistNode 结构体里有个指向压缩列表的指针。
 
@@ -946,13 +946,13 @@ Redis 在 5.0 新设计一个数据结构叫 listpack，目的是替代压缩列
 
 listpack 采用了压缩列表的很多优秀的设计，比如还是用一块连续的内存空间来紧凑地保存数据，并且为了节省内存的开销，listpack 节点会采用不同的编码方式保存不同大小的数据。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051650864.png)
+![image.png](https://r2.129870.xyz/img/202308051650864.png)
 
 listpack 头包含两个属性，分别记录了 listpack 总字节数和元素数量，然后 listpack 末尾也有个结尾标识。图中的 listpack entry 就是 listpack 的节点。
 
 每个 listpack 节点结构如下：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308051650228.png)
+![image.png](https://r2.129870.xyz/img/202308051650228.png)
 
 主要包含三个方面内容：
 - encoding：定义该元素的编码类型，会对不同长度的整数和字符串进行编码。
@@ -991,9 +991,9 @@ GEO 类型的底层数据结构就是用 `Sorted Set` 来实现的，其中 `Set
 
 这样一来，每做完一次二分区，我们就可以得到 1 位编码值。然后，我们再对经度值所属的分区再做一次二分区，同时再次查看经度值落在了二分区后的左分区还是右分区，按照刚才的规则再做 1 位编码。当做完 N 次的二分区后，经度值就可以用一个 N bit 的数来表示了。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518234740.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518234746.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518234819.png)
+![](https://r2.129870.xyz/img/20220518234740.png)
+![](https://r2.129870.xyz/img/20220518234746.png)
+![](https://r2.129870.xyz/img/20220518234819.png)
 
 当一组经纬度值都编完码后，我们再把它们的各自编码值组合在一起，组合的规则是：最终编码值的偶数位上依次是经度的编码值，奇数位上依次是纬度的编码值，即偶数位从 0 开始，奇数位从 1 开始。
 
@@ -1003,7 +1003,7 @@ GEO 类型的底层数据结构就是用 `Sorted Set` 来实现的，其中 `Set
 
 有的编码值虽然在大小上接近，但实际对应的方格却距离比较远。例如，我们用 4 位来做 GeoHash 编码，把经度区间\[-180, 180]和纬度区间\[-90, 90]各分成了 4 个分区，一共 16 个分区，对应了 16 个方格。编码值为 0111 和 1000 的两个方格就离得比较远，如下图所示：所以，为了避免查询不准确问题，我们可以同时查询给定经纬度所在的方格周围的 4 个或 8 个方格。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518235015.png)
+![](https://r2.129870.xyz/img/20220518235015.png)
 
 ## 3.5. Pipline
 
@@ -1061,17 +1061,17 @@ noslave-lazy-flush no
 
 ### 3.7.1. CPU 架构之 NUMA 架构
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519125629.png)
+![](https://r2.129870.xyz/img/20220519125629.png)
 
 多核 CPU 通过共享总线对内存进行访问，那么对总线对争用将会称为性能对阻碍。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519125740.png)
+![](https://r2.129870.xyz/img/20220519125740.png)
 
 `Non-Uniform Memory Access`，`NUMA` 架构通过把 CPU 和临近的 RAM 当做一个 `node`，CPU 会优先访问距离近的 RAM。同时，CPU 之间有一个快速通道连接，所以每个 CPU 还是访问到所有的 RAM 位置（只是速度会有差异）。
 
 采用 `NUMA` 架构虽然减少了总线的争用，但是**若程序发生了 CPU 的切换，那么 CPU 中的缓存数据就要重新加载**，这是 `NUMA` 架构存在的问题：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519130036.png)
+![](https://r2.129870.xyz/img/20220519130036.png)
 
 ### 3.7.2. Redis 进行 CPU 层面的优化
 
@@ -1085,12 +1085,12 @@ taskset -c 0 ./redis-server
 
  Redis 实例和网络中断程序的数据交互：网络中断处理程序从网卡硬件中读取数据，并把数据写入到操作系统内核维护的一块内存缓冲区。内核会通过 epoll 机制触发事件，通知 Redis 实例，Redis 实例再把数据从内核的内存缓冲区拷贝到自己的内存空间。那么，在 CPU 的 `NUMA` 架构下，当网络中断处理程序、Redis 实例分别和 CPU 核绑定后，就会有一个潜在的风险：**如果网络中断处理程序和 Redis 实例各自所绑的 CPU 核不在同一个 CPU Socket 上，那么，Redis 实例读取网络数据时，就需要跨 CPU Socket 访问内存**，这个过程会花费较多时间。
  
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519130422.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519130432.png)
+![](https://r2.129870.xyz/img/20220519130422.png)
+![](https://r2.129870.xyz/img/20220519130432.png)
 
 所以，为了避免 Redis 跨 CPU Socket 访问网络数据，我们最好把网络中断程序和 Redis 实例绑在同一个 CPU Socket 上，这样一来，Redis 实例就可以直接从本地内存读取网络数据了，如下图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519130503.png)
+![](https://r2.129870.xyz/img/20220519130503.png)
 
 #### 3.7.2.2. 绑核带来的问题
 
@@ -1109,7 +1109,7 @@ taskset -c 0 ./redis-server
 
 ### 4.1.1. 主从同步的过程
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220517231216.png)
+![](https://r2.129870.xyz/img/20220517231216.png)
 
 主从同步用于备份主库的数据，从库通过与主库建立连接而不断获取到主库到数据。建立连接的步骤如下：
 
@@ -1136,7 +1136,7 @@ taskset -c 0 ./redis-server
 
 ### 4.1.2. 主从同步的重连
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220517234150.png)
+![](https://r2.129870.xyz/img/20220517234150.png)
 
 主从连接建立完毕以后就可以正常同步数据了，但是当主从之间因为某些原因断开重新建立连接后，双方数据怎么继续同步呢？
 
@@ -1182,7 +1182,7 @@ taskset -c 0 ./redis-server
 
 在新主库完全切换完之前，客户端请求仍能正常写入主库。等到哨兵选举出新的主库而原主库这段期间接收到的请求未同步给从库，从而导致新主库无这些数据。造成数据不一致。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521220627.png)
+![](https://r2.129870.xyz/img/20220521220627.png)
 
 这个问题是出在原主库发生假故障后仍然能接收请求上，我们就开始在主从集群机制的配置项中查找是否有限制主库接收请求的设置：
 
@@ -1235,8 +1235,8 @@ taskset -c 0 ./redis-server
 
 我们可以通过哨兵来进行主从数据库的监控选举与通知，但是如果哨兵节点挂机了要怎么办呢？因此我们需要部署多个哨兵构建哨兵集群来保证哨兵的高可用。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518115624.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518115632.png)
+![](https://r2.129870.xyz/img/20220518115624.png)
+![](https://r2.129870.xyz/img/20220518115632.png)
 
 哨兵集群的原理：
 
@@ -1252,7 +1252,7 @@ taskset -c 0 ./redis-server
 
 3. 除了从库外，哨兵还需要和客户端建立连接，以通知客户端主库切换信息，以及客户端关心的其他信息。如通过 `+switch-master` 命令得知主库地址切换，`+sdown` 实例进入主观下线状态等。
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518120328.png)
+	![](https://r2.129870.xyz/img/20220518120328.png)
 
 ### 4.2.3. 哨兵选主
 
@@ -1296,7 +1296,7 @@ taskset -c 0 ./redis-server
 
 #### 4.3.1.2. AOF 重写
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220517181251.png)
+![](https://r2.129870.xyz/img/20220517181251.png)
 
 当操作命令积累时，AOF 文件会变大。**AOF 重写支持以当前数据库的所有未过期数据，对其生成每一条 set 命令，从而产生一个全新的 AOF 文件**。重写机制具有“多变一”功能，该 AOF 文件理论上会比原始文件小许多，这个操作称为 AOF 重写。
 
@@ -1355,7 +1355,7 @@ AOF 重写命令的生成：
 
 信号函数执行完后，主进程就可以继续像往常一样处理命令了。在整个 AOF 后台重写过程中，除了发生写时复制会对主进程造成阻塞，还有信号处理函数执行时也会对主进程造成阻塞，在其他时候，AOF 后台重写都不会阻塞主进程。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308061622220.png)
+![image.png](https://r2.129870.xyz/img/202308061622220.png)
 
 #### 4.3.1.3. AOF 与 WAL 的抉择
 
@@ -1411,7 +1411,7 @@ save 60 10000
 
 `Redis4.0` 引入了混合模式，支持 RDB 与 AOF 同时使用。新的 AOF 文件前半段是 RDB，后半段是增量的 AOF。采用混合模式既可以利用 RDB 模式备份文件小和全的特性，又可以利用 AOF 一致性高的特性。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220517194638.png)
+![](https://r2.129870.xyz/img/20220517194638.png)
 
 如果想要开启混合持久化功能，可以在 Redis 配置文件将下面这个配置项设置成 yes：
 
@@ -1453,7 +1453,7 @@ aof-use-rdb-preamble yes
 
 #### 5.1.1.1. 初始哈希槽的划分
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518160601.png)
+![](https://r2.129870.xyz/img/20220518160601.png)
 
 在 Redis Cluster 方案中，一个切片集群共有 [[数据密集型系统设计2：复制与分区#2.3.1.1. 固定数量分区| 16384 个哈希槽]]，这些哈希槽类似于数据分区，每个键值对都会根据它的 key，被映射到一个哈希槽中。映射的规则如下：
 
@@ -1489,7 +1489,7 @@ Redis 哈希槽的概念和 `一致性 hash` 很像，但它们的侧重点不�
 
 ### 5.1.2. Redis Cluster 集群的使用
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220518162735.png)
+![](https://r2.129870.xyz/img/20220518162735.png)
 
 集群划分好以后就涉及到客户端的使用了，那么客户端如何定位到 Redis 实例呢？这其实是一个[[数据密集系统设计/数据密集型系统设计2：复制与分区#2 4 请求路由|请求路由]]的问题，客户端通过与 Redis 集群建立连接后，可以知道 Redis 集群中所有哈希槽的映射关系，在操作数据时，按以下步骤进行：
 
@@ -1513,7 +1513,7 @@ Redis Cluster 在运行时，每个实例上都会保存 `Slot` 和实例的对�
 
 2. 一个实例在接收到 PING 消息后，会给发送 PING 消息的实例，发送一个 PONG 消息。PONG 消息包含的内容和 PING 消息一样。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521235556.png)
+![](https://r2.129870.xyz/img/20220521235556.png)
 
 `Gossip 协议` 可以保证在一段时间后，集群中的每一个实例都能获得其它所有实例的状态信息。这样一来，即使有新节点加入、节点故障、Slot 变更等事件发生，实例间也可以通过 PING、PONG 消息的传递，完成集群状态在每个实例上的同步。
 
@@ -1531,9 +1531,9 @@ Redis Cluster 的实例启动后，默认会每秒从本地的实例列表中随
 
 #### 5.2.1. Codis 的架构
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521224427.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521224738.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521224718.png)
+![](https://r2.129870.xyz/img/20220521224427.png)
+![](https://r2.129870.xyz/img/20220521224738.png)
+![](https://r2.129870.xyz/img/20220521224718.png)
 
 Codis 集群中包含了 4 类关键组件：
 
@@ -1555,7 +1555,7 @@ Codis 集群中包含了 4 类关键组件：
 
 #### 5.2.2. Coid 的数据迁移
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521224840.png)
+![](https://r2.129870.xyz/img/20220521224840.png)
 
 增加 codis server，这个过程主要涉及到两步操作：
 
@@ -1587,12 +1587,12 @@ Codis 集群中，客户端是和 codis proxy 直接连接的，所以，当客�
 
 proxy 上的信息源头都是来自 Zookeeper（例如路由表）。而 Zookeeper 集群使用多个实例来保存数据，只要有超过半数的 Zookeeper 实例可以正常工作， Zookeeper 集群就可以提供服务，也可以保证这些数据的可靠性。所以，codis proxy 使用 Zookeeper 集群保存路由表，可以充分利用 Zookeeper 的高可靠性保证来确保 codis proxy 的可靠性，不用再做额外的工作了。当 codis proxy 发生故障后，直接重启 proxy 就行。重启后的 proxy，可以通过 codis dashboard 从 Zookeeper 集群上获取路由表，然后，就可以接收客户端请求进行转发了。这样的设计，也降低了 Codis 集群本身的开发复杂度。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521225253.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521225301.png)
+![](https://r2.129870.xyz/img/20220521225253.png)
+![](https://r2.129870.xyz/img/20220521225301.png)
 
 #### 5.2.4. Redis Cluster 与 Codis 的对比
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220521225421.png)
+![](https://r2.129870.xyz/img/20220521225421.png)
 
 - 从稳定性和成熟度来看，Codis 应用得比较早，在业界已经有了成熟的生产部署。虽然 Codis 引入了 proxy 和 Zookeeper，增加了集群复杂度，但是，proxy 的无状态设计和 Zookeeper 自身的稳定性，也给 Codis 的稳定使用提供了保证。而 Redis Cluster 的推出时间晚于 Codis，相对来说，成熟度要弱于 Codis，如果你想选择一个成熟稳定的方案，Codis 更加合适些。
 
@@ -1661,7 +1661,7 @@ int main(int argc, char **argv) {
 
 其主要流程总结如下：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308102330312.png)
+![image.png](https://r2.129870.xyz/img/202308102330312.png)
 
 处理器结构：
 - 多个 Socket
@@ -1685,13 +1685,13 @@ int main(int argc, char **argv) {
 7. 客户端准备好接收结果时，产生 `AE_WRITABLE` 事件压入队列，命令回复器回复结果。
 8. 最后操作完成，解除命令回复器与 `AE_WRITABLE` 事件的关联。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308102349576.png)
+![image.png](https://r2.129870.xyz/img/202308102349576.png)
 
 ## 6.2. Redis 的内存淘汰策略
 
 每当我们对一个 key 设置了过期时间时，Redis 会把该 key 带上过期时间存储到一个**过期字典**（expires dict）中，也就是说「过期字典」保存了数据库中所有 key 的过期时间：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308052348762.png)
+![image.png](https://r2.129870.xyz/img/202308052348762.png)
 
 字典实际上是哈希表，哈希表的最大好处就是让我们可以用 O (1) 的时间复杂度来快速查找。当我们查询一个 key 时，Redis 首先检查该 key 是否存在于过期字典中：
 
@@ -1752,7 +1752,7 @@ if (r < p) counter++;
 
 ```
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220520232722.png)
+![](https://r2.129870.xyz/img/20220520232722.png)
 
 使用了非线性递增的计数器方法，即使缓存数据的访问次数成千上万，LFU 策略也可以有效地区分不同的访问次数，从而进行合理的数据筛选。
 
@@ -1821,7 +1821,7 @@ Redis 事务的使用：
 
 输入缓冲区会先把客户端发送过来的命令暂存起来，Redis 主线程再从输入缓冲区中读取命令，进行处理。当 Redis 主线程处理完数据后，会把结果写入到输出缓冲区，再通过输出缓冲区返回给客户端，如下图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519234030.png)
+![](https://r2.129870.xyz/img/20220519234030.png)
 
 ### 6.6.2. 输入输出缓冲区溢出
 
@@ -1873,7 +1873,7 @@ Redis 为每个客户端设置的输出缓冲区也包括两部分：一部分�
 
 在全量复制过程中，主节点在向从节点传输 RDB 文件的同时，会继续接收客户端发送的写命令请求。这些写命令就会先保存在复制缓冲区中，等 RDB 文件传输完成后，再发送给从节点去执行。主节点上会为每个从节点都维护一个复制缓冲区，来保证主从节点间的数据同步。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519235134.png)
+![](https://r2.129870.xyz/img/20220519235134.png)
 
 针对主从复制的缓冲区，我们可以做以下几点考虑：
 
@@ -1890,7 +1890,7 @@ Redis 为每个客户端设置的输出缓冲区也包括两部分：一部分�
 
 这个增量缓冲区就是我们提到的 `repl_backlog_buffer`。复制积压缓冲区是一个大小有限的环形缓冲区。当**主节点把复制积压缓冲区写满后，会覆盖缓冲区中的旧命令数据**。如果从节点还没有同步这些旧命令数据，就会造成主从节点间重新开始执行全量复制。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220519235655.png)
+![](https://r2.129870.xyz/img/20220519235655.png)
 
 从本质上看，缓冲区溢出，有以下几个原因：
 - 命令数据发送过快

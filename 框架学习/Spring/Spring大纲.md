@@ -2,7 +2,7 @@
 
 # 1. Spring 大纲
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220504152622.png)
+![](https://r2.129870.xyz/img/20220504152622.png)
 
 - BeanFactory、FactoryBean、ApplicationContext 区别
 	1. ClassPathXmlApplicaitonContext

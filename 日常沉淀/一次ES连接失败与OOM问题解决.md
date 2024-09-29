@@ -50,13 +50,13 @@ ES连接问题解决后，重启服务，利用Jemter进行并发请求测试。
 
 - 在jvisualvm中观察发现，char[]类型的数据量在随着访问进行不断的增加，因此判断该类型数据是造成内存占用的原因之一。可是我们并不能知道究竟是什么在使用这些数据，因此我们需要借助一个新的工具MemoryAnalyzer，该工具由[Eclipse官方提供](https://www.eclipse.org/downloads/download.php?file=/mat/)。
 - 启动jvisualvm，获取当前运行程序的快照进行分析(在File栏下点击Acquire Heap Dump可选择当前正在运行的java程序)。
-	![image-20200918002343109](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20200918002343.png)
+	![image-20200918002343109](https://r2.129870.xyz/img/20200918002343.png)
 
 - 获取快照后工具会给出可能存在的内存泄露原因
-  ![image-20200918002622785](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20200918002622.png)
+  ![image-20200918002622785](https://r2.129870.xyz/img/20200918002622.png)
 - 在Overview菜单栏下选择Histogram查看堆内存对象的具体情况
-  ![image-20200918002947060](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20200918002947.png)
-  ![image-20200918003100862](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20200918003100.png)
+  ![image-20200918002947060](https://r2.129870.xyz/img/20200918002947.png)
+  ![image-20200918003100862](https://r2.129870.xyz/img/20200918003100.png)
 - 进行查看，发现这些对象都是一些日志对象DTO，这些DTO在接口调用时被创建，用于记录接口的调用信息。继续排查发现，这些DTO被存放在一个LinkedBlockingQueue队列中，该队列由线程池取出数据进行日志记录(排查中发现，该线程池是单线程池SingleThreadExecutor)，因此猜测是接口调用速度快于日志DTO记录速度，导致这些日志DTO来不及发送出去而一直呆在LinkedBlockingQueue队列中从而使堆内存不断膨胀。
 - 接下来进行我们的猜测证实，我们将日志记录的操作注释，重新使用Jmeter测试调用我们的接口，此时堆内存分配回收恢复正常，处于一个稳定的值。
 

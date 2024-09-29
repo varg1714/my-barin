@@ -2,7 +2,7 @@
 
 # 1. ReentrantLock 类图
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220430224029.png)
+![](https://r2.129870.xyz/img/20220430224029.png)
 
 ReentrantLock 实现有两种，分为公平锁与非公平锁。两者的却别在于允不允许新插入的线程直接抢占锁：公平锁需要线程排队，而非公平锁则允许线程直接去抢占锁而无需判断当前队列中是否有其他线程在等待锁。
 
@@ -10,7 +10,7 @@ ReentrantLock 实现有两种，分为公平锁与非公平锁。两者的却别
 
 # 2. ReentrantLock 执行流程分析
 
-![ReentrantLock流程.drawio.svg](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308222354164.svg)
+![ReentrantLock流程.drawio.svg](https://r2.129870.xyz/img/202308222354164.svg)
 
 # 3. ReentrartLock 疑问记录
 

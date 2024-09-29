@@ -2,7 +2,7 @@
 
 # 1. Condition 类图
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220501154209.png)
+![](https://r2.129870.xyz/img/20220501154209.png)
 
 Condition 对象有 await，signal 等方法。Object 有 wait，notify 等方法。这两者之间区别如下：
 1.  Condition 支持不响应中断
@@ -12,7 +12,7 @@ Condition 对象有 await，signal 等方法。Object 有 wait，notify 等方�
 
 # 2. Condition 的流程分析
 
-![Condition流程.drawio.svg](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202308250211226.svg)
+![Condition流程.drawio.svg](https://r2.129870.xyz/img/202308250211226.svg)
 
 # 3. Condition 疑问记录
 

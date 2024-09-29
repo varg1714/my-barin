@@ -42,11 +42,11 @@
 
 如自增主键的 `Max Row ID` 属性实际占用 8 个字节的存储空间，所以在修改页面中的该属性时，会记录一条类型为 `MLOG_8BYTE` 的 `redo` 日志，`MLOG_8BYTE` 的 `redo` 日志结构如下所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190003003.png)
+![](https://r2.129870.xyz/img/202209190003003.png)
 
 其余 `MLOG_1BYTE`、`MLOG_2BYTE`、`MLOG_4BYTE` 类型的 `redo` 日志结构和 `MLOG_8BYTE` 的类似，只不过具体数据中包含对应个字节的数据罢了。`MLOG_WRITE_STRING` 类型的 `redo` 日志表示写入一串数据，但是因为不能确定写入的具体数据占用多少字节，所以需要在日志结构中添加一个 `len` 字段：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190003543.png)
+![](https://r2.129870.xyz/img/202209190003543.png)
 
 PS：只要将 `MLOG_WRITE_STRING` 类型的 redo 日志的 len 字段填充上 1、2、4、8 这些数字，就可以分别替代 `MLOG_1BYTE`、`MLOG_2BYTE`、`MLOG_4BYTE`、`MLOG_8BYTE` 这些类型的 redo 日志。
 
@@ -66,7 +66,7 @@ PS：只要将 `MLOG_WRITE_STRING` 类型的 redo 日志的 len 字段填充上 
 
 画一个简易的示意图就像是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190008562.png)
+![](https://r2.129870.xyz/img/202209190008562.png)
 
 针对这种复杂的情况，这时我们如果使用上边介绍的简单的物理 `redo` 日志来记录这些修改时，可以有两种解决方案：
 
@@ -93,7 +93,7 @@ PS：只要将 `MLOG_WRITE_STRING` 类型的 redo 日志的 len 字段填充上 
 
 我们以类型为 `MLOG_COMP_REC_INSERT` 这个代表插入一条使用紧凑行格式的记录时的 `redo` 日志为例来说明一下我们上边所说的 `物理` 层面和 `逻辑` 层面的含义：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190013101.png)
+![](https://r2.129870.xyz/img/202209190013101.png)
 
 很显然这个类型为 `MLOG_COMP_REC_INSERT` 的 `redo` 日志并没有记录 `PAGE_N_DIR_SLOTS` 的值修改为了啥，`PAGE_HEAP_TOP` 的值修改为了啥，`PAGE_N_HEAP` 的值修改为了啥等等这些信息，而只是把在本页面中插入一条记录所有必备的要素记了下来，之后系统崩溃重启时，服务器会调用相关向某个页面插入一条记录的那个函数，而 `redo` 日志中的那些数据就可以被当成是调用这个函数所需的参数，在调用完该函数后，页面中的 `PAGE_N_DIR_SLOTS`、`PAGE_HEAP_TOP`、`PAGE_N_HEAP` 等等的值也就都被恢复到系统崩溃前的样子了。这就是所谓的 `逻辑` 日志的意思。
 
@@ -114,11 +114,11 @@ Mysql 规定在执行这些需要保证**原子性的操作时必须以 `组` �
 	
 	如何把这些 `redo` 日志划分到一个组里边儿呢？Mysql 在某组 `redo` 日志结尾后边加上一条特殊类型的 `redo` 日志，该类型名称为 `MLOG_MULTI_REC_END`，`type` 字段对应的十进制数字为 `31`，该类型的 `redo` 日志结构很简单，只有一个 `type` 字段：
 	
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190022227.png)
+	![](https://r2.129870.xyz/img/202209190022227.png)
 	
 	所以某个需要保证原子性的操作产生的一系列 `redo` 日志必须要以一个类型为 `MLOG_MULTI_REC_END` 结尾，就像这样：
 	
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190022311.png)
+	![](https://r2.129870.xyz/img/202209190022311.png)
 	
 	这样在系统崩溃重启进行恢复时，只有当解析到类型为 `MLOG_MULTI_REC_END` 的 `redo` 日志，才认为解析到了一组完整的 `redo` 日志，才会进行恢复。否则的话直接放弃前边解析到的 `redo` 日志。
 
@@ -128,7 +128,7 @@ Mysql 规定在执行这些需要保证**原子性的操作时必须以 `组` �
 
 	其实在一条日志后边跟一个类型为 `MLOG_MULTI_REC_END` 的 `redo` 日志也是可以的，不过设计 `InnoDB` 的大叔比较勤俭节约，他们不想浪费一个比特位。由于 `redo` 日志的类型就是几十种，是小于 `127` 这个数字的，也就是说我们用 7 个比特位就足以包括所有的 `redo` 日志类型，而 `type` 字段其实是占用 1 个字节的，也就是说我们可以省出来一个比特位用来表示该需要保证原子性的操作只产生单一的一条 `redo` 日志，示意图如下：
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190024509.png)
+	![](https://r2.129870.xyz/img/202209190024509.png)
 
 	如果 `type` 字段的第一个比特位为 `1`，代表该需要保证原子性的操作只产生了单一的一条 `redo` 日志，否则表示该需要保证原子性的操作产生了一系列的 `redo` 日志。
 
@@ -138,7 +138,7 @@ Mysql 规定在执行这些需要保证**原子性的操作时必须以 `组` �
 
 一个事务可以包含若干条语句，每一条语句其实是由若干个 `mtr` 组成，每一个 `mtr` 又可以包含若干条 `redo` 日志，画个图表示它们的关系就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190025616.png)
+![](https://r2.129870.xyz/img/202209190025616.png)
 
 ## 1.3. redo 日志写入过程
 
@@ -146,11 +146,11 @@ Mysql 规定在执行这些需要保证**原子性的操作时必须以 `组` �
 
 为了更好的进行系统崩溃恢复，Mysql 把通过 `mtr` 生成的 `redo` 日志都放在了大小为 `512字节` 的 `页` 中。为了和我们前边提到的表空间中的页做区别，我们这里把用来存储 `redo` 日志的页称为 `block`。一个 `redo log block` 的示意图如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190026884.png)
+![](https://r2.129870.xyz/img/202209190026884.png)
 
 真正的 `redo` 日志都是存储到占用 `496` 字节大小的 `log block body` 中，图中的 `log block header` 和 `log block trailer` 存储的是一些管理信息：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190026412.png)
+![](https://r2.129870.xyz/img/202209190026412.png)
 
 其中 `log block header` 的几个属性的意思分别如下：
 
@@ -170,15 +170,15 @@ Mysql 规定在执行这些需要保证**原子性的操作时必须以 `组` �
 
 Mysql 为了解决磁盘速度过慢的问题而引入了 `Buffer Pool`。同理，写入 `redo` 日志时也不能直接直接写到磁盘上，实际上在服务器启动时就向操作系统申请了一大片称之为 `redo log buffer` 的连续内存空间，翻译成中文就是 `redo 日志缓冲区`，我们也可以简称为 `log buffer`。这片内存空间被划分成若干个连续的 `redo log block`，就像这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190028627.png)
+![](https://r2.129870.xyz/img/202209190028627.png)
 
 向 `log buffer` 中写入 `redo` 日志的过程是顺序的，也就是先往前边的 block 中写，当该 block 的空闲空间用完之后再往下一个 block 中写。为了定位该在 `log buffer` 中在哪个 `block` 的哪个偏移量处写入 `redo` 日志，Mysql 提供了一个称之为 `buf_free` 的全局变量，该变量指明后续写入的 `redo` 日志应该写入到 `log buffer` 中的哪个位置，如图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190029079.png)
+![](https://r2.129870.xyz/img/202209190029079.png)
 
 不同的事务可能是并发执行的，每当一个 `mtr` 执行完成时，伴随该 `mtr` 生成的一组 `redo` 日志就需要被复制到 `log buffer` 中，也就是说不同事务的 `mtr` 可能是交替写入 `log buffer` 的（为了美观，我们把一个 `mtr` 中产生的所有的 `redo` 日志当作一个整体来画）：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190030328.png)
+![](https://r2.129870.xyz/img/202209190030328.png)
 
 从示意图中我们可以看出来，不同的 `mtr` 产生的一组 `redo` 日志占用的存储空间可能不一样，有的 `mtr` 产生的 `redo` 日志量很少，，有的 `mtr` 产生的 `redo` 日志量非常大。
 
@@ -233,7 +233,7 @@ Mysql 为了解决磁盘速度过慢的问题而引入了 `Buffer Pool`。同理
 
 从上边的描述中可以看到，磁盘上的 `redo` 日志文件不只一个，而是以一个 `日志文件组` 的形式出现的。这些文件以 `ib_logfile[数字]`（`数字` 可以是 `0`、`1`、`2`...）的形式进行命名。在将 `redo` 日志写入 `日志文件组` 时，是从 `ib_logfile0` 开始写，如果 `ib_logfile0` 写满了，就接着 `ib_logfile1` 写，同理，`ib_logfile1` 写满了就去写 `ib_logfile2`，依此类推。如果写到最后一个文件该咋办？那就重新转到 `ib_logfile0` 继续写，所以整个过程如下图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190045531.png)
+![](https://r2.129870.xyz/img/202209190045531.png)
 
 ### 1.4.3. redo 日志文件格式
 
@@ -247,17 +247,17 @@ Mysql 为了解决磁盘速度过慢的问题而引入了 `Buffer Pool`。同理
 
 所以我们前边所说的 `循环` 使用 redo 日志文件，其实是从每个日志文件的第 2048 个字节开始算，画个示意图就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190046839.png)
+![](https://r2.129870.xyz/img/202209190046839.png)
 
 普通 block 的格式我们在唠叨 `log buffer` 的时候都说过了，就是 `log block header`、`log block body`、`log block trialer` 这三个部分。这里需要介绍一下每个 `redo` 日志文件前 2048 个字节，也就是前 4 个特殊 block 的格式都是干嘛的：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190047929.png)
+![](https://r2.129870.xyz/img/202209190047929.png)
 
 这 4 个 block 分别是：
 
 - `log file header` ：描述该 `redo` 日志文件的一些整体属性
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190047194.png)
+	![](https://r2.129870.xyz/img/202209190047194.png)
 
 	各个属性的具体释义如下：
 
@@ -265,7 +265,7 @@ Mysql 为了解决磁盘速度过慢的问题而引入了 `Buffer Pool`。同理
 
 - `checkpoint1` ：记录关于 `checkpoint` 的一些属性。
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190048041.png)
+	![](https://r2.129870.xyz/img/202209190048041.png)
 
 	各个属性的具体释义如下：
 	
@@ -287,7 +287,7 @@ Mysql 为记录已经写入的 `redo` 日志量，设计了一个称之为 `Log 
 
 `redo` 日志是首先写到 `log buffer` 中，之后才会被刷新到磁盘上的 `redo` 日志文件。所以 Mysql 提出了一个称之为 `buf_next_to_write` 的全局变量，标记当前 `log buffer` 中已经有哪些日志被刷新到磁盘中了：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190052707.png)
+![](https://r2.129870.xyz/img/202209190052707.png)
 
 我们前边说 `lsn` 是表示当前系统中写入的 `redo` 日志量，这包括了写到 `log buffer` 而没有刷新到磁盘的日志。相应的，Mysql 提出了一个表示刷新到磁盘中的 `redo` 日志量的全局变量，称之为 `flushed_to_disk_lsn`。系统第一次启动时，该变量的值和初始的 `lsn` 值是相同的，都是 `8704`。随着系统的运行，`redo` 日志被不断写入 `log buffer`，但是并不会立即刷新到磁盘，`lsn` 的值就和 `flushed_to_disk_lsn` 的值拉开了差距。
 
@@ -297,7 +297,7 @@ Mysql 为记录已经写入的 `redo` 日志量，设计了一个称之为 `Log 
 
 我们知道一个 `mtr` 代表一次对底层页面的原子访问，在访问过程中可能会产生一组不可分割的 `redo` 日志，在 `mtr` 结束时，会把这一组 `redo` 日志写入到 `log buffer` 中。除此之外，在 `mtr` 结束时还有一件非常重要的事情要做，就是把在 mtr 执行过程中可能修改过的页面加入到 Buffer Pool 的 [[Mysql的存储结构#6 1 3 flush 链表的管理|flush 链表]]。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190057119.png)
+![](https://r2.129870.xyz/img/202209190057119.png)
 
 当第一次修改某个缓存在 `Buffer Pool` 中的页面时，就会把这个页面对应的控制块插入到 `flush链表` 的头部，之后再修改该页面时由于它已经在 `flush` 链表中了，就不再次插入了。也就是说 **flush 链表中的脏页是按照页面的第一次修改时间从大到小进行排序的**。在这个过程中会在缓存页对应的控制块中记录两个关于页面何时修改的属性：
 
@@ -324,7 +324,7 @@ Mysql 提出了一个全局变量 `checkpoint_lsn` 来代表当前系统中可�
 
 记录完 `checkpoint` 的信息之后，`redo` 日志文件组中各个 `lsn` 值的关系就像这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190101664.png)
+![](https://r2.129870.xyz/img/202209190101664.png)
 
 ### 1.6.1. 批量从 flush 链表中刷出脏页
 
@@ -354,7 +354,7 @@ Mysql 提出了一个全局变量 `checkpoint_lsn` 来代表当前系统中可�
 
 `redo` 日志恢复的起点确定了，那终点是哪个呢？这个还得从 [[Mysql的一致性保证#redo 日志 block 块|block 的结构]]说起。我们说在写 `redo` 日志的时候都是顺序写的，写满了一个 block 之后会再往下一个 block 中写：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190106291.png)
+![](https://r2.129870.xyz/img/202209190106291.png)
 
 普通 block 的 `log block header` 部分有一个称之为 `LOG_BLOCK_HDR_DATA_LEN` 的属性，该属性值记录了当前 block 里使用了多少字节的空间。对于被填满的 block 来说，该值永远为 `512`。如果该属性的值不为 `512`，那么就是它了，它就是此次崩溃恢复中需要扫描的最后一个 block。
 
@@ -362,14 +362,14 @@ Mysql 提出了一个全局变量 `checkpoint_lsn` 来代表当前系统中可�
 
 确定了需要扫描哪些 `redo` 日志进行崩溃恢复之后，接下来就是怎么进行恢复了。假设现在的 `redo` 日志文件中有 5 条 `redo` 日志，如图：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190107937.png)
+![](https://r2.129870.xyz/img/202209190107937.png)
 
 由于 `redo 0` 在 `checkpoint_lsn` 后边，恢复时可以不管它。我们现在可以按照 `redo` 日志的顺序依次扫描 `checkpoint_lsn` 之后的各条 redo 日志，按照日志中记载的内容将对应的页面恢复出来。这样没什么问题，不过 Mysql 还是想了一些办法加快这个恢复的过程：
 
 - 使用哈希表
     根据 `redo` 日志的 `space ID` 和 `page number` 属性计算出散列值，把 `space ID` 和 `page number` 相同的 `redo` 日志放到哈希表的同一个槽里，如果有多个 `space ID` 和 `page number` 都相同的 `redo` 日志，那么它们之间使用链表连接起来，按照生成的先后顺序链接起来的，如图所示：
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209190107318.png)
+	![](https://r2.129870.xyz/img/202209190107318.png)
 
 	之后就可以遍历哈希表，因为对同一个页面进行修改的 `redo` 日志都放在了一个槽里，所以可以一次性将一个页面修复好（避免了很多读取页面的随机 IO），这样可以加快恢复速度。
 	
@@ -383,7 +383,7 @@ Mysql 提出了一个全局变量 `checkpoint_lsn` 来代表当前系统中可�
 
 ## 2.1. binlog 存储位置
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220513230808.png)
+![](https://r2.129870.xyz/img/20220513230808.png)
 
 系统给 binlog cache 分配了一片内存，每个线程一个，但是共用同一份 binlog 文件。参数 `binlog_cache_size` 控制单个线程内 binlog cache 所占内存的大小。若超过该参数值，就要暂存到磁盘的临时文件 (不是最终的 binlog 文件)。事务提交时，执行器把 binlog cache 里的完整事务写入 binlog，并清空 binlog cache。所以如果经常有大事物的化可以考虑增大这个值来减少刷盘的次数。
 
@@ -414,11 +414,11 @@ binlog 日志的格式：
 - row 格式
 	基于原始数据存储，数据是什么样子就存储成什么样子。可以通过命令 `show binlog events;` 查看当前 binlog 日志文件：
 	
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514144956.png)
+	![](https://r2.129870.xyz/img/20220514144956.png)
 
 	binlog 日志文件在 row 格式下如上所示，如果需要查看更为详细的信息通过解析 binlog 日志查看，可以执行以下命令：`/var/lib/mysql# mysqlbinlog -vv binlog.000001 --start-position=3103917;`
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220514145948.png)
+	![](https://r2.129870.xyz/img/20220514145948.png)
 
 	`binlog_row_image` 的默认配置是 FULL，因此 `delete_event` 里面，包含了删掉的行的所有字段的值。如果把 `binlog_row_image` 设置为 `MINIMAL`，则只会记录必要的信息。
 - mixed 格式
@@ -430,7 +430,7 @@ binlog 日志的格式：
 
 图中浅色框表示是在 InnoDB 内部执行的，深色框表示是在执行器中执行的：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220508234920.png)
+![](https://r2.129870.xyz/img/20220508234920.png)
 
 ## 3.1. redolog 和 binlog 两次提交的原因
 
@@ -476,7 +476,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 通过上面的分析我们可以知道，redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一阶段，我们可以采取组提交策略。对于 redo log 与 binlog 的操作争取一次写盘完成。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220513231453.png)
+![](https://r2.129870.xyz/img/20220513231453.png)
 
 在将 redo log 写入到磁盘时，刷盘动作延迟到 `binlog write` 到 `page cache` 之后，这样 binlog 与 redo log 就有机会一同写入到磁盘中了。不过通常情况下第 3 步执行得会很快，所以 binlog 的 write 和 fsync 间的间隔时间短，导致能集合到一起持久化的 binlog 比较少，因此 binlog 的组提交的效果通常不如 redo log 的效果那么好。
 
@@ -496,7 +496,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 `InnoDB` 记录行格式中：聚簇索引的记录除了会保存完整的用户数据以外，而且还会自动添加名为 `trx_id`、`roll_pointer` 的隐藏列，如果用户没有在表中定义主键以及 UNIQUE 键，还会自动添加一个名为 `row_id` 的隐藏列。所以一条记录在页面中的真实结构看起来就是这样的：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192249305.png)
+![](https://r2.129870.xyz/img/202209192249305.png)
 
 `trx_id` 列就是某个对这个聚簇索引记录做改动的语句所在的事务对应的 `事务id` 而已（此处的改动可以是 `INSERT`、`DELETE`、`UPDATE` 操作）。
 
@@ -512,7 +512,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 当我们向表中插入一条记录时这条记录被放到了一个数据页中，如果希望回滚这个插入操作，那么把这条记录删除就好了，也就是说在写对应的 `undo` 日志时，主要是把这条记录的主键信息记上。所以 Mysql 设计了一个类型为 `TRX_UNDO_INSERT_REC` 的 `undo日志`，它的完整结构如下图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192253198.png)
+![](https://r2.129870.xyz/img/202209192253198.png)
 
 当我们向某个表中插入一条记录时，实际上需要向聚簇索引和所有的二级索引都插入一条记录。不过记录 undo 日志时，我们只需要考虑向聚簇索引插入记录时的情况就好了，因为聚簇索引记录和二级索引记录是一一对应的，我们**在回滚插入操作时，只需要知道这条记录的主键信息，然后根据主键信息做对应的删除操作，做删除操作时就会顺带着把所有二级索引中相应的记录也删除掉**。
 
@@ -520,7 +520,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 `roll_pointer` 这个占用 `7` 个字节的字段本质上就是一个指向记录对应的 `undo日志` 的一个指针。比方说我们向表里插入了 2 条记录，每条记录都有与其对应的一条 `undo日志`。记录被存储到了类型为 `FIL_PAGE_INDEX` 的页面中，`undo日志` 被存放到了类型为 `FIL_PAGE_UNDO_LOG` 的页面中。效果如图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192256728.png)
+![](https://r2.129870.xyz/img/202209192256728.png)
 
 ### 4.2.2. DELETE 操作对应的 undo 日志
 
@@ -528,14 +528,14 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 我们假设某个数据页面中的记录分布情况是这样的：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192259999.png)
+![](https://r2.129870.xyz/img/202209192259999.png)
 
 从图中可以看出，`正常记录链表` 中包含了 3 条正常记录，`垃圾链表` 里包含了 2 条已删除记录，在 `垃圾链表` 中的这些记录占用的存储空间可以被重新利用。页面的 `Page Header` 部分的 `PAGE_FREE` 属性的值代表指向 `垃圾链表` 头节点的指针。假设现在我们准备使用 `DELETE` 语句把 `正常记录链表` 中的最后一条记录给删除掉，其实这个删除的过程需要经历两个阶段：
 
 1. 阶段一：仅仅将记录的 `delete_mask` 标识位设置为 `1`
     其他字段不做修改（其实会修改记录的 `trx_id`、`roll_pointer` 这些隐藏列的值），Mysql 把这个阶段称之为 `delete mark`。**此时被删除的记录并没有被加入到 `垃圾链表`，也就是此时记录处于一个 `中间状态`，在删除语句所在的事务提交之前，被删除的记录一直都处于这种所谓的 `中间状态`**。
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192302780.png)
+    ![](https://r2.129870.xyz/img/202209192302780.png)
     
     > [!note] 只标记不移动的原因
     > </br>
@@ -543,7 +543,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 2. 阶段二：当该删除语句所在的事务提交之后，会有专门的线程后来真正的把记录删除掉。
     所谓真正的删除就是把该记录从 `正常记录链表` 中移除，并且加入到 `垃圾链表` 中，然后还要调整一些页面的其他信息，比如页面中的用户记录数量 `PAGE_N_RECS`、上次插入记录的位置 `PAGE_LAST_INSERT`、垃圾链表头节点的指针 `PAGE_FREE`、页面中可重用的字节数量 `PAGE_GARBAGE`、还有页目录的一些信息等等。设计 `InnoDB` 的大叔把这个阶段称之为 `purge`。
 
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192302031.png)
+    ![](https://r2.129870.xyz/img/202209192302031.png)
 
     把 `阶段二` 执行完了，这条记录就算是真正的被删除掉了。这条已删除记录占用的存储空间也可以被重新利用了。
     
@@ -559,13 +559,13 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 从上边的描述中我们也可以看出来，**在删除语句所在的事务提交之前，只会经历 `阶段一`，也就是 `delete mark` 阶段**（提交之后我们就不用回滚了，所以只需考虑对删除操作的 `阶段一` 做的影响进行回滚）。Mysql 设计了一种称之为 `TRX_UNDO_DEL_MARK_REC` 类型的 `undo日志`，它的完整结构如下图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192308065.png)
+![](https://r2.129870.xyz/img/202209192308065.png)
 
 上边的这个类型为 `TRX_UNDO_DEL_MARK_REC` 的 `undo日志` 中的属性，特别注意一下这几点：
 
 - 在对一条记录进行 `delete mark` 操作前，需要把该记录的旧的 `trx_id` 和 `roll_pointer` 隐藏列的值都给记到对应的 `undo日志` 中来，这样可以通过 `undo日志` 的 `old roll_pointer` 找到记录在修改之前对应的 `undo` 日志。
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192309912.png)
+	![](https://r2.129870.xyz/img/202209192309912.png)
 
 - 与类型为 `TRX_UNDO_INSERT_REC` 的 `undo日志` 不同，类型为 `TRX_UNDO_DEL_MARK_REC` 的 `undo` 日志还多了一个 `索引列各列信息` 的内容。
 
@@ -575,7 +575,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 当一条数据删除后，这个 `delete mark` 操作对应的 `undo日志` 的结构就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192311019.png)
+![](https://r2.129870.xyz/img/202209192311019.png)
 
 ### 4.2.3. UPDATE 操作对应的 undo 日志
 
@@ -599,7 +599,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 针对 `UPDATE` 不更新主键的情况（包括上边所说的就地更新和先删除旧记录再插入新记录），Mysql 设计了一种类型为 `TRX_UNDO_UPD_EXIST_REC` 的 `undo日志`，它的完整结构如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192315254.png)
+![](https://r2.129870.xyz/img/202209192315254.png)
 
 大部分属性和 `TRX_UNDO_DEL_MARK_REC` 类型的 `undo日志` 是类似的，不过还是要注意这么几点：
 
@@ -628,11 +628,11 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 在介绍[[Mysql的存储结构#5 Mysql 的表空间|表空间]]的时候说过，表空间其实是由许许多多的页面构成的，页面默认大小为 `16KB`。这些页面有不同的类型，比如类型为 `FIL_PAGE_INDEX` 的页面用于存储聚簇索引以及二级索引，类型为 `FIL_PAGE_TYPE_FSP_HDR` 的页面用于存储表空间头部信息的，还有其他各种类型的页面，其中有一种称之为 `FIL_PAGE_UNDO_LOG` 类型的页面是专门用来存储 `undo日志` 的，这种类型的页面的通用结构如下图所示（以默认的 `16KB` 大小为例）：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192325621.png)
+![](https://r2.129870.xyz/img/202209192325621.png)
 
 `Undo Page Header` 是 `Undo页面` 所特有的，我们来看一下它的结构：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192325479.png)
+![](https://r2.129870.xyz/img/202209192325479.png)
 
 - `TRX_UNDO_PAGE_TYPE` ：本页面准备存储什么种类的 `undo日志`。
     我们前边介绍了好几种类型的 `undo日志`，它们可以被分为两个大类：
@@ -646,7 +646,7 @@ redo log 与 binlog 通过事务 id 进行关联。
     之所以把 undo 日志分成两个大类，是因为**类型为 TRX_UNDO_INSERT_REC 的 undo 日志在事务提交后可以直接删除掉，而其他类型的 undo 日志还需要为所谓的 MVCC 服务，不能直接删除掉**，对它们的处理需要区别对待。
 - `TRX_UNDO_PAGE_START` ：表示在当前页面中是从什么位置开始存储 `undo日志` 的，或者说表示第一条 `undo日志` 在本页面中的起始偏移量。
 - `TRX_UNDO_PAGE_FREE` ：与上边的 `TRX_UNDO_PAGE_START` 对应，表示当前页面中存储的最后一条 `undo` 日志结束时的偏移量，或者说从这个位置开始，可以继续写入新的 `undo日志`。
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192328749.png)
+    ![](https://r2.129870.xyz/img/202209192328749.png)
 - `TRX_UNDO_PAGE_NODE` ：代表一个 `List Node` 结构，链表的普通节点。
 
 ### 4.3.2. Undo 页面链表
@@ -655,17 +655,17 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 因为一个事务可能包含多个语句，而且一个语句可能对若干条记录进行改动，而对每条记录进行改动前，都需要记录 1 条或 2 条的 `undo日志`，所以在一个事务执行过程中可能产生很多 `undo日志`，这些日志可能一个页面放不下，需要放到多个页面中，这些页面就通过我们上边介绍的 `TRX_UNDO_PAGE_NODE` 属性连成了链表：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192329507.png)
+![](https://r2.129870.xyz/img/202209192329507.png)
 
 链表中的第一个 `Undo页面` 称它为 `first undo page`，其余的 `Undo页面` 称之为 `normal undo page`，这是因为在 `first undo page` 中除了记录 `Undo Page Header` 之外，还会记录其他的一些管理信息。
 
 在一个事务执行过程中，可能混着执行 `INSERT`、`DELETE`、`UPDATE` 语句，也就意味着会产生不同类型的 `undo日志`。但是我们前边又强调过，同一个 `Undo页面` 要么只存储 `TRX_UNDO_INSERT` 大类的 `undo日志`，要么只存储 `TRX_UNDO_UPDATE` 大类的 `undo日志`，不能混着存，所以在**一个事务执行过程中就可能需要 2 个 `Undo页面` 的链表，一个称之为 `insert undo链表`，另一个称之为 `update undo链表`** ：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192330031.png)
+![](https://r2.129870.xyz/img/202209192330031.png)
 
 另外，Mysql 对**普通表和临时表的记录改动时产生的 `undo日志` 要分别记录**，所以在一个事务中最多有 4 个以 `Undo页面` 为节点组成的链表：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192331535.png)
+![](https://r2.129870.xyz/img/202209192331535.png)
 
 当然，并不是在事务一开始就会为这个事务分配这 4 个链表，而是按需分配，啥时候需要啥时候再分配，不需要就不分配。
 
@@ -673,7 +673,7 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 为了尽可能提高 `undo日志` 的写入效率，不同事务执行过程中产生的 undo 日志需要被写入到不同的 Undo 页面链表中，如以下的例子：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192332187.png)
+![](https://r2.129870.xyz/img/202209192332187.png)
 
 如果有更多的事务，那就意味着可能会产生更多的 `Undo页面` 链表。
 
@@ -683,11 +683,11 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 Mysql 规定，每一个 `Undo页面` 链表都对应着一个[[Mysql的存储结构#5 2 1 独立表空间|段]]，称之为 `Undo Log Segment`。也就是说链表中的页面都是从这个段里边申请的，所以他们在 `Undo页面` 链表的第一个页面，也就是上边提到的 `first undo page` 中设计了一个称之为 `Undo Log Segment Header` 的部分，这个部分中包含了该链表对应的段的 `segment header` 信息以及其他的一些关于这个段的信息，所以 `Undo` 页面链表的第一个页面其实长这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192334294.png)
+![](https://r2.129870.xyz/img/202209192334294.png)
 
 这个 `Undo` 链表的第一个页面比普通页面多了个 `Undo Log Segment Header`，我们来看一下它的结构：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192335369.png)
+![](https://r2.129870.xyz/img/202209192335369.png)
 
 其中各个属性的意思如下：
 
@@ -712,11 +712,11 @@ Mysql 认为同一个事务向一个 `Undo页面` 链表中写入的 `undo日志
 
 Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo页面` 链表的第一个页面在真正写入 `undo日志` 前，其实都会被填充 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 这 3 个部分，如图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192341738.png)
+![](https://r2.129870.xyz/img/202209192341738.png)
 
 这个 `Undo Log Header` 具体的结构如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192341254.png)
+![](https://r2.129870.xyz/img/202209192341254.png)
 
 - `TRX_UNDO_TRX_ID` ：生成本组 `undo日志` 的事务 `id`。
 - `TRX_UNDO_TRX_NO` ：事务提交后生成的一个序号，使用此序号来标记事务的提交顺序（先提交的此序号小，后提交的此序号大）。
@@ -732,7 +732,7 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo�
 
 对于没有被重用的 `Undo页面` 链表来说，链表的第一个页面，也就是 `first undo page` 在真正写入 `undo日志` 前，会填充 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 这 3 个部分，之后才开始正式写入 `undo日志`。对于其他的页面来说，也就是 `normal undo page` 在真正写入 `undo日志` 前，只会填充 `Undo Page Header`。链表的 `List Base Node` 存放到 `first undo page` 的 `Undo Log Segment Header` 部分，`List Node` 信息存放到每一个 `Undo页面` 的 `undo Page Header` 部分，所以画一个 `Undo页面` 链表的示意图就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192343558.png)
+![](https://r2.129870.xyz/img/202209192343558.png)
 
 ### 4.3.4. 重用 Undo 页面
 
@@ -747,13 +747,13 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo�
 - `insert undo 链表`
     `insert undo链表` 中只存储类型为 `TRX_UNDO_INSERT_REC` 的 `undo日志`，这种类型的 `undo日志` 在事务提交之后就没用了，就可以被清除掉。所以在某个事务提交后，重用这个事务的 `insert undo链表` 时，可以直接把之前事务写入的一组 `undo日志` 覆盖掉，从头开始写入新事务的一组 `undo日志`，如下图所示：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192345918.png)
+    ![](https://r2.129870.xyz/img/202209192345918.png)
     
     当然，在重用 Undo 页面链表写入新的一组 undo 日志时，不仅会写入新的 Undo Log Header，还会适当调整 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 中的一些属性，比如 `TRX_UNDO_PAGE_START`、`TRX_UNDO_PAGE_FREE` 等。
 - `update undo 链表`
     在一个事务提交后，它的 `update undo链表` 中的 `undo日志` 也不能立即删除掉（这些日志用于 MVCC）。所以如果之后的事务想重用 `update undo链表` 时，就不能覆盖之前事务写入的 `undo日志`。这样就相当于在同一个 `Undo页面` 中写入了多组的 `undo日志`，效果看起来就是这样：
 
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192347690.png)
+    ![](https://r2.129870.xyz/img/202209192347690.png)
 
 ### 4.3.5. 回滚段
 
@@ -761,7 +761,7 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo�
 
 我们现在知道一个事务在执行过程中最多可以分配 4 个 `Undo页面` 链表，在同一时刻不同事务拥有的 `Undo页面` 链表是不一样的，所以在同一时刻系统里其实可以有许许多多个 `Undo页面` 链表存在。为了更好的管理这些链表，Mysql 又设计了一个称之为 `Rollback Segment Header` 的页面，在这个页面中存放了各个 `Undo页面` 链表的 `frist undo page` 的 `页号`，他们把这些 `页号` 称之为 `undo slot`。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192348444.png)
+![](https://r2.129870.xyz/img/202209192348444.png)
 
 每一个 `Rollback Segment Header` 页面都对应着一个段，这个段就称为 `Rollback Segment`，翻译过来就是 `回滚段`。与我们之前介绍的各种段不同的是，这个 `Rollback Segment` 里其实只有一个页面。我们再来看看这个称之为 `Rollback Segment Header` 的页面的各个部分的含义都是啥意思：
 
@@ -807,11 +807,11 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo�
 
 每个回滚段都对应着一个 `Rollback Segment Header` 页面，有 128 个回滚段，自然就要有 128 个 `Rollback Segment Header` 页面，这些页面的地址总得找个地方存一下吧！于是 Mysql [[Mysql的存储结构#5 2 2 系统表空间|系统表空间]]的第 `5` 号页面的某个区域包含了 128 个 8 字节大小的格子：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192357369.png)
+![](https://r2.129870.xyz/img/202209192357369.png)
 
 每个 8 字节的格子的构造就像这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192357396.png)
+![](https://r2.129870.xyz/img/202209192357396.png)
 
 如图所示，每个 8 字节的格子其实由两部分组成：
 
@@ -823,7 +823,7 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo�
 
 所以通过上边的叙述我们可以大致清楚，在系统表空间的第 `5` 号页面中存储了 128 个 `Rollback Segment Header` 页面地址，每个 `Rollback Segment Header` 就相当于一个回滚段。在 `Rollback Segment Header` 页面中，又包含 `1024` 个 `undo slot`，每个 `undo slot` 都对应一个 `Undo页面` 链表。我们画个示意图：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209192358989.png)
+![](https://r2.129870.xyz/img/202209192358989.png)
 
 #### 4.3.5.4. 回滚段分类
 

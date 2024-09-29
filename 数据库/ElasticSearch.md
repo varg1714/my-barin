@@ -27,7 +27,7 @@ ES 底层支持倒排索引、列存储等数据结构，使得在日志场景�
 
 日志处理的基本流程包含：日志采集 -> 数据清洗 -> 存储 -> 可视化分析。Elastic Stack 通过完整的日志解决方案，帮助用户完成对日志处理全链路管理。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110133197.png)
+![image.png](https://r2.129870.xyz/img/202309110133197.png)
 
 #### 1.1.2.2. 时序分析场景
 
@@ -35,7 +35,7 @@ ES 底层支持倒排索引、列存储等数据结构，使得在日志场景�
 
 ES 提供灵活、多维度的统计分析能力，实现查看监控按照地域、业务模块等灵活的进行统计分析。另外，ES 支持列存储、高压缩比、副本数按需调整等能力，可实现较低存储成本。最后时序数据也可通过 Kibana 组件轻松实现可视化。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110135795.png)
+![image.png](https://r2.129870.xyz/img/202309110135795.png)
 
 #### 1.1.2.3. 搜索场景
 
@@ -61,7 +61,7 @@ Javascript is the best programming language.
 
 为了创建倒排索引，我们通过分词器将每个文档的内容域拆分成单独的词（我们称它为词条或 Term），创建一个包含所有不重复词条的排序列表，然后列出每个词条出现在哪个文档。这种结构由文档中所有不重复词的列表构成，对于其中每个词都有一个文档列表与之关联。这种由属性值来确定记录的位置的结构就是倒排索引。带有倒排索引的文件我们称为倒排文件。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309101735990.png)
+![image.png](https://r2.129870.xyz/img/202309101735990.png)
 
 其中主要有如下几个核心术语需要理解：
 
@@ -91,7 +91,7 @@ ES 集群由一个或多个 Elasticsearch 节点组成，每个节点配置相�
 
 [Zen Discovery](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-zen.html) 是 ES 的内置默认发现模块（发现模块的职责是发现集群中的节点以及选举 Master 节点）。它提供单播和基于文件的发现，并且可以扩展为通过插件支持云环境和其他形式的发现。Zen Discovery 可与其他模块集成，例如，节点之间的所有通信都使用 Transport 模块完成。节点使用发现机制通过 Ping 的方式查找其他节点。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110126695.png)
+![](https://r2.129870.xyz/img/202309110126695.png)
 
 ES 默认被配置为使用单播发现，以防止节点无意中加入集群。只有在同一台机器上运行的节点才会自动组成集群。如果集群的节点运行在不同的机器上，可以为 ES 提供一些尝试连接的节点列表。当一个节点联系到单播列表中的成员时，它就会得到整个集群所有节点的状态，然后它会联系 Master 节点，并加入集群。这意味着**单播列表不需要包含集群中的所有节点，它只是需要足够的节点，当一个新节点联系上其中一个并且通信就可以了**。该列表可由 `discovery.zen.ping.unicast.hosts` 指定，官方推荐设置为所有的候选主节点。
 
@@ -105,7 +105,7 @@ ES 默认被配置为使用单播发现，以防止节点无意中加入集群�
 
 主节点负责创建索引、删除索引、跟踪哪些节点是群集的一部分，并决定哪些分片分配给相关的节点、追踪集群中节点的状态等，稳定的主节点对集群的健康是非常重要的。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311100029080.png)
+![image.png](https://r2.129870.xyz/img/202311100029080.png)
 
 每个节点上都保存了集群状态，但只有主节点才能修改集群状态信息（如创建索引、决定分片分布等），集群状态（Cluster State)，维护了一个集群中必要的信息   ：
 - 所有的节点信息
@@ -116,7 +116,7 @@ ES 默认被配置为使用单播发现，以防止节点无意中加入集群�
 
 主节点和其他节点之间通过 Ping 的方式互检查，主节点负责 Ping 所有其他节点，判断是否有节点已经挂掉。其他节点也通过 Ping 的方式判断主节点是否处于可用状态。当节点故障后，会被主节点移出集群，并自动在其他节点上恢复故障节点上的分片。主分片故障时会提升其中一个副本分片为主分片。其他节点也会探活主节点，当主节点故障后，会触发内置的类 Raft 协议选主，并通过设置最少候选主节点数，避免集群脑裂。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110128550.png)
+![image.png](https://r2.129870.xyz/img/202309110128550.png)
 
 虽然对节点做了角色区分，但是**用户的请求可以发往任何一个节点，并由该节点负责分发请求、收集结果等操作，而不需要主节点转发**。这种节点可称之为协调节点，协调节点是不需要指定和配置的，集群中的任何节点都可以充当协调节点的角色。同时协调节点的存在使得请求可以发往任意节点，这提升了灵活性，但另一方面若该协调节点本身已经处于高负载状态，那么势必会降低转发的性能。
 
@@ -272,7 +272,7 @@ ES 中的 meta 数据只能由 master 进行更新，并同步给其他节点。
     
     ES 采取了两阶段提交，把 Master 发布 ClusterState 分成两步，第一步是向所有节点 send 最新的 ClusterState，当有超过半数的 master 节点返回 ack 时，再发送 commit 请求，要求节点 commit 接收到的 ClusterState。如果没有超过半数的节点返回 ack，那么认为本次发布失败，同时退出 master 状态，执行 rejoin 重新加入集群。
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112240018.png)
+    ![image.png](https://r2.129870.xyz/img/202311112240018.png)
     
     采取两阶段提交可以解决一些问题，但并不是完美的：
     1. 第一阶段数据未持久化
@@ -314,7 +314,7 @@ ES 支持 PB 级全文搜索，当索引上的数据量太大的时候，ES 通�
 
 ES 为了提高写入的能力这个过程是并发写的，同时为了解决并发写的过程中数据冲突的问题，ES 通过乐观锁的方式控制，每个文档都有一个 `_version`（版本）号，当文档被修改时版本号递增。一旦所有的副本分片都报告写成功才会向协调节点报告成功，协调节点向客户端报告成功。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309101908800.png)
+![image.png](https://r2.129870.xyz/img/202309101908800.png)
 
 当原主分片故障后，副本分片会被提升为主分片，这个提升主分片的过程是瞬间发生的。此时集群的状态将会为 Yellow。当该分片恢复时，如果期间有更改的数据只需要从主分片上复制修改的数据文件即可。
 
@@ -322,13 +322,13 @@ ES 为了提高写入的能力这个过程是并发写的，同时为了解决�
 
 ## 2.1. Es 的存储模型
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311030114347.png)
+![image.png](https://r2.129870.xyz/img/202311030114347.png)
 
 ## 2.2. 索引写入原理
 
 下图描述了 3 个节点的集群，共拥有 12 个分片，其中有 4 个主分片（S0、S1、S2、S3）和 8 个副本分片（R0、R1、R2、R3），每个主分片对应两个副本分片，节点 1 是主节点（Master 节点）负责整个集群的状态。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309101911565.png)
+![image.png](https://r2.129870.xyz/img/202309101911565.png)
 
 写索引是只能写在主分片上，然后同步到副本分片。这里有四个主分片，一条数据 ES 是根据什么规则写到特定分片上的呢？
 
@@ -342,7 +342,7 @@ Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个
 
 由于在 ES 集群中每个节点通过上面的计算公式都知道集群中的文档的存放位置，所以每个节点都有处理读写请求的能力。在一个写请求被发送到某个节点后，协调节点会根据路由公式计算出需要写到哪个分片上，再将请求转发到该分片的主分片节点上。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309101915606.png)
+![image.png](https://r2.129870.xyz/img/202309101915606.png)
 
 每次写入的时候，写入请求会先根据_routing 规则选择发给哪个 Shard，Index Request 中可以设置使用哪个 Filed 的值作为路由参数，如果没有设置，则使用 Mapping 中的配置，如果 Mapping 中也没有配置，则使用 id 作为路由参数。然后通过 routing 的 Hash 值选择出 Shard，最后从集群的 Meta 中找出该 Shard 的 Primary 节点。
 
@@ -385,7 +385,7 @@ Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个
 
 #### 2.3.1.1. Create 流程
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112029405.png)
+![image.png](https://r2.129870.xyz/img/202311112029405.png)
 
 每当有新 Document 要写入时，会进行以下操作：
 
@@ -416,7 +416,7 @@ Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个
 
 #### 2.3.1.2. Update 流程
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112036650.png)
+![image.png](https://r2.129870.xyz/img/202311112036650.png)
 
 Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实现该功能，具体流程如下：
 
@@ -437,7 +437,7 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
 
 #### 2.3.1.3. 整体写入流程
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311112041329.png)
+![image.png](https://r2.129870.xyz/img/202311112041329.png)
 
 - 红色：Client Node。
 - 绿色：Primary Node。
@@ -530,13 +530,13 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
 
 Elasticsearch 中每个 Shard 都会有多个 Replica，主要是为了保证数据可靠性，除此之外，还可以增加读能力，因为写的时候虽然要写大部分 Replica Shard，但是查询的时候只需要查询 Primary 和 Replica 中的任何一个就可以了。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130052812.png)
+![image.png](https://r2.129870.xyz/img/202311130052812.png)
 
 当查询的时候，从三个节点中根据 Request 中的 preference 参数选择一个节点查询。preference 可以设置 `_local`，`_primary`，`_replica` 以及其他选项。如果选择了 primary，则每次查询都是直接查询 Primary，可以保证每次查询都是最新的。如果设置了其他参数，那么可能会查询到 R1 或者 R2，这时候就有可能查询不到最新的数据。
 
 Elasticsearch 中通过分区实现分布式，数据写入的时候根据 \_routing 规则将数据写入某一个 Shard 中，这样就能将海量数据分布在多个 Shard 以及多台机器上，以达到分布式的目标。但这样就导致了查询的时候，潜在数据会在当前 index 的所有的 Shard 中，所以 Elasticsearch 查询的时候需要查询所有 Shard，同一个 Shard 的 Primary 和 Replica 选择一个即可，查询请求会分发给所有 Shard，每个 Shard 中都是一个独立的查询引擎，比如需要返回 Top 10 的结果，那么每个 Shard 都会查询并且返回 Top 10 的结果，然后在 Client Node 里面会接收所有 Shard 的结果，然后通过优先级队列二次排序，选择出 Top 10 的结果返回给用户。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130053222.png)
+![image.png](https://r2.129870.xyz/img/202311130053222.png)
 
 > [!warning]  请求膨胀问题
 >
@@ -546,7 +546,7 @@ Elasticsearch 中通过分区实现分布式，数据写入的时候根据 \_rou
 
 Elasticsearch 中的查询主要分为两类：Get 请求：通过 ID 查询特定 Doc；Search 请求：通过 Query 查询匹配 Doc。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130057857.png)
+![image.png](https://r2.129870.xyz/img/202311130057857.png)
 
 对于 Search 类请求，查询的时候是一起查询内存（指刚 Refresh Segment，但是还没持久化到磁盘的新 Segment）和磁盘上的 Segment，最后将结果合并后返回。这种查询是近实时（Near Real Time）的，主要是由于内存中的 Index 数据需要一段时间后才会刷新为 Segment。
 
@@ -554,7 +554,7 @@ Elasticsearch 中的查询主要分为两类：Get 请求：通过 ID 查询特�
 
 ##### 2.3.1.5.3. 数据查询阶段
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202311130059187.png)
+![image.png](https://r2.129870.xyz/img/202311130059187.png)
 
 所有的搜索系统一般都是两阶段查询，第一阶段查询到匹配的 DocID，第二阶段再查询 DocID 对应的完整文档，这种在 Elasticsearch 中称为 `query_then_fetch`，还有一种是一阶段查询的时候就返回完整 Doc，在 Elasticsearch 中称作 `query_and_fetch`，一般第二种适用于只需要查询一个 Shard 的请求。
 
@@ -632,12 +632,12 @@ Elasticsearch 通过在后台定期进行[[数据密集型系统设计1：引入
     
     因此，我们可以自定义 routing 值，这样写入、查询均带有路由字段信息。请求只会发送给部分分片，避免全量分片扫描。这些节点完成查询后将结果返回给请求节点，由请求节点汇聚各个节点的结果返回给客户端。
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110033326.png)
+    ![image.png](https://r2.129870.xyz/img/202309110033326.png)
     
 7. 尽量选择 SSD 磁盘类型。
 8. 冻结历史索引，释放内存空间。
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110034464.png)
+    ![image.png](https://r2.129870.xyz/img/202309110034464.png)
     
     Open 状态的索引由于是通过将倒排索引以 FST 数据结构的方式加载进内存中，因此索引是能够被快速搜索的，且搜索速度也是最快的。但是需要消耗大量的内存空间，且这部分内存为常驻内存，不会被 GC 的。1T 的索引预计需要消耗 2-4 GB 的 JVM 堆内存空间。
     
@@ -660,7 +660,7 @@ Elasticsearch 通过在后台定期进行[[数据密集型系统设计1：引入
 
 以下性能优化点参考[腾讯的 ES 性能优化](https://mp.weixin.qq.com/s/CNf75yT0A0QPki-Qhw3_8w)一节。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110212386.png)
+![image.png](https://r2.129870.xyz/img/202309110212386.png)
 
 ### 3.3.1. 高可用性能优化
 
@@ -682,7 +682,7 @@ Elasticsearch 通过在后台定期进行[[数据密集型系统设计1：引入
 - 系统缺陷方面
     修复了滚动重启、Master 阻塞、分布式死锁等一系列 Bug。其中滚动重启优化，可加速节点重启速度 5+倍，具体可参考 PR [ES-46520](https://github.com/elastic/elasticsearch/pull/46520)；
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110214557.png)
+![image.png](https://r2.129870.xyz/img/202309110214557.png)
 
 ### 3.3.2. 成本优化
 
@@ -690,13 +690,13 @@ Elasticsearch 通过在后台定期进行[[数据密集型系统设计1：引入
 
 内存成本方面，很多用户在使用大存储机型时会发现，存储资源才用了百分之二十，内存已经不足。其实基于时序数据的访问特性，我们可以利用 Cache 进行优化。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110216043.png)
+![image.png](https://r2.129870.xyz/img/202309110216043.png)
 
 ### 3.3.3. 性能优化
 
 以日志、监控为代表的时序场景，对写入性能要求非常高，写入并发可达 1000w/s。然而我们发现在带主键写入时，ES 性能衰减 1+倍，部分压测场景下，CPU 无法充分利用。以搜索服务为代表的场景，对查询性的要求非常高，要求 20w QPS, 平响 20ms，而且尽量避免 GC、执行计划不优等造成的查询毛刺。
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110217952.png)
+![image.png](https://r2.129870.xyz/img/202309110217952.png)
 
 # 4. 集群运维经验
 
@@ -849,7 +849,7 @@ Rollover 的原理是使用一个别名指向真正的索引，当指向的索�
 
 ES 一直在索引管理这块进行优化迭代，从 6.7 版本推出了索引生命周期管理（Index Lifecycle Management ，简称 ILM)机制，是目前官方提供的比较完善的索引管理方法。所谓 Lifecycle (生命周期)是把索引定义了四个阶段：
 
-![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110159297.png)
+![image.png](https://r2.129870.xyz/img/202309110159297.png)
 
 - Hot：索引可写入，也可查询，也就是我们通常说的热数据，为保证性能数据通常都是在内存中的。
 - Warm：索引不可写入，但可查询，介于热和冷之间，数据可以是全内存的，也可以是在 SSD 的硬盘上的。
@@ -862,7 +862,7 @@ ES 一直在索引管理这块进行优化迭代，从 6.7 版本推出了索引
 
 1. 建立 Lifecycle 策略
     
-    ![image.png](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202309110202931.png)
+    ![image.png](https://r2.129870.xyz/img/202309110202931.png)
     
 2. 建立索引模版
     

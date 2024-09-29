@@ -2,7 +2,7 @@
 
 # 1. ThreadLocal 的类关系
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220429173759.png)
+![](https://r2.129870.xyz/img/20220429173759.png)
 
 ThreadLocal 类组织关系如下，在 Thread 中引用了 ThreadLocalMap 对象，而 ThreadLocalMap 对象是在 ThreadLocal 中声明定义的。
 

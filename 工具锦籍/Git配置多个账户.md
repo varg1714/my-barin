@@ -26,11 +26,11 @@
 
   注意 -T大写,如果是 -t 的话对于github会抛出以下错误:
 
-  <img src = "https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210406233301.png" style = "float:left">
+  <img src = "https://r2.129870.xyz/img/20210406233301.png" style = "float:left">
 
   
   切换回大写则链接成功建立,对于gitlab而言则没有这个问题:
-  ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20210406233526.png)
+  ![](https://r2.129870.xyz/img/20210406233526.png)
 - 建立版本库，同时为每个版本库指定不同的用户
   ~~~sh
   git config --local user.name = user

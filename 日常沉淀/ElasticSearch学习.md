@@ -12,7 +12,7 @@ ElasticSearch+LogStash+Kibana
 
 ## 1.2. 关于索引的基本操作
 
-![image-20200913203843231](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20200913203843.png)
+![image-20200913203843231](https://r2.129870.xyz/img/20200913203843.png)
 
 Elasticsearch exception [type=mapper_parsing_exception, reason=object mapping for [proTags] tried to parse field [proTags] as object, but found a concrete value]
 

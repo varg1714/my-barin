@@ -2,7 +2,7 @@
 
 # 1. FutureTask 类图
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220502220541.png)
+![](https://r2.129870.xyz/img/20220502220541.png)
 
 # 2. FutureTask 流程分析
 

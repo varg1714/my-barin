@@ -137,7 +137,7 @@ mysql>
 
 ## 2.1. COMPACT 格式
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042217042.png)
+![](https://r2.129870.xyz/img/202209042217042.png)
 
 COMPACT 格式一条完整的记录其实可以被分为 `记录的额外信息` 和 `记录的真实数据` 两大部分。
 
@@ -154,8 +154,8 @@ COMPACT 格式一条完整的记录其实可以被分为 `记录的额外信息`
 
 在 `Compact` 行格式中，把所有变长字段的真实数据占用的字节长度都存放在记录的开头部位，从而形成一个变长字段长度列表，各变长字段数据占用的字节数按照列的顺序**逆序存放**。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042223666.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042223432.png)
+![](https://r2.129870.xyz/img/202209042223666.png)
+![](https://r2.129870.xyz/img/202209042223432.png)
 
 由于第一行记录中 `c1`、`c2`、`c4` 列中的字符串都比较短，也就是说内容占用的字节数比较小，用 1 个字节就可以表示，但是如果变长列的内容占用的字节数比较多，可能就需要用 2 个字节来表示。具体用 1 个还是 2 个字节来表示真实数据占用的字节数，`InnoDB` 有它的一套规则，我们首先声明一下 `W`、`M` 和 `L` 的意思：
 
@@ -179,7 +179,7 @@ COMPACT 格式一条完整的记录其实可以被分为 `记录的额外信息`
 
 另外需要注意的一点是，变长字段长度列表中只存储值为 _**非 NULL**_ 的列内容占用的长度，值为 _**NULL**_ 的列的长度是不储存的。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042228572.png)
+![](https://r2.129870.xyz/img/202209042228572.png)
 
 **并不是所有记录都有这个变长字段长度列表部分**，比方说表中所有的列都不是变长的数据类型的话，这一部分就不需要有。
 
@@ -197,15 +197,15 @@ COMPACT 格式一条完整的记录其实可以被分为 `记录的额外信息`
 
 所以对于上面两条数据，他们的 _NULL 值列表_ 如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042233266.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042233752.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042233037.png)
+![](https://r2.129870.xyz/img/202209042233266.png)
+![](https://r2.129870.xyz/img/202209042233752.png)
+![](https://r2.129870.xyz/img/202209042233037.png)
 
 #### 2.1.1.3. 记录头信息
 
 除了 `变长字段长度列表`、`NULL值列表` 之外，还有一个用于描述记录的 `记录头信息`，它是由固定的 `5` 个字节组成。`5` 个字节也就是 `40` 个二进制位，不同的位代表不同的意思，如图：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042234643.png)
+![](https://r2.129870.xyz/img/202209042234643.png)
 
 这些二进制位代表的详细信息如下表：
 
@@ -213,7 +213,7 @@ COMPACT 格式一条完整的记录其实可以被分为 `记录的额外信息`
 
 我们现在直接看一下 `record_format_demo` 中的两条记录的 `头信息` 分别是什么：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042237473.png)
+![](https://r2.129870.xyz/img/202209042237473.png)
 
 ### 2.1.2. 记录的真实数据
 
@@ -225,7 +225,7 @@ COMPACT 格式一条完整的记录其实可以被分为 `记录的额外信息`
 
 这里需要提一下 `InnoDB` 表对主键的生成策略：优先使用用户自定义主键作为主键，**如果用户没有定义主键，则选取一个 `Unique` 键作为主键**，如果表中连 `Unique` 键都没有定义的话，则 `InnoDB` 会为表默认添加一个名为 `row_id` 的隐藏列作为主键。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042239073.png)
+![](https://r2.129870.xyz/img/202209042239073.png)
 
 ### 2.1.3. CHAR (M) 列的存储格式
 
@@ -241,7 +241,7 @@ Records: 2  Duplicates: 0  Warnings: 0
 
 修改该列字符集后记录的 `变长字段长度列表` 也发生了变化，如图：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042243072.png)
+![](https://r2.129870.xyz/img/202209042243072.png)
 
 这就意味着：对于 _**CHAR (M)**_ 类型的列来说，**当列采用的是定长字符集时，该列占用的字节数不会被加到变长字段长度列表，而如果采用变长字符集时，该列占用的字节数也会被加到变长字段长度列表**。
 
@@ -262,11 +262,11 @@ Records: 2  Duplicates: 0  Warnings: 0
 
 在 `Compact` 和 `Redundant` 行格式中，对于占用存储空间非常大的列，在 `记录的真实数据` 处只会存储该列的一部分数据，把剩余的数据分散存储在几个其他的页中，然后 `记录的真实数据` 处用 20 个字节存储指向这些页的地址（当然这 20 个字节中还包括这些分散在其他页面中的数据的指针占用的字节数），从而可以找到剩余数据所在的页，如图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042303293.png)
+![](https://r2.129870.xyz/img/202209042303293.png)
 
 从图中可以看出来，对于 `Compact` 和 `Redundant` 行格式来说，如果某一列中的数据非常多的话，在本记录的真实数据处只会存储该列的前 `768` 个字节的数据和一个指向其他页的地址，然后把剩下的数据存放到其他页中，这个过程也叫做 `行溢出`，存储超出 `768` 字节的那些页面也被称为 `溢出页`。画一个简图就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042304813.png)
+![](https://r2.129870.xyz/img/202209042304813.png)
 
 最后需要注意的是，不只是 VARCHAR (M) 类型的列，其他的 TEXT、BLOB 类型的列在存储数据非常多的时候也会发生 `行溢出`。
 
@@ -298,7 +298,7 @@ $$
 
 `Dynamic` 和 `Compressed` 行格式，这俩行格式和 `Compact` 行格式挺像，只不过在处理 `行溢出` 数据时有点儿分歧，它们不会在记录的真实数据处存储字段真实数据的前 `768` 个字节，而是把所有的字节都存储到其他页面中，只在记录的真实数据处存储其他页面的地址，就像这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042308235.png)
+![](https://r2.129870.xyz/img/202209042308235.png)
 
 `Compressed` 行格式和 `Dynamic` 不同的一点是，`Compressed` 行格式会采用压缩算法对页面进行压缩，以节省空间。
 
@@ -308,7 +308,7 @@ $$
 
 数据页代表的这块 `16KB` 大小的存储空间可以被划分为多个部分，不同部分有不同的功能，各个部分如图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042335106.png)
+![](https://r2.129870.xyz/img/202209042335106.png)
 
 一个 `InnoDB` 数据页的存储空间大致被划分成了 `7` 个部分，有的部分占用的字节数是确定的，有的部分占用的字节数是不确定的。
 
@@ -318,7 +318,7 @@ $$
 
 在页的 7 个组成部分中，我们自己存储的记录会按照我们指定的 `行格式` 存储到 `User Records` 部分。但是在一开始生成页的时候，其实并没有 `User Records` 这个部分，每当我们插入一条记录，都会从 `Free Space` 部分，也就是尚未使用的存储空间中申请一个记录大小的空间划分到 `User Records` 部分，当 `Free Space` 部分的空间全部被 `User Records` 部分替代掉之后，也就意味着这个页使用完了，如果还有新的记录插入的话，就需要去申请新的页了，这个过程的图示如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042337859.png)
+![](https://r2.129870.xyz/img/202209042337859.png)
 
 ### 3.2.1. 数据的记录头信息
 
@@ -338,13 +338,13 @@ Query OK, 0 rows affected (0.03 sec)
 
 这个新创建的 `page_demo` 表有 3 个列，其中 `c1` 和 `c2` 列是用来存储整数的，`c3` 列是用来存储字符串的。需要注意的是，我们把 c1 列指定为主键，所以在具体的行格式中 InnoDB 就没必要为我们去创建那个所谓的 `row_id` 隐藏列了。而且我们为这个表指定了 `ascii` 字符集以及 `Compact` 的行格式。所以这个表中记录的行格式示意图就是这样的：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042339797.png)
+![](https://r2.129870.xyz/img/202209042339797.png)
 
 <table> <thead> <tr> <th> 名称 </th> <th> 大小（单位：bit）</th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> 预留位 1 </code> </td> <td> <code> 1 </code> </td> <td> 没有使用 </td> </tr> <tr> <td> <code> 预留位 2 </code> </td> <td> <code> 1 </code> </td> <td> 没有使用 </td> </tr> <tr> <td> <code> delete_mask </code> </td> <td> <code> 1 </code> </td> <td> 标记该记录是否被删除 </td> </tr> <tr> <td> <code> min_rec_mask </code> </td> <td> <code> 1 </code> </td> <td> B + 树的每层非叶子节点中的最小记录都会添加该标记 </td> </tr> <tr> <td> <code> n_owned </code> </td> <td> <code> 4 </code> </td> <td> 表示当前记录拥有的记录数 </td> </tr> <tr> <td> <code> heap_no </code> </td> <td> <code> 13 </code> </td> <td> 表示当前记录在记录堆的位置信息 </td> </tr> <tr> <td> <code> record_type </code> </td> <td> <code> 3 </code> </td> <td> 表示当前记录的类型，<code> 0 </code> 表示普通记录，<code> 1 </code> 表示 B + 树非叶节点记录，<code> 2 </code> 表示最小记录，<code> 3 </code> 表示最大记录 </td> </tr> <tr> <td> <code> next_record </code> </td> <td> <code> 16 </code> </td> <td> 表示下一条记录的相对位置 </td> </tr> </tbody> </table>
 
 以一些数据例子为例说明记录头信息中各个字段的作用：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042340092.png)
+![](https://r2.129870.xyz/img/202209042340092.png)
 
 - `delete_mask`
     这个属性标记着当前记录是否被删除，占用 1 个二进制位，值为 `0` 的时候代表记录并没有被删除，为 `1` 的时候代表记录被删除掉了。
@@ -365,11 +365,11 @@ Query OK, 0 rows affected (0.03 sec)
 
     不管我们向 `页` 中插入了多少自己的记录，设计 `InnoDB` 的大叔们都规定他们定义的两条伪记录分别为最小记录与最大记录。这两条记录的构造十分简单，都是由 5 字节大小的 `记录头信息` 和 8 字节大小的一个固定的部分组成的，如图所示：
 
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042345355.png)
+    ![](https://r2.129870.xyz/img/202209042345355.png)
 
     由于这两条记录不是我们自己定义的记录，所以它们并不存放在 `页` 的 `User Records` 部分，他们被单独放在一个称为 `Infimum + Supremum` 的部分，如图所示：
 
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042345733.png)
+    ![](https://r2.129870.xyz/img/202209042345733.png)
 
     从图中我们可以看出来，最小记录和最大记录的 `heap_no` 值分别是 `0` 和 `1`，也就是说它们的位置最靠前。
 - record_type
@@ -379,7 +379,7 @@ Query OK, 0 rows affected (0.03 sec)
 
     这其实是个 `链表`，可以通过一条记录找到它的下一条记录。但是需要注意的一点是，`下一条记录` 指得并不是按照我们插入顺序的下一条记录，而是按照主键值由小到大的顺序的下一条记录。而且规定 _**Infimum 记录（也就是最小记录）**_ 的下一条记录就是本页中主键值最小的用户记录，而本页中主键值最大的用户记录的下一条记录就是 _**Supremum 记录（也就是最大记录）**_。
 
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042347269.png)
+    ![](https://r2.129870.xyz/img/202209042347269.png)
     
     > [!note] next_record 指针的设计
     > </br>
@@ -398,8 +398,8 @@ Query OK, 0 rows affected (0.03 sec)
 
 比方说现在的 `page_demo` 表中正常的记录共有 6 条，`InnoDB` 会把它们分成两组，第一组中只有一个最小记录，第二组中是剩余的 5 条记录：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042353242.png)
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042353223.png)
+![](https://r2.129870.xyz/img/202209042353242.png)
+![](https://r2.129870.xyz/img/202209042353223.png)
 
 设计 `InnoDB` 的大叔们对每个分组中的记录条数是有规定的：对于最小记录所在的分组只能有 _**1**_ 条记录；最大记录所在的分组拥有的记录条数只能在 _**1~8**_ 条之间；剩下的分组中记录的条数范围只能在是 _**4~8**_ 条之间。所以分组是按照下边的步骤进行的：
 1. 初始情况下一个数据页里只有最小记录和最大记录两条记录，它们分属于两个分组。
@@ -408,7 +408,7 @@ Query OK, 0 rows affected (0.03 sec)
 
 以更多的数据为例说明：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209042357931.png)
+![](https://r2.129870.xyz/img/202209042357931.png)
 
 现在看怎么从这个 `页目录` 中查找记录。因为各个槽代表的记录的主键值都是从小到大排序的，所以我们可以使用所谓的 `二分法` 来进行快速查找。
 
@@ -458,7 +458,7 @@ Query OK, 0 rows affected (0.03 sec)
 	
 	需要注意的是，并不是所有类型的页都有上一个和下一个页的属性，不过 `数据页`（也就是类型为 `FIL_PAGE_INDEX` 的页）是有这两个属性的，所以所有的数据页其实是一个双链表，就像这样：
 	
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209050009280.png)
+	![](https://r2.129870.xyz/img/202209050009280.png)
 
 - `FIL_PAGE_LSN`
 	用于记录页面被 [[Mysql的一致性保证#1 5 Log Sequence Number|刷新到磁盘时的LSN值]]。
@@ -482,15 +482,15 @@ Query OK, 0 rows affected (0.03 sec)
 
 在 [[Mysql的存储结构#3 5 File Header（文件头部）|数据页]]一章中，我们介绍了数据页之间是一个双向链表，通过该链表，我们就能找到所有的数据记录。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060012224.png)
+![](https://r2.129870.xyz/img/202209060012224.png)
 
 当数据量很大时，若想查找记录则需遍历该链表，这是非常耗时的。还记得我们为根据主键值快速定位一条记录在页中的位置而设立的 [[Mysql的存储结构#3 3 Page Directory（页目录）|页目录]]么？我们也可以想办法为快速定位记录所在的数据页而建立一个别的目录，建这个目录必须完成下边这些事儿：
 
 - 下一个数据页中用户记录的主键值必须大于上一个页中用户记录的主键值。
     假设我们现在有一个页，其中有 3 条数据，并假设一个页中最多存放 3 条数据（实际上会有很多）：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060015878.png)
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060015220.png)
+    ![](https://r2.129870.xyz/img/202209060015878.png)
+    ![](https://r2.129870.xyz/img/202209060015220.png)
     
     此时我们再来插入一条记录：
     
@@ -500,11 +500,11 @@ Query OK, 0 rows affected (0.03 sec)
     
     因为 `页10` 最多只能放 3 条记录，所以我们不得不再分配一个新页：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060017918.png)
+    ![](https://r2.129870.xyz/img/202209060017918.png)
     
     `页10` 中用户记录最大的主键值是 `5`，而 `页28` 中有一条记录的主键值是 `4`，因为 `5 > 4`，所以这就不符合下一个数据页中用户记录的主键值必须大于上一个页中用户记录的主键值的要求，所以在插入主键值为 `4` 的记录的时候需要伴随着一次记录移动，也就是把主键值为 `5` 的记录移动到 `页28` 中，然后再把主键值为 `4` 的记录插入到 `页10` 中，这个过程的示意图如下：
     
-    ![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060018184.png)
+    ![](https://r2.129870.xyz/img/202209060018184.png)
     
     这个过程表明了**在对页中的记录进行增删改操作的过程中，我们必须通过一些诸如记录移动的操作来始终保证这个状态一直成立：下一个数据页中用户记录的主键值必须大于上一个页中用户记录的主键值。这个过程我们也可以称为 `页分裂`**。
 - 给所有的页建立一个目录项。
@@ -512,7 +512,7 @@ Query OK, 0 rows affected (0.03 sec)
 	- 页的用户记录中最小的主键值，我们用 `key` 来表示。
 	- 页号，我们用 `page_no` 表示。
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060021912.png)
+	![](https://r2.129870.xyz/img/202209060021912.png)
 
 	以 `页28` 为例，它对应 `目录项2`，这个目录项中包含着该页的页号 `28` 以及该页中用户记录的最小主键值 `5`。我们只需要把几个目录项在物理存储器上连续存储，比如把他们放到一个数组里，就可以实现根据主键值快速查找某条记录的功能了。比方说我们想找主键值为 `20` 的记录，具体查找过程分两步：
     
@@ -539,7 +539,7 @@ Query OK, 0 rows affected (0.03 sec)
 
 我们把前边使用到的目录项放到数据页中的样子就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060026474.png)
+![](https://r2.129870.xyz/img/202209060026474.png)
 
 从图中可以看出来，我们新分配了一个编号为 `30` 的页来专门存储 `目录项记录`。这里再次强调一遍 `目录项记录` 和普通的 `用户记录` 的不同点：
 
@@ -558,7 +558,7 @@ Query OK, 0 rows affected (0.03 sec)
 
 	当目录页较多时，根据目录页范围定位数据到底在哪个目录页中。如以下例子：
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060036352.png)
+	![](https://r2.129870.xyz/img/202209060036352.png)
 
 	我们现在的存储 `目录项记录` 的页有两个，即 `页30` 和 `页32`，又因为 `页30` 表示的目录项的主键值的范围是 `[1, 320)`，`页32` 表示的目录项的主键值不小于 `320`，所以主键值为 `20` 的记录对应的目录项记录在 `页30` 中。
 
@@ -571,11 +571,11 @@ Query OK, 0 rows affected (0.03 sec)
 
 随着我们的数据越来越多，因此数据页和目录页就会越来越多。这些页在存储空间中也可能不挨着，如果我们表中的数据非常多则会产生很多存储 `目录项记录` 的页，那我们怎么根据主键值快速定位一个存储 `目录项记录` 的页呢？其实也简单，为这些存储 `目录项记录` 的页再生成一个更高级的目录，就像是一个多级目录一样，大目录里嵌套小目录，小目录里才是实际的数据，所以现在各个页的示意图就是这样子：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060040013.png)
+![](https://r2.129870.xyz/img/202209060040013.png)
 
 如果简化一下，它就变成了以下这个结构，这就是 B+树：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060041061.png)
+![](https://r2.129870.xyz/img/202209060041061.png)
 
 不论是存放用户记录的数据页，还是存放目录项记录的数据页，我们都把它们存放到 `B+` 树这个数据结构中了，所以我们也称这些数据页为 `节点`。
 
@@ -623,7 +623,7 @@ Query OK, 0 rows affected (0.03 sec)
 
 `聚簇索引` 只能在搜索条件是主键值时才能发挥作用，因为 `B+` 树中的数据都是按照主键进行排序的。那如果我们想以别的列作为搜索条件该咋办呢？我们可以多建几棵 `B+` 树，不同的 `B+` 树中的数据采用不同的排序规则。比方说我们用 `c2` 列的大小作为数据页、页中记录的排序规则，再建一棵 `B+` 树，效果如下图所示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060045675.png)
+![](https://r2.129870.xyz/img/202209060045675.png)
 
 这个 `B+` 树与上边介绍的聚簇索引有几处不同：
 
@@ -636,7 +636,7 @@ Query OK, 0 rows affected (0.03 sec)
 
 	事实上，除了 `C2` 列之外，二级索引中还有主键值。如果二级索引中目录项记录的内容只是 `索引列 + 页号` 的搭配的话，那么为 `c2` 列建立索引后的 `B+` 树应该长这样：
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060052678.png)
+	![](https://r2.129870.xyz/img/202209060052678.png)
 
 	如果我们想新插入一行记录，其中 `c1`、`c2`、`c3` 的值分别是：`9`、`1`、`'c'`，那么在修改这个为 `c2` 列建立的二级索引对应的 `B+` 树时便碰到了个大问题：由于 `页3` 中存储的目录项记录是由 `c2列 + 页号` 的值构成的，`页3` 中的两条目录项记录对应的 `c2` 列的值都是 `1`，而我们新插入的这条记录的 `c2` 列的值也是 `1`，那我们这条新插入的记录到底应该放到 `页4` 中，还是应该放到 `页5` 中啊？答案是：对不起，懵逼了。
 
@@ -648,7 +648,7 @@ Query OK, 0 rows affected (0.03 sec)
 
 	也就是我们把 `主键值` 也添加到二级索引内节点中的目录项记录了，这样就能保证 `B+` 树每一层节点中各条目录项记录除 `页号` 这个字段外是唯一的，所以我们为 `c2` 列建立二级索引后的示意图实际上应该是这样子的：
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060053306.png)
+	![](https://r2.129870.xyz/img/202209060053306.png)
 
 	这样我们再插入记录 `(9, 1, 'c')` 时，由于 `页3` 中存储的目录项记录是由 `c2列 + 主键 + 页号` 的值构成的，可以先把新记录的 `c2` 列的值和 `页3` 中各目录项记录的 `c2` 列的值作比较，如果 `c2` 列的值相同的话，可以接着比较主键值，因为 `B+` 树同一层中不同目录项记录的 `c2列 + 主键` 的值肯定是不一样的，所以最后肯定能定位唯一的一条目录项记录，在本例中最后确定新记录应该被插入到 `页5` 中。
 
@@ -664,7 +664,7 @@ Query OK, 0 rows affected (0.03 sec)
 
 `MyISAM` 记录也需要记录头信息来存储一些额外数据，我们以上边唠叨过的 `index_demo` 表为例，看一下这个表中的记录使用 `MyISAM` 作为存储引擎在存储空间中的表示：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209060059582.png)
+![](https://r2.129870.xyz/img/202209060059582.png)
 
 由于在插入数据的时候并没有刻意按照主键大小排序，所以我们并不能在这些数据上使用二分法进行查找。
 
@@ -710,7 +710,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 ## 5.2. 表空间的存储格式
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070114027.png)
+![](https://r2.129870.xyz/img/202209070114027.png)
 
 ### 5.2.1. 独立表空间
 
@@ -718,11 +718,11 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 表空间中的页实在是太多了，既包含索引页，还包含数据页以及其他各种的页类型。为了更好的管理这些页面，设计 `InnoDB` 的大叔们提出了 `区`（英文名：`extent`）的概念。对于 16KB 的页来说，连续的 64 个页就是一个 `区`，也就是说一个区默认占用 1MB 空间大小。不论是系统表空间还是独立表空间，都可以看成是由若干个区组成的，每 256 个区被划分成一组。画个图表示就是这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070109823.png)
+![](https://r2.129870.xyz/img/202209070109823.png)
 
 划分区以后虽然能减少页管理的数量，但是**一方面区的数量仍非常多，另一方面我们需要额外管理这些区的信息，因此提出了 `组` 的概念**。一个组包含 256 个区，利用组的前几个页面中存放了区管理的信息和其他的一些信息：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070111554.png)
+![](https://r2.129870.xyz/img/202209070111554.png)
 
 从上图中我们能得到如下信息：
 
@@ -766,14 +766,14 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 为了方便管理这些不同类型的区，Mysql 设计了一个称为 `XDES Entry` 的结构（全称就是 Extent Descriptor Entry），每一个区都对应着一个 `XDES Entry` 结构，这个结构记录了对应的区的一些属性：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070125885.png)
+![](https://r2.129870.xyz/img/202209070125885.png)
 
 - `Segment ID`（8 字节）
     每一个段都有一个唯一的编号，用 ID 表示，此处的 `Segment ID` 字段表示就是该区所在的段。当然前提是该区已经被分配给某个段了，不然的话该字段的值没啥意义。
 - `List Node`（12 字节）
 	这个部分可以将若干个 `XDES Entry` 结构串联成一个链表，大家看一下这个 `List Node` 的结构：
 
-	![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070129244.png)
+	![](https://r2.129870.xyz/img/202209070129244.png)
 	如果我们想定位表空间内的某一个位置的话，只需指定页号以及该位置在指定页号中的页内偏移量即可。所以：
 	- `Pre Node Page Number` 和 `Pre Node Offset` 的组合就是指向前一个 `XDES Entry` 的指针
 	- `Next Node Page Number` 和 `Next Node Offset` 的组合就是指向后一个 `XDES Entry` 的指针。
@@ -806,7 +806,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 上边光是介绍了一堆链表，可我们怎么找到这些链表呢，或者说怎么找到某个链表的头节点或者尾节点在表空间中的位置呢？Mysql 设计了一个叫 `List Base Node` 的结构，这个结构中包含了链表的头节点和尾节点的指针以及这个链表中包含了多少节点的信息：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070138751.png)
+![](https://r2.129870.xyz/img/202209070138751.png)
 
 我们上边介绍的每个链表都对应这么一个 `List Base Node` 结构，其中：
 
@@ -820,7 +820,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 我们前边说过，段其实不对应表空间中某一个连续的物理区域，而是一个逻辑上的概念，由若干个零散的页面以及一些完整的区组成。像每个区都有对应的 `XDES Entry` 来记录这个区中的属性一样，设计 `InnoDB` 的大叔为每个段都定义了一个 `INODE Entry` 结构来记录一下段中的属性：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070140580.png)
+![](https://r2.129870.xyz/img/202209070140580.png)
 
 它的各个部分释义如下：
 
@@ -843,7 +843,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 首先看第一个组的第一个页面，当然也是表空间的第一个页面，页号为 `0`。这个页面的类型是 `FSP_HDR`，它**存储了表空间的一些整体属性以及第一个组内 256 个区的对应的 `XDES Entry` 结构**：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070146831.png)
+![](https://r2.129870.xyz/img/202209070146831.png)
 
 从图中可以看出，一个完整的 `FSP_HDR` 类型的页面大致由 5 个部分组成：
 
@@ -855,7 +855,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 这个部分是用来存储表空间的一些整体属性的:
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070148925.png)
+![](https://r2.129870.xyz/img/202209070148925.png)
 
 下面是各个属性的简单描述：
 
@@ -896,7 +896,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 除去第一个分组以外，**之后的每个分组的第一个页面只需要记录本组内所有的区对应的 `XDES Entry` 结构即可，不需要再记录表空间的属性了**，为了和 `FSP_HDR` 类型做区别，我们把之后每个分组的第一个页面的类型定义为 `XDES`，它的结构和 `FSP_HDR` 类型是非常相似：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070157872.png)
+![](https://r2.129870.xyz/img/202209070157872.png)
 
 与 `FSP_HDR` 类型的页面对比，除了少了 `File Space Header` 部分之外，也就是除了少了记录表空间整体属性的部分之外，其余的部分是一样的。
 
@@ -910,7 +910,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 再次对比前边介绍表空间的图，第一个分组的第三个页面的类型是 `INODE`。我们前边说过设计 `InnoDB` 的大叔为每个索引定义了两个段，而且为某些特殊功能定义了些特殊的段。为了方便管理，他们又为每个段设计了一个 [[Mysql的存储结构#5 2 1 4 段的结构 INODE Entry|INODE Entry]] 结构，这个结构中记录了关于这个段的相关属性：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070202642.png)
+![](https://r2.129870.xyz/img/202209070202642.png)
 
 从图中可以看出，一个 `INODE` 类型的页面是由这几部分构成的：
 
@@ -936,7 +936,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 其中的 `PAGE_BTR_SEG_LEAF` 和 `PAGE_BTR_SEG_TOP` 都占用 10 个字节，它们其实对应一个叫 `Segment Header` 的结构，该结构图示如下：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070209093.png)
+![](https://r2.129870.xyz/img/202209070209093.png)
 
 各个部分的具体释义如下：
 
@@ -952,7 +952,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 系统表空间与独立表空间的一个非常明显的不同之处就是在表空间开头有许多记录整个系统属性的页面：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070215271.png)
+![](https://r2.129870.xyz/img/202209070215271.png)
 
 可以看到，系统表空间和独立表空间的前三个页面（页号分别为 `0`、`1`、`2`，类型分别是 `FSP_HDR`、`IBUF_BITMAP`、`INODE`）的类型是一致的，只是页号为 `3` ～ `7` 的页面是系统表空间特有的：
 
@@ -1012,7 +1012,7 @@ MySQL 除了保存着我们插入的用户数据之外，还需要保存许多�
 
 也就是说这 4 个表是表中之表，那这 4 个表的元数据去哪里获取呢？没法搞了，**只能把这 4 个表的元数据，就是它们有哪些列、哪些索引等信息硬编码到代码中**，然后设计 `InnoDB` 的大叔又**拿出一个固定的页面来记录这 4 个表的聚簇索引和二级索引对应的 `B+树` 位置**，这个页面就是页号为 `7` 的页面，类型为 `SYS`，记录了 `Data Dictionary Header`，也就是数据字典的头部信息。除了这 4 个表的 5 个索引的根页面信息外，这个页号为 `7` 的页面还记录了整个 InnoDB 存储引擎的一些全局属性：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209070221126.png)
+![](https://r2.129870.xyz/img/202209070221126.png)
 
 可以看到这个页面由下边几个部分组成：
 
@@ -1088,7 +1088,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 每个缓存页对应的控制信息占用的内存大小是相同的，称为 `控制块`，控制块和缓存页是一一对应的，它们都被存放到 Buffer Pool 中，其中控制块被存放到 Buffer Pool 的前边，缓存页被存放到 Buffer Pool 后边，所以整个 `Buffer Pool` 对应的内存空间看起来就是这样的：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182249282.png)
+![](https://r2.129870.xyz/img/202209182249282.png)
 
 控制块与缓存页分配后，剩余不足的空间会变成碎片。当然，如果 `Buffer Pool` 的大小设置的刚刚好的话，也可能不会产生 `碎片`。
 
@@ -1100,7 +1100,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 刚刚完成初始化的 `Buffer Pool` 中所有的缓存页都是空闲的，所以每一个缓存页对应的控制块都会被加入到 `free链表` 中，假设该 `Buffer Pool` 中可容纳的缓存页数量为 `n`，那增加了 `free链表` 的效果图就是这样的：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182253199.png)
+![](https://r2.129870.xyz/img/202209182253199.png)
 
 为了管理好这个 `free链表`，特意为这个链表定义了一个 `基节点`，里边儿包含着链表的头节点地址，尾节点地址，以及当前链表中节点的数量等信息。这里需要注意的是，**链表的基节点占用的内存空间并不包含在为 `Buffer Pool` 申请的一大片连续内存空间之内，而是单独申请的一块内存空间**。
 
@@ -1116,7 +1116,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 为了记录这些被修改过而未刷新到磁盘上的脏页，Mysql 设计了一个 `flush链表`，链表的构造和 `free链表` 差不多，假设某个时间点 `Buffer Pool` 中的脏页数量为 `n`，那么对应的 `flush链表` 就长这样：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182312152.png)
+![](https://r2.129870.xyz/img/202209182312152.png)
 
 ### 6.1.4. LRU 链表的管理
 
@@ -1142,7 +1142,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 - 一部分存储使用频率非常高的缓存页，所以这一部分链表也叫做 `热数据`，或者称 `young区域`。
 - 一部分存储使用频率不是很高的缓存页，所以这一部分链表也叫做 `冷数据`，或者称 `old区域`。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182321578.png)
+![](https://r2.129870.xyz/img/202209182321578.png)
 
 默认情况下，`old` 区域在 `LRU链表` 中所占的比例是 `37%`，也就是说 `old` 区域大约占 `LRU链表` 的 `3/8`。这个比例我们是可以设置的，我们可以在启动时修改 `innodb_old_blocks_pct` 参数来控制 `old` 区域在 `LRU链表` 中所占的比例。
 
@@ -1184,7 +1184,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 所以在 `Buffer Pool` 特别大的时候，我们可以把它们拆分成若干个小的 `Buffer Pool`，每个 `Buffer Pool` 都称为一个 `实例`，它们都是独立的，独立的去申请内存空间，独立的管理各种链表，所以在多线程并发访问时并不会相互影响，从而提高并发处理能力。我们可以在服务器启动的时候通过设置 `innodb_buffer_pool_instances` 的值来修改 `Buffer Pool` 实例的个数，如以下的配置：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182338137.png)
+![](https://r2.129870.xyz/img/202209182338137.png)
 
 ### 6.2.2. innodb_buffer_pool_chunk_size
 
@@ -1192,7 +1192,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 `MySQL` 的在 `5.7.5` 以及之后的版本中支持了在服务器运行过程中调整 `Buffer Pool` 大小的功能，但是有一个问题，就是每次当我们要重新调整 `Buffer Pool` 大小时，都需要重新向操作系统申请一块连续的内存空间，然后将旧的 `Buffer Pool` 中的内容复制到这一块新空间，这是极其耗时的。所以 `MySQL` 决定不再一次性为某个 `Buffer Pool` 实例向操作系统申请一大片连续的内存空间，而是以一个所谓的 `chunk` 为单位向操作系统申请空间。也就是说一个 `Buffer Pool` 实例其实是由若干个 `chunk` 组成的，一个 `chunk` 就代表一片连续的内存空间，里边儿包含了若干缓存页与其对应的控制块：
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/202209182339908.png)
+![](https://r2.129870.xyz/img/202209182339908.png)
 
 上图代表的 `Buffer Pool` 就是由 2 个实例组成的，每个实例中又包含 2 个 `chunk`。
 
@@ -1240,4 +1240,4 @@ mysql>
 
 在 `ChangeBuffer` 产生后，就会将 `ChangeBuffer` 相关的操作写入 `redolog` 而后写入磁盘，因此无需担心 `ChangeBuffer` 丢失后造成的数据一致性问题。**`redolog` 主要节省的是随机写磁盘的 IO 消耗 (转成顺序写)，而 `ChangeBuffer` 主要节省的则是随机读磁盘的 IO 消耗**。
 
-![](https://varg-my-images.oss-cn-beijing.aliyuncs.com/img/20220511222449.png)
+![](https://r2.129870.xyz/img/20220511222449.png)
