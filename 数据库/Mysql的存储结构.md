@@ -427,11 +427,8 @@ Query OK, 0 rows affected (0.03 sec)
 1. 计算中间槽的位置：$(0+4)\div 2 = 2$，所以查看 `槽 2` 对应记录的主键值为 8 大于 6 往前查找。
 2. 重新计算中间槽的位置：$(0+2) \div 2=1$，所以查看 `槽 1` 对应的主键值为 4 < 6 往后查找。
 3. 因为 `high - low` 的值为 1，所以确定主键值为 `6` 的记录在 `槽 2` 对应的组中。
-    
 
     此刻我们需要找到 `槽 2` 中主键值最小的那条记录，然后沿着单向链表遍历 `槽 2` 中的记录进行查找。可以借助 `槽 1` 对应的记录，该条记录的下一条记录就是 `槽 2` 中主键值最小的记录，该记录的主键值为 `5`。
-
-    
 
     此时从这条主键值为 `5` 的记录出发，遍历 `槽 2` 中的各条记录，直到找到主键值为 `6` 的那条记录即可。由于一个组中包含的记录条数只能是 1~8 条，所以遍历一个组中的记录的代价是很小的。
 
@@ -469,7 +466,6 @@ Query OK, 0 rows affected (0.03 sec)
 
 - `FIL_PAGE_PREV` 和 `FIL_PAGE_NEXT`
 	`FIL_PAGE_PREV ` 和 ` FIL_PAGE_NEXT ` 分别代表本页的上一个和下一个页的页号，这样通过建立一个双向链表把页都串联。
-	
 
     ![](https://r2.129870.xyz/img/202209050009280.png)
 
@@ -532,10 +528,8 @@ Query OK, 0 rows affected (0.03 sec)
 
 	以 `页 28` 为例，它对应 `目录项 2`，这个目录项中包含着该页的页号 `28` 以及该页中用户记录的最小主键值 `5`。只需根据目录项即可实现根据主键值快速查找某条记录的功能。以查找主键值为 `20` 的记录为例：
 
-    
     1. 先从目录项中根据二分法快速确定出主键值为 `20` 的记录在 `目录项 3` 中
     2. 去 `页 9` 中定位具体的记录
-    
 
 	至此，针对数据页做的简易目录就搞定了。这个 `目录` 有一个别名，称为 `索引`。
 
@@ -572,7 +566,6 @@ Query OK, 0 rows affected (0.03 sec)
 现在以查找主键为 `20` 的记录为例：
 
 1. 通过二分法定位数据所在的目录页。
-    
 
 	![](https://r2.129870.xyz/img/202209060036352.png)
 
@@ -835,15 +828,13 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 ##### 5.2.1.5.1. FSP_HDR 类型页
 
-首先看第一个组的第一个页面，当然也是表空间的第一个页面，页号为 `0`。这个页面的类型是 `FSP_HDR`，它**存储了表空间的一些整体属性以及第一个组内 256 个区的对应的 `XDES Entry` 结构**：
+首先是表空间的第一个页面，页号为 `0`。这个页面的类型是 `FSP_HDR`，它**存储了表空间的一些整体属性以及第一个组内 256 个区的对应的 `XDES Entry` 结构**：
 
 ![](https://r2.129870.xyz/img/202209070146831.png)
 
-从图中可以看出，一个完整的 `FSP_HDR` 类型的页面大致由 5 个部分组成：
+一个完整的 `FSP_HDR` 类型的页面大致由 5 个部分组成：
 
 <table> <thead> <tr> <th> 名称 </th> <th> 中文名 </th> <th> 占用空间大小 </th> <th> 简单描述 </th> </tr> </thead> <tbody> <tr> <td> <code> File Header </code> </td> <td> 文件头部 </td> <td> <code> 38 </code> 字节 </td> <td> 页的一些通用信息 </td> </tr> <tr> <td> <code> File Space Header </code> </td> <td> 表空间头部 </td> <td> <code> 112 </code> 字节 </td> <td> 表空间的一些整体属性信息 </td> </tr> <tr> <td> <code> XDES Entry </code> </td> <td> 区描述信息 </td> <td> <code> 10240 </code> 字节 </td> <td> 存储本组 256 个区对应的属性信息 </td> </tr> <tr> <td> <code> Empty Space </code> </td> <td> 尚未使用空间 </td> <td> <code> 5986 </code> 字节 </td> <td> 用于页结构的填充，没啥实际意义 </td> </tr> <tr> <td> <code> File Trailer </code> </td> <td> 文件尾部 </td> <td> <code> 8 </code> 字节 </td> <td> 校验页是否完整 </td> </tr> </tbody> </table>
-
-[[Mysql的存储结构#3 5 File Header（文件头部）|File Header]] 和 [[Mysql的存储结构#3 6 File Trailer（文件尾部）|File Trailer]] 就不再强调了，`Empty Space` 是尚未使用的空间，重点来看看 `File Space Header` 和 `XDES Entry` 这两个部分。
 
 ###### 5.2.1.5.1.1. File Space Header
 
@@ -862,27 +853,27 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 - `FRAG_N_USED`
     这个字段表明在 `FREE_FRAG` 链表中已经使用的页面数量。
 - `FREE Limit`
-    我们知道表空间都对应着具体的磁盘文件，一开始我们创建表空间的时候对应的磁盘文件中都没有数据，所以我们需要对表空间完成一个初始化操作，包括为表空间中的区建立 `XDES Entry` 结构，为各个段建立 `INODE Entry` 结构，建立各种链表等各种操作。
+    表空间对应着具体的磁盘文件，一开始创建表空间的时候对应的磁盘文件中都没有数据，需要对表空间完成一个初始化操作，包括为表空间中的区建立 `XDES Entry` 结构，为各个段建立 `INODE Entry` 结构，建立各种链表等各种操作。
 
-    我们可以一开始就为表空间申请一个特别大的空间，但是实际上有绝大部分的区是空闲的，我们可以选择把所有的这些空闲区对应的 `XDES Entry` 结构加入 `FREE` 链表，也可以选择只把一部分的空闲区加入 `FREE` 链表，等啥时候空闲链表中的 `XDES Entry` 结构对应的区不够使了，再把之前没有加入 `FREE` 链表的空闲区对应的 `XDES Entry` 结构加入 `FREE` 链表，中心思想就是啥时候用到啥时候初始化。
+    实际上初始时绝大部分的区是空闲的，可以选择把所有的这些空闲区对应的 `XDES Entry` 结构加入 `FREE` 链表，也可以选择只把一部分的空闲区加入 `FREE` 链表，等空闲链表中的 `XDES Entry` 结构对应的区不够时再把之前没有加入 `FREE` 链表的空闲区对应的 `XDES Entry` 结构加入 `FREE` 链表。
 
     Mysql 为表空间定义了 `FREE Limit` 这个字段，在该字段表示的页号之前的区都被初始化了，之后的区尚未被初始化。
 
 - `Next Unused Segment ID`
-	表中每个索引都对应 2 个段，每个段都有一个唯一的 ID。设计 `InnoDB` 的大叔们提出了这个名叫 `Next Unused Segment ID` 的字段，该字段表明当前表空间中最大的段 ID 的下一个 ID，这样在创建新段的时候赋予新段一个唯一的 ID 值就直接使用这个字段的值就好了。
+	表中每个索引都对应 2 个段，每个段都有一个唯一的 ID。 `Next Unused Segment ID` 表明当前表空间中最大的段 ID 的下一个 ID，在创建新段的时候赋予新段一个唯一的 ID 值就直接使用这个值。
 - `Space Flags`
-	表空间对于一些布尔类型的属性，或者只需要寥寥几个比特位搞定的属性都放在了这个 `Space Flags` 中存储，虽然它只有 4 个字节，32 个比特位大小，却存储了好多表空间的属性：
+	表空间对于一些布尔类型的属性，或者只需要几个比特位的属性都放在了这个 `Space Flags` 中存储：
 
 	<table> <thead> <tr> <th> 标志名称 </th> <th> 占用的空间（单位：bit）</th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> POST_ANTELOPE </code> </td> <td> 1 </td> <td> 表示文件格式是否大于 <code> ANTELOPE </code> </td> </tr> <tr> <td> <code> ZIP_SSIZE </code> </td> <td> 4 </td> <td> 表示压缩页面的大小 </td> </tr> <tr> <td> <code> ATOMIC_BLOBS </code> </td> <td> 1 </td> <td> 表示是否自动把值非常长的字段放到 BLOB 页里 </td> </tr> <tr> <td> <code> PAGE_SSIZE </code> </td> <td> 4 </td> <td> 页面大小 </td> </tr> <tr> <td> <code> DATA_DIR </code> </td> <td> 1 </td> <td> 表示表空间是否是从默认的数据目录中获取的 </td> </tr> <tr> <td> <code> SHARED </code> </td> <td> 1 </td> <td> 是否为共享表空间 </td> </tr> <tr> <td> <code> TEMPORARY </code> </td> <td> 1 </td> <td> 是否为临时表空间 </td> </tr> <tr> <td> <code> ENCRYPTION </code> </td> <td> 1 </td> <td> 表空间是否加密 </td> </tr> <tr> <td> <code> UNUSED </code> </td> <td> 18 </td> <td> 没有使用到的比特位 </td> </tr> </tbody> </table>
 
 - `List Base Node for SEG_INODES_FULL List` 和 `List Base Node for SEG_INODES_FREE List`
-	每个段对应的 `INODE Entry` 结构会集中存放到一个类型为 [[Mysql的存储结构#5 2 1 5 4 INODE 类型页面|INODE]] 的页中，如果表空间中的段特别多，则会有多个 `INODE Entry` 结构，可能一个页放不下，这些 `INODE` 类型的页会组成两种列表：
+	用于管理段对应的 `INODE Entry` 结构的链表，段信息存放在一个类型为 [[Mysql的存储结构#5 2 1 5 4 INODE 类型页面|INODE]] 的页中：
 	- `SEG_INODES_FULL` 链表，该链表中的 `INODE` 类型的页面都已经被 `INODE Entry` 结构填充满了，没空闲空间存放额外的 `INODE Entry` 了。
 	- `SEG_INODES_FREE` 链表，该链表中的 `INODE` 类型的页面仍有空闲空间来存放 `INODE Entry` 结构。
 
 ###### 5.2.1.5.1.2. XDES Entry
 
-紧接着 `File Space Header` 部分的就是 `XDES Entry` 部分了，`XDES Entry` 就是在表空间的第一个页面中保存的。我们知道一个 `XDES Entry` 结构的大小是 40 字节，但是一个页面的大小有限，只能存放有限个 `XDES Entry` 结构，所以我们才把 256 个区划分成一组，在每组的第一个页面中存放 256 个 `XDES Entry` 结构。大家回看那个 `FSP_HDR` 类型页面的示意图，`XDES Entry 0` 就对应着 `extent 0`，`XDES Entry 1` 就对应着 `extent 1`... 依此类推，`XDES Entry255` 就对应着 `extent 255`。
+对应每个区的 `XDES Entry` 信息，一个组共有 256 个区即对应 256 个 `XDES Entry` 结构。
 
 ##### 5.2.1.5.2. XDES 类型页面
 
@@ -896,13 +887,13 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 ##### 5.2.1.5.3. IBUF_BITMAP 类型页面
 
-对比前边介绍表空间的图，每个分组的第二个页面的类型都是 `IBUF_BITMAP`，这种类型的页里边记录了一些有关 `Change Buffer` 的东西。
+在[[#5.2.1.1. 区（exient）的概述|表空间]]中，每个分组的第二个页面的类型都是 `IBUF_BITMAP`，这种类型的页里边记录了一些有关 `Change Buffer` 的信息。
 
 ##### 5.2.1.5.4. INODE 类型页面
 
 ###### 5.2.1.5.4.1. INODE 页面结构
 
-再次对比前边介绍表空间的图，第一个分组的第三个页面的类型是 `INODE`。`InnoDB` 为每个索引定义了两个段，而且为某些特殊功能定义了些特殊的段。为了方便管理，他们又为每个段设计了一个 [[Mysql的存储结构#5 2 1 4 段的结构 INODE Entry|INODE Entry]] 结构，这个结构中记录了关于这个段的相关属性：
+在[[#5.2.1.1. 区（exient）的概述|表空间]]第一个分组的第三个页面的类型是 `INODE`。`InnoDB` 为每个索引定义了两个段，而且为某些特殊功能定义了些特殊的段。为了方便管理，他们又为每个段设计了一个 [[Mysql的存储结构#5 2 1 4 段的结构 INODE Entry|INODE Entry]] 结构，这个结构中记录了关于这个段的相关属性：
 
 ![](https://r2.129870.xyz/img/202209070202642.png)
 
@@ -912,19 +903,19 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
  `INODE Entry` 部分主要包括对应的段内零散页面的地址以及附属于该段的 `FREE`、`NOT_FULL` 和 `FULL` 链表的基节点。每个 `INODE Entry` 结构占用 192 字节，一个页面里可以存储 `85` 个这样的结构。
 
-`List Node for INODE Page List` ，因为一个表空间中可能存在超过 85 个段，所以可能一个 `INODE` 类型的页面不足以存储所有的段对应的 `INODE Entry` 结构，所以就需要额外的 `INODE` 类型的页面来存储这些结构。还是为了方便管理这些 `INODE` 类型的页面，设计 `InnoDB` 的大叔们将这些 `INODE` 类型的页面串联成两个不同的链表：
+当一个页面无法容纳所有段信息时需要使用多个页， `List Node for INODE Page List` 链表用于维护这些页的信息：
 
 - `SEG_INODES_FULL` 链表：该链表中的 `INODE` 类型的页面中已经没有空闲空间来存储额外的 `INODE Entry` 结构了。
 - `SEG_INODES_FREE` 链表：该链表中的 `INODE` 类型的页面中还有空闲空间来存储额外的 `INODE Entry` 结构了。
 
-前边提到过这两个链表的基节点就存储在 [[Mysql的存储结构#5 2 1 5 1 1 File Space Header|File Space Header]] 里边，也就是说这两个链表的基节点的位置是固定的。以后每当我们新创建一个段（创建索引时就会创建段）时，都会创建一个 `INODE Entry` 结构与之对应，存储 `INODE Entry` 的大致过程就是这样的：
+这两个链表的基节点就存储在 [[Mysql的存储结构#5 2 1 5 1 1 File Space Header|File Space Header]] 里边，以后每当新创建一个段（创建索引时就会创建段）时，都会创建一个 `INODE Entry` 结构与之对应，存储 `INODE Entry` 的流程如下：
 
 - 先判断 `SEG_INODES_FREE` 链表是否为空，如果不为空，直接从该链表中获取一个节点，也就相当于获取到一个仍有空闲空间的 `INODE` 类型的页面，然后把该 `INODE Entry` 结构放到该页面中。当该页面中无剩余空间时，就把该页放到 `SEG_INODES_FULL` 链表中。
 - 如果 `SEG_INODES_FREE` 链表为空，则需要从表空间的 `FREE_FRAG` 链表中申请一个页面，修改该页面的类型为 `INODE`，把该页面放到 `SEG_INODES_FREE` 链表中，与此同时把该 `INODE Entry` 结构放入该页面。
 
 ###### 5.2.1.5.4.2. 索引关联 INODE 页面
 
-一个索引会产生两个段，分别是叶子节点段和非叶子节点段，而每个段都会对应一个 `INODE Entry` 结构，那我们怎么知道某个段对应哪个 `INODE Entry` 结构呢？所以得找个地方记下来这个对应关系。`INDEX` 类型的页时有一个 [[Mysql的存储结构#3 4 Page Header（页面头部）|Page Header]] 部分：
+一个索引会产生两个段，分别是叶子节点段和非叶子节点段，这个段信息位于 `INDEX` 类型页中的 [[Mysql的存储结构#3 4 Page Header（页面头部）|Page Header]] 部分：
 
 <table> <thead> <tr> <th> 名称 </th> <th> 占用空间大小 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td>... </td> <td>... </td> <td>... </td> </tr> <tr> <td> <code> PAGE_BTR_SEG_LEAF </code> </td> <td> <code> 10 </code> 字节 </td> <td> B + 树叶子段的头部信息，仅在 B + 树的根页定义 </td> </tr> <tr> <td> <code> PAGE_BTR_SEG_TOP </code> </td> <td> <code> 10 </code> 字节 </td> <td> B + 树非叶子段的头部信息，仅在 B + 树的根页定义 </td> </tr> </tbody> </table>
 
@@ -936,11 +927,11 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 <table> <thead> <tr> <th> 名称 </th> <th> 占用字节数 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> Space ID of the INODE Entry </code> </td> <td> <code> 4 </code> </td> <td> INODE Entry 结构所在的表空间 ID </td> </tr> <tr> <td> <code> Page Number of the INODE Entry </code> </td> <td> <code> 4 </code> </td> <td> INODE Entry 结构所在的页面页号 </td> </tr> <tr> <td> <code> Byte Offset of the INODE Ent </code> </td> <td> <code> 2 </code> </td> <td> INODE Entry 结构在该页面中的偏移量 </td> </tr> </tbody> </table>
 
-`PAGE_BTR_SEG_LEAF` 记录着叶子节点段对应的 `INODE Entry` 结构的地址是哪个表空间的哪个页面的哪个偏移量，`PAGE_BTR_SEG_TOP` 记录着非叶子节点段对应的 `INODE Entry` 结构的地址是哪个表空间的哪个页面的哪个偏移量。这样子索引和其对应的段的关系就建立起来了。不过需要注意的一点是，因为**一个索引只对应两个段，所以只需要在索引的根页面中记录这两个结构即可**。
+上述信息记录着段对应的 `INODE Entry` 结构的地址是哪个表空间的哪个页面的哪个偏移量。借此索引和其对应的段的关系就建立起来了。因为**一个索引只对应两个段，所以只需要在索引的根页面中记录这两个结构即可**。
 
 ### 5.2.2. 系统表空间
 
-系统表空间的结构和独立表空间基本类似，只不过由于整个 MySQL 进程只有一个系统表空间，在系统表空间中会额外记录一些有关整个系统信息的页面，所以会比独立表空间多出一些记录这些信息的页面。因为这个系统表空间最牛逼，相当于是表空间之首，所以它的 `表空间 ID`（Space ID）是 `0`。
+系统表空间的结构和独立表空间基本类似，整个 MySQL 进程只有一个系统表空间，因此在系统表空间中会额外记录一些有关整个系统信息的页面，所以会比独立表空间多出一些记录这些信息的页面。系统表空间的 `表空间 ID`（Space ID）是 `0`。
 
 #### 5.2.2.1. 系统表空间整体结构
 
@@ -956,7 +947,7 @@ MyISAM 的行格式有定长记录格式（Static）、变长记录格式（Dyna
 
 #### 5.2.2.2. InnoDB 数据字典
 
-MySQL 除了保存着我们插入的用户数据之外，还需要保存许多额外的信息，比方说：
+MySQL 需要保存许多额外的信息：
 
 - 某个表属于哪个表空间，表里边有多少列。
 - 表对应的每一个列的类型是什么。
@@ -964,7 +955,7 @@ MySQL 除了保存着我们插入的用户数据之外，还需要保存许多�
 - 该表有哪些外键，外键对应哪个表的哪些列。
 - 某个表空间对应文件系统上文件路径是什么。
 
-上述这些数据并不是我们使用 `INSERT` 语句插入的用户数据，实际上是为了更好的管理我们这些用户数据而不得已引入的一些额外数据，这些数据也称为 `元数据`。InnoDB 存储引擎特意定义了一些列的内部系统表（internal system table）来记录这些这些 `元数据` ：
+这些数据也称为 `元数据`。InnoDB 存储引擎定义了一些列的内部系统表（internal system table）来记录这些这些 `元数据` ：
 
 <table> <thead> <tr> <th> 表名 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> SYS_TABLES </code> </td> <td> 整个 InnoDB 存储引擎中所有的表的信息 </td> </tr> <tr> <td> <code> SYS_COLUMNS </code> </td> <td> 整个 InnoDB 存储引擎中所有的列的信息 </td> </tr> <tr> <td> <code> SYS_INDEXES </code> </td> <td> 整个 InnoDB 存储引擎中所有的索引的信息 </td> </tr> <tr> <td> <code> SYS_FIELDS </code> </td> <td> 整个 InnoDB 存储引擎中所有的索引对应的列的信息 </td> </tr> <tr> <td> <code> SYS_FOREIGN </code> </td> <td> 整个 InnoDB 存储引擎中所有的外键的信息 </td> </tr> <tr> <td> <code> SYS_FOREIGN_COLS </code> </td> <td> 整个 InnoDB 存储引擎中所有的外键对应列的信息 </td> </tr> <tr> <td> <code> SYS_TABLESPACES </code> </td> <td> 整个 InnoDB 存储引擎中所有的表空间信息 </td> </tr> <tr> <td> <code> SYS_DATAFILES </code> </td> <td> 整个 InnoDB 存储引擎中所有的表空间对应文件系统的文件路径信息 </td> </tr> <tr> <td> <code> SYS_VIRTUAL </code> </td> <td> 整个 InnoDB 存储引擎中所有的虚拟生成列的信息 </td> </tr> </tbody> </table>
 
@@ -981,7 +972,7 @@ MySQL 除了保存着我们插入的用户数据之外，还需要保存许多�
 
 ##### 5.2.2.2.2. SYS_COLUMNS 表
 
-<table> <thead> <tr> <th> 列名 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> TABLE_ID </code> </td> <td> 该列所属表对应的 ID </td> </tr> <tr> <td> <code> POS </code> </td> <td> 该列在表中是第几列 </td> </tr> <tr> <td> <code> NAME </code> </td> <td> 该列的名称 </td> </tr> <tr> <td> <code> MTYPE </code> </td> <td> main data type，主数据类型，就是那堆 INT、CHAR、VARCHAR、FLOAT、DOUBLE 之类的东东 </td> </tr> <tr> <td> <code> PRTYPE </code> </td> <td> precise type，精确数据类型，就是修饰主数据类型的那堆东东，比如是否允许 NULL 值，是否允许负数啥的 </td> </tr> <tr> <td> <code> LEN </code> </td> <td> 该列最多占用存储空间的字节数 </td> </tr> <tr> <td> <code> PREC </code> </td> <td> 该列的精度，不过这列貌似都没有使用，默认值都是 0 </td> </tr> </tbody> </table>
+<table> <thead> <tr> <th> 列名 </th> <th> 描述 </th> </tr> </thead> <tbody> <tr> <td> <code> TABLE_ID </code> </td> <td> 该列所属表对应的 ID </td> </tr> <tr> <td> <code> POS </code> </td> <td> 该列在表中是第几列 </td> </tr> <tr> <td> <code> NAME </code> </td> <td> 该列的名称 </td> </tr> <tr> <td> <code> MTYPE </code> </td> <td> main data type，主数据类型， INT、CHAR、VARCHAR、FLOAT、DOUBLE 此类属性 </td> </tr> <tr> <td> <code> PRTYPE </code> </td> <td> precise type，精确数据类型，比如是否允许 NULL 值，是否允许负数 </td> </tr> <tr> <td> <code> LEN </code> </td> <td> 该列最多占用存储空间的字节数 </td> </tr> <tr> <td> <code> PREC </code> </td> <td> 该列的精度，默认值都是 0 </td> </tr> </tbody> </table>
 
 这个 `SYS_COLUMNS` 表只有一个聚集索引：以 `(TABLE_ID, POS)` 列为主键的聚簇索引。
 
@@ -999,14 +990,7 @@ MySQL 除了保存着我们插入的用户数据之外，还需要保存许多�
 
 #### 5.2.2.3. Data Dictionary Header 页面
 
-有了上述 4 个基本系统表，也就意味着可以获取其他系统表以及用户定义的表的所有元数据。比方说我们想看看 `SYS_TABLESPACES` 这个系统表里存储了哪些表空间以及表空间对应的属性，那就可以：
-
-- 到 `SYS_TABLES` 表中根据表名定位到具体的记录，就可以获取到 `SYS_TABLESPACES` 表的 `TABLE_ID`
-- 使用这个 `TABLE_ID` 到 `SYS_COLUMNS` 表中就可以获取到属于该表的所有列的信息。
-- 使用这个 `TABLE_ID` 还可以到 `SYS_INDEXES` 表中获取所有的索引的信息，索引的信息中包括对应的 `INDEX_ID`，还记录着该索引对应的 `B+` 数根页面是哪个表空间的哪个页面。
-- 使用 `INDEX_ID` 就可以到 `SYS_FIELDS` 表中获取所有索引列的信息。
-
-也就是说这 4 个表是表中之表，那这 4 个表的元数据去哪里获取呢？没法搞了，**只能把这 4 个表的元数据，就是它们有哪些列、哪些索引等信息硬编码到代码中**，然后 `InnoDB` 又**拿出一个固定的页面来记录这 4 个表的聚簇索引和二级索引对应的 `B+树` 位置**，这个页面就是页号为 `7` 的页面，类型为 `SYS`，记录了 `Data Dictionary Header`，也就是数据字典的头部信息。除了这 4 个表的 5 个索引的根页面信息外，这个页号为 `7` 的页面还记录了整个 InnoDB 存储引擎的一些全局属性：
+有了上述 4 个基本系统表，也就意味着可以获取其他系统表以及用户定义的表的所有元数据。**这 4 个表的元数据：它们有哪些列、哪些索引等信息被硬编码到代码中**，然后 `InnoDB` 又**拿出一个固定的页面来记录这 4 个表的聚簇索引和二级索引对应的 `B+树` 位置**，这个页面就是页号为 `7` 的页面，类型为 `SYS`，记录了 `Data Dictionary Header`，也就是数据字典的头部信息。除了这 4 个表的 5 个索引的根页面信息外，这个页号为 `7` 的页面还记录了整个 InnoDB 存储引擎的一些全局属性：
 
 ![](https://r2.129870.xyz/img/202209070221126.png)
 
@@ -1014,14 +998,12 @@ MySQL 除了保存着我们插入的用户数据之外，还需要保存许多�
 
 <table> <thead> <tr> <th> 名称 </th> <th> 中文名 </th> <th> 占用空间大小 </th> <th> 简单描述 </th> </tr> </thead> <tbody> <tr> <td> <code> File Header </code> </td> <td> 文件头部 </td> <td> <code> 38 </code> 字节 </td> <td> 页的一些通用信息 </td> </tr> <tr> <td> <code> Data Dictionary Header </code> </td> <td> 数据字典头部信息 </td> <td> <code> 56 </code> 字节 </td> <td> 记录一些基本系统表的根页面位置以及 InnoDB 存储引擎的一些全局信息 </td> </tr> <tr> <td> <code> Segment Header </code> </td> <td> 段头部信息 </td> <td> <code> 10 </code> 字节 </td> <td> 记录本页面所在段对应的 INODE Entry 位置信息 </td> </tr> <tr> <td> <code> Empty Space </code> </td> <td> 尚未使用空间 </td> <td> <code> 16272 </code> 字节 </td> <td> 用于页结构的填充，没啥实际意义 </td> </tr> <tr> <td> <code> File Trailer </code> </td> <td> 文件尾部 </td> <td> <code> 8 </code> 字节 </td> <td> 校验页是否完整 </td> </tr> </tbody> </table>
 
-可以看到这个页面里竟然有 `Segment Header` 部分，意味着设计 InnoDB 的大叔把这些有关数据字典的信息当成一个段来分配存储空间，我们就姑且称之为 `数据字典段` 吧。由于目前我们需要记录的数据字典信息非常少（可以看到 `Data Dictionary Header` 部分仅占用了 56 字节），所以该段只有一个碎片页，也就是页号为 `7` 的这个页。
+这个页面里竟然有 `Segment Header` 部分，意味着 InnoDB 把这些有关数据字典的信息当成一个段来分配存储空间，姑且称之为 `数据字典段` 。由于目前需要记录的数据字典信息非常少，所以该段只有一个碎片页，也就是页号为 `7` 的这个页。
 
 `Data Dictionary Header` 部分的各个字段：
 
 - `Max Row ID`
-	如果不显式的为表定义主键，而且表中也没有 `UNIQUE` 索引，那么 `InnoDB` 存储引擎会默认为我们生成一个名为 `row_id` 的列作为主键。因为它是主键，所以每条记录的 `row_id` 列的值不能重复。
-
-	原则上只要一个表中的 `row_id` 列不重复就可以了，不过 InnoDB 只提供了这个 `Max Row ID` 字段，不论哪个拥有 `row_id` 列的表插入一条记录时，该记录的 `row_id` 列的值就是 `Max Row ID` 对应的值，然后再把 `Max Row ID` 对应的值加 1，**也就是说这个 `Max Row ID` 是全局共享的**。
+	如果不显式的为表定义主键，而且表中也没有 `UNIQUE` 索引，那么 `InnoDB` 存储引擎会默认为我们生成一个名为 `row_id` 的列作为主键。**这个 `Max Row ID` 是全局共享的**。
 
 - `Max Table ID`
 	InnoDB 存储引擎中的所有的表都对应一个唯一的 ID，每次新建一个表时，就会把本字段的值作为该表的 ID，然后自增本字段的值。
@@ -1046,7 +1028,7 @@ MySQL 除了保存着我们插入的用户数据之外，还需要保存许多�
 
 #### 5.2.2.4. information_schema 系统数据库
 
-需要注意一点的是，用户是不能直接访问 `InnoDB` 的这些内部系统表的，除非你直接去解析系统表空间对应文件系统上的文件。在系统数据库 `information_schema` 中提供了一些以 `innodb_sys` 开头的表：
+用户并不能直接访问 `InnoDB` 的这些内部系统表，在系统数据库 `information_schema` 中提供了一些以 `innodb_sys` 开头的表：
 
 ```sql
 
@@ -1072,7 +1054,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 ```
 
-在 `information_schema` 数据库中的这些以 `INNODB_SYS` 开头的表并不是真正的内部系统表，而是在存储引擎启动时读取这些以 `SYS` 开头的系统表，然后填充到这些以 `INNODB_SYS` 开头的表中。以 `INNODB_SYS` 开头的表和以 `SYS` 开头的表中的字段并不完全一样，但供大家参考已经足矣。
+这些以 `INNODB_SYS` 开头的表并不是真正的内部系统表，而是在存储引擎启动时读取这些以 `SYS` 开头的系统表，然后填充到这些以 `INNODB_SYS` 开头的表中的。
 
 # 6. Mysql 的缓冲区（Buffer Pool）
 
@@ -1082,9 +1064,9 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 ## 6.1. Buffer Pool 的组织结构
 
-`Buffer Pool` 中默认的缓存页大小和在磁盘上默认的页大小是一样的，都是 `16KB`。为了更好的管理这些在 `Buffer Pool` 中的缓存页，Mysql 为每一个缓存页都创建了一些所谓的 `控制信息`，这些控制信息包括该**页所属的表空间编号、页号、缓存页在 `Buffer Pool` 中的地址、链表节点信息、一些锁信息以及 [[Mysql的一致性保证#1 5 Log Sequence Number|LSN]] 信息等**。
+`Buffer Pool` 中默认的缓存页大小和在磁盘上默认的页大小一致。为了更好的管理这些在 `Buffer Pool` 中的缓存页，Mysql 为每一个缓存页都创建了一些 `控制信息`，这些控制信息包括该**页所属的表空间编号、页号、缓存页在 `Buffer Pool` 中的地址、链表节点信息、一些锁信息以及 [[Mysql的一致性保证#1 5 Log Sequence Number|LSN]] 信息等**。
 
-每个缓存页对应的控制信息占用的内存大小是相同的，称为 `控制块`，控制块和缓存页是一一对应的，它们都被存放到 Buffer Pool 中，其中控制块被存放到 Buffer Pool 的前边，缓存页被存放到 Buffer Pool 后边，所以整个 `Buffer Pool` 对应的内存空间看起来就是这样的：
+每个缓存页对应的控制信息占用的内存大小是相同的，称为 `控制块`，控制块和缓存页是一一对应的，它们都被存放到 Buffer Pool 中，其中控制块被存放到 Buffer Pool 的前边，缓存页被存放到 Buffer Pool 后边：
 
 ![](https://r2.129870.xyz/img/202209182249282.png)
 
@@ -1094,9 +1076,9 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 ### 6.1.1. free 链表的管理
 
-为了区分 `Buffer Pool` 中哪些缓存页是空闲的，哪些已经被使用了的，即为了记录 Buffer Pool 中哪些缓存页是可用的，我们可以把所有空闲的缓存页对应的控制块作为一个节点放到一个链表中，这个链表也可以被称作 `free 链表`（或者说空闲链表）。
+为了记录 Buffer Pool 中哪些缓存页是可用的，可以把所有空闲的缓存页对应的控制块作为一个节点放到一个链表中，这个链表也可以被称作 `free 链表`。
 
-刚刚完成初始化的 `Buffer Pool` 中所有的缓存页都是空闲的，所以每一个缓存页对应的控制块都会被加入到 `free 链表` 中，假设该 `Buffer Pool` 中可容纳的缓存页数量为 `n`，那增加了 `free 链表` 的效果图就是这样的：
+刚初始化的 `Buffer Pool` 中所有的缓存页都是空闲的，所以每一个缓存页对应的控制块都会被加入到 `free 链表` 中：
 
 ![](https://r2.129870.xyz/img/202209182253199.png)
 
@@ -1112,7 +1094,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 修改了 `Buffer Pool` 中某个缓存页的数据后它就和磁盘上的页变得不一致了，这样的缓存页也被称为脏页（dirty page）。因为**磁盘的交互速度太慢了，所以脏页并不会立马刷新到磁盘上，而是在未来的某个时间点进行同步**。
 
-为了记录这些被修改过而未刷新到磁盘上的脏页，Mysql 设计了一个 `flush 链表`，链表的构造和 `free 链表` 差不多，假设某个时间点 `Buffer Pool` 中的脏页数量为 `n`，那么对应的 `flush 链表` 就长这样：
+为了记录这些被修改过而未刷新到磁盘上的脏页，Mysql 设计了一个 `flush 链表`，链表的构造和 `free 链表` 类似：
 
 ![](https://r2.129870.xyz/img/202209182312152.png)
 
@@ -1125,16 +1107,16 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 传统的 LRU 链表将新读取的页面放到链表的头部，淘汰时淘汰链表的尾部，这对于 Mysql 来说存在一些问题：
 
 - Mysql 的预读
-	`InnoDB` 提供了一个看起来比较贴心的服务—— `预读`（英文名：`read ahead`）。所谓 `预读`，就是 `InnoDB` 认为执行当前的请求可能之后会读取某些页面，就预先把它们加载到 `Buffer Pool` 中。根据触发方式的不同，`预读` 又可以细分为下边两种：
+	`InnoDB` 提供了一个看起来比较贴心的服务—— `预读`（`read ahead`）。所谓 `预读`，就是 `InnoDB` 认为执行当前的请求可能之后会读取某些页面，就预先把它们加载到 `Buffer Pool` 中。根据触发方式的不同，`预读` 又可以细分为下边两种：
 	- 线性预读
-		设计 `InnoDB` 的大叔提供了一个系统变量 `innodb_read_ahead_threshold`，**如果顺序访问了某个[[Mysql的存储结构#5 2 1 1 区（exient）的概述|区]]（`extent`）的页面超过这个系统变量的值，就会触发一次 `异步` 读取下一个区中全部的页面到 `Buffer Pool`** 的请求，注意 `异步` 读取意味着从磁盘中加载这些被预读的页面并不会影响到当前工作线程的正常执行。
+		由系统变量 `innodb_read_ahead_threshold` 控制，**如果顺序访问了某个[[Mysql的存储结构#5 2 1 1 区（exient）的概述|区]]（`extent`）的页面超过这个系统变量的值，就会触发一次 `异步` 读取下一个区中全部的页面到 `Buffer Pool`** 的请求。
 	- 随机预读
 		如果 `Buffer Pool` 中已经缓存了某个[[Mysql的存储结构#5 2 1 1 区（exient）的概述|区]]的 13 个连续的页面（这 13 个页面需要在 [[Mysql的存储结构#6 1 4 2 LRU 链表的进一步优化|LRU链表的前1/4页面]]），不论这些页面是不是顺序读取的，都会触发一次 `异步` 读取本区中所有其的页面到 `Buffer Pool` 的请求。该功能由 `innodb_random_read_ahead` 系统变量控制，它的默认值为 `OFF`。
 
-	`预读` 本来是个好事儿，但是预读数据没有使用到就会导致处在 `LRU 链表` 尾部的一些缓存页会很快的被淘汰掉，也就是所谓的 `劣币驱逐良币`，会大大降低缓存命中率。
+	如果预读数据没有使用到就会导致处在 `LRU 链表` 尾部的一些缓存页会很快的被淘汰掉，大大降低缓存命中率。
 
 - Mysql 的大批量读取
-	有时候我们会进行大量数据的查询，如某些表的全表扫描。这意味着将访问到该表所在的所有页！假设这个表中记录非常多的话，那该表会占用特别多的 `页`，当需要访问这些页时，会把它们统统都加载到 `Buffer Pool` 中，所以原缓冲区中的页将被置换。
+	当进行大量数据的查询，如某些表的全表扫描。这意味着将访问到该表所在的所有页！假设这个表中记录非常多的话，那该表会占用特别多的 `页`，当需要访问这些页时，会把它们统统都加载到 `Buffer Pool` 中，所以原缓冲区中的页将被置换。
 
 为了避免上述情况，Mysql 把这个 `LRU 链表` 按照一定比例分成两截，分别是：
 
@@ -1143,16 +1125,16 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 ![](https://r2.129870.xyz/img/202209182321578.png)
 
-默认情况下，`old` 区域在 `LRU 链表` 中所占的比例是 `37%`，也就是说 `old` 区域大约占 `LRU 链表` 的 `3/8`。这个比例我们是可以设置的，我们可以在启动时修改 `innodb_old_blocks_pct` 参数来控制 `old` 区域在 `LRU 链表` 中所占的比例。
+默认情况下，`old` 区域在 `LRU 链表` 中所占的比例是 `37%`，这个比例可以在启动时修改 `innodb_old_blocks_pct` 参数来控制。
 
-有了这个被划分成 `young` 和 `old` 区域的 `LRU` 链表之后，Mysql 就可以针对我们上边提到的两种可能降低缓存命中率的情况进行优化了：
+分区域后的优化方式如下：
 
 - 针对预读的页面可能不进行后续访问情况的优化
     当磁盘上的某个页面在初次加载到 Buffer Pool 中的某个缓存页时，该缓存页对应的控制块会被放到 old 区域的头部。这样针对预读到 `Buffer Pool` 却不进行后续访问的页面就会被逐渐从 `old` 区域逐出，而不会影响 `young` 区域中被使用比较频繁的缓存页。
 - 针对全表扫描时，短时间内访问大量使用频率非常低的页面情况的优化
-    全表扫描有一个特点，那就是它的执行频率非常低，而且在执行全表扫描的过程中，即使某个页面中有很多条记录，也就是去多次访问这个页面所花费的时间也是非常少的。所以 Mysql 规定，在对某个处在 `old` 区域的缓存页进行第一次访问时就在它对应的控制块中记录下来这个访问时间，**如果后续的访问时间与第一次访问的时间在某个时间间隔内，那么该页面就不会被从 old 区域移动到 young 区域的头部**，否则将它移动到 young 区域的头部。上述的这个[[Redis大纲#6 2 2 Redis-LRU 算法的实现|时间控制]]由系统变量 `innodb_old_blocks_time` 控制。
+    全表扫描有一个特点，那就是它的执行频率非常低。在对某个处在 `old` 区域的缓存页进行第一次访问时就在它对应的控制块中记录下来这个访问时间，**如果后续的访问时间与第一次访问的时间在某个时间间隔内，那么该页面就不会被从 old 区域移动到 young 区域的头部**，否则将它移动到 young 区域的头部。这个[[Redis大纲#6 2 2 Redis-LRU 算法的实现|时间控制]]由系统变量 `innodb_old_blocks_time` 控制。
 
-综上所述，正是因为将 `LRU` 链表划分为 `young` 和 `old` 区域这两个部分，又添加了 `innodb_old_blocks_time` 这个系统变量，才使得预读机制和全表扫描造成的缓存命中率降低的问题得到了遏制，因为用不到的预读页面以及全表扫描的页面都只会被放到 `old` 区域，而不影响 `young` 区域中的缓存页。
+因为将 `LRU` 链表划分为 `young` 和 `old` 区域这两个部分，又添加了 `innodb_old_blocks_time` 这个系统变量，才使得预读机制和全表扫描造成的缓存命中率降低的问题得到了遏制，因为用不到的预读页面以及全表扫描的页面都只会被放到 `old` 区域，而不影响 `young` 区域中的缓存页。
 
 #### 6.1.4.2. LRU 链表的进一步优化
 
@@ -1160,20 +1142,16 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 为了解决这个问题其实我们还可以提出一些优化策略，比如只有被访问的缓存页位于 `young` 区域的 `1/4` 的后边，才会被移动到 `LRU 链表` 头部，这样就可以降低调整 `LRU 链表` 的频率，从而提升性能（也就是说如果某个缓存页对应的节点在 `young` 区域的 `1/4` 中，再次访问该缓存页时也不会将其移动到 `LRU` 链表头部）。
 
-当然除此之外 Mysql 进行了非常多的优化，此处就不再介绍了。
-
 ### 6.1.5. 刷新脏页到磁盘
 
 后台有专门的线程每隔一段时间负责把脏页刷新到磁盘，这样可以不影响用户线程处理正常的请求。主要有两种刷新路径：
 
 - 从 `LRU 链表` 的冷数据中刷新一部分页面到磁盘。
-    后台线程会定时从 `LRU 链表` 尾部开始扫描一些页面，扫描的页面数量可以通过系统变量 `innodb_lru_scan_depth` 来指定，如果从里边儿发现脏页，会把它们刷新到磁盘。这种刷新页面的方式被称之为 `BUF_FLUSH_LRU`。
+    后台线程会定时从 `LRU 链表` 尾部开始扫描一些页面，扫描的页面数量可以通过系统变量 `innodb_lru_scan_depth` 来指定，如果发现脏页，会把它们刷新到磁盘。这种刷新页面的方式被称之为 `BUF_FLUSH_LRU`。
 - 从 `flush 链表` 中刷新一部分页面到磁盘。
-    后台线程也会定时从 `flush 链表` 中刷新一部分页面到磁盘，刷新的速率取决于当时系统是不是很繁忙。这种刷新页面的方式被称之为 `BUF_FLUSH_LIST`。
+    后台线程也会定时从 `flush 链表` 中刷新一部分页面到磁盘，刷新的速率取决于当时系统繁忙状态。这种刷新页面的方式被称之为 `BUF_FLUSH_LIST`。
 
-有时候后台线程刷新脏页的进度比较慢，导致用户线程在准备加载一个磁盘页到 `Buffer Pool` 时没有可用的缓存页，这时就会尝试看看 `LRU 链表` 尾部有没有可以直接释放掉的未修改页面，如果没有的话会不得不将 `LRU 链表` 尾部的一个脏页同步刷新到磁盘（和磁盘交互是很慢的，这会降低处理用户请求的速度）。这种刷新单个页面到磁盘中的刷新方式被称之为 `BUF_FLUSH_SINGLE_PAGE`。
-
-当然，有时候系统特别繁忙时，也可能出现用户线程批量的从 `flush 链表` 中刷新脏页的情况，很显然在处理用户请求过程中去刷新脏页是一种严重降低处理速度的行为（毕竟磁盘的速度慢的要死），这属于一种迫不得已的情况。
+有时候后台线程刷新脏页的进度比较慢，导致用户线程在准备加载一个磁盘页到 `Buffer Pool` 时没有可用的缓存页，这时就会查看 `LRU 链表` 尾部有没有可以直接释放掉的未修改页面，如果没有的话会不得不将 `LRU 链表` 尾部的一个脏页同步刷新到磁盘（和磁盘交互是很慢的，这会降低处理用户请求的速度）。这种刷新单个页面到磁盘中的刷新方式被称之为 `BUF_FLUSH_SINGLE_PAGE`。
 
 ## 6.2. Buffer Pool 的配置
 
@@ -1181,7 +1159,7 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 `Buffer Pool` 本质是 `InnoDB` 向操作系统申请的一块连续的内存空间，**在多线程环境下，访问 `Buffer Pool` 中的各种链表都需要加锁处理等操作，在 `Buffer Pool` 特别大而且多线程并发访问特别高的情况下，单一的 `Buffer Pool` 可能会影响请求的处理速度**。
 
-所以在 `Buffer Pool` 特别大的时候，我们可以把它们拆分成若干个小的 `Buffer Pool`，每个 `Buffer Pool` 都称为一个 `实例`，它们都是独立的，独立的去申请内存空间，独立的管理各种链表，所以在多线程并发访问时并不会相互影响，从而提高并发处理能力。我们可以在服务器启动的时候通过设置 `innodb_buffer_pool_instances` 的值来修改 `Buffer Pool` 实例的个数，如以下的配置：
+所以在 `Buffer Pool` 特别大的时候，可以把它们拆分成若干个小的 `Buffer Pool`，每个 `Buffer Pool` 都称为一个 `实例`，独立的去申请内存空间与管理各种链表，所以在多线程并发访问时并不会相互影响，从而提高并发处理能力。可以在服务器启动的时候通过设置 `innodb_buffer_pool_instances` 的值来修改 `Buffer Pool` 实例的个数，如以下的配置：
 
 ![](https://r2.129870.xyz/img/202209182338137.png)
 
@@ -1189,13 +1167,15 @@ mysql> SHOW TABLES LIKE 'innodb_sys%';
 
 在 `MySQL 5.7.5` 之前，`Buffer Pool` 的大小只能在服务器启动时通过配置 `innodb_buffer_pool_size` 启动参数来调整大小，在服务器运行过程中是不允许调整该值的。
 
-`MySQL` 的在 `5.7.5` 以及之后的版本中支持了在服务器运行过程中调整 `Buffer Pool` 大小的功能，但是有一个问题，就是每次当我们要重新调整 `Buffer Pool` 大小时，都需要重新向操作系统申请一块连续的内存空间，然后将旧的 `Buffer Pool` 中的内容复制到这一块新空间，这是极其耗时的。所以 `MySQL` 决定不再一次性为某个 `Buffer Pool` 实例向操作系统申请一大片连续的内存空间，而是以一个所谓的 `chunk` 为单位向操作系统申请空间。也就是说一个 `Buffer Pool` 实例其实是由若干个 `chunk` 组成的，一个 `chunk` 就代表一片连续的内存空间，里边儿包含了若干缓存页与其对应的控制块：
+`MySQL` 的在 `5.7.5` 以及之后的版本中支持了在服务器运行过程中调整 `Buffer Pool` 大小的功能，但是有一个问题，就是每次当我们要重新调整 `Buffer Pool` 大小时，都需要重新向操作系统申请一块连续的内存空间，然后将旧的 `Buffer Pool` 中的内容复制到这一块新空间，这是极其耗时的。
+
+所以 `MySQL` 并不是一次性为某个 `Buffer Pool` 实例向操作系统申请一大片连续的内存空间，而是以一个所谓的 `chunk` 为单位向操作系统申请空间。即一个 `Buffer Pool` 实例其实是由若干个 `chunk` 组成的，一个 `chunk` 就代表一片连续的内存空间，里面包含了若干缓存页与其对应的控制块：
 
 ![](https://r2.129870.xyz/img/202209182339908.png)
 
 上图代表的 `Buffer Pool` 就是由 2 个实例组成的，每个实例中又包含 2 个 `chunk`。
 
-正是因为发明了这个 `chunk` 的概念，我们在服务器运行期间调整 `Buffer Pool` 的大小时就是以 `chunk` 为单位增加或者删除内存空间，而不需要重新向操作系统申请一片大的内存，然后进行缓存页的复制。`chunk` 的大小是我们在启动操作 `MySQL` 服务器时通过 `innodb_buffer_pool_chunk_size` 启动参数指定的，它的默认值是 `134217728`，也就是 `128M`。不过需要注意的是，innodb_buffer_pool_chunk_size 的值只能在服务器启动时指定，在服务器运行过程中是不可以修改的。
+因此在服务器运行期间调整 `Buffer Pool` 的大小时就是以 `chunk` 为单位增加或者删除内存空间，而不需要重新向操作系统申请一片大的内存，然后进行缓存页的复制。`chunk` 的大小可以在启动操作 `MySQL` 服务器时通过 `innodb_buffer_pool_chunk_size` 启动参数指定的，它的默认值是`128M`。innodb_buffer_pool_chunk_size 的值只能在服务器启动时指定，在服务器运行过程中是不可以修改的。
 
 需要注意的是，`innodb_buffer_pool_size` 必须是 `innodb_buffer_pool_chunk_size × innodb_buffer_pool_instances` 的倍数（这主要是想保证每一个 `Buffer Pool` 实例中包含的 `chunk` 数量相同）。
 
