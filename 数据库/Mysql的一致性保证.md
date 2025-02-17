@@ -370,9 +370,9 @@ binlog 写盘状态 ：
 
 - 内存中
 - write cache
-	把日志写入到文件系统的 page cache，并没有把数据持久化到磁盘，所以速度较快
+	把日志写入到文件系统的 `page cache`，并没有把数据持久化到磁盘。
 - fsync
-    将数据持久化到磁盘。一般认为 fsync 才占磁盘的 IOPS
+    将数据持久化到磁盘。
 
 write 和 fsync 的时机，由参数 `sync_binlog` 控制：
 
@@ -389,22 +389,22 @@ write 和 fsync 的时机，由参数 `sync_binlog` 控制：
 binlog 日志的格式：
 
 - statement 格式
-	语句级的格式，使用的是原始 SQL 存储。这就会存在问题，binlog 日志是按提交顺序存储的，如果提交顺序与执行顺序有差别，就会导致数据更新出问题。或者主备之间索引选择不一致，同样会导致数据更新出错。
+	语句级的格式，原始 SQL 存储。binlog 日志是按提交顺序存储的，如果提交顺序与执行顺序有差别，就会导致数据更新出问题。或者主备之间索引选择不一致，同样会导致数据更新出错。
 - row 格式
-	基于原始数据存储，数据是什么样子就存储成什么样子。可以通过命令 `show binlog events;` 查看当前 binlog 日志文件：
+	基于原始数据存储。可以通过命令 `show binlog events;` 查看当前 binlog 日志文件：
 
 	![](https://r2.129870.xyz/img/20220514144956.png)
 
-	binlog 日志文件在 row 格式下如上所示，如果需要查看更为详细的信息通过解析 binlog 日志查看，可以执行以下命令：`/var/lib/mysql# mysqlbinlog -vv binlog.000001 --start-position=3103917;`
+	更为详细的信息通过解析 binlog 日志查看，可以执行以下命令：`/var/lib/mysql# mysqlbinlog -vv binlog.000001 --start-position=3103917;`
 
 	![](https://r2.129870.xyz/img/20220514145948.png)
 
 	`binlog_row_image` 的默认配置是 FULL，因此 `delete_event` 里面，包含了删掉的行的所有字段的值。如果把 `binlog_row_image` 设置为 `MINIMAL`，则只会记录必要的信息。
 
 - mixed 格式
-	因为有些 statement 格式的 binlog 可能会导致主备不一致，所以要使用 row 格式。但 row 格式的缺点是，很占空间。比如你用一个 delete 语句删掉 10 万行数据，用 statement 的话就是一个 SQL 语句被记录到 binlog 中，占用几十个字节的空间。但如果用 row 格式的 binlog，就要把这 10 万条记录都写到 binlog 中。这样做，不仅会占用更大的空间，同时写 binlog 也要耗费 IO 资源，影响执行速度。
+	因为有些 statement 格式的 binlog 可能会导致主备不一致，所以要使用 row 格式。但 row 格式很占空间，在 sql 影响条数很大的情况下，不仅会占用更大的日志空间，同时写 binlog 也要耗费 IO 资源，影响执行速度。
 
-	所以，MySQL 就取了个折中方案，也就是有了 mixed 格式的 binlog。Mixed 格式的意思是，MySQL 自己会判断这条 SQL 语句是否可能引起主备不一致，如果有可能，就用 row 格式，否则就用 statement 格式。也就是说，mixed 格式可以利用 statment 格式的优点，同时又避免了数据不一致的风险。
+	mixed 格式 binlog，混合日志。MySQL 自动根据 SQL 语句是否可能引起主备不一致的可能性判断使用 row 格式或者 statement 格式。即 mixed 格式可以利用 statment 格式的优点，同时又避免了数据不一致的风险。
 
 # 3. binlog 日志与 redo 日志的合作
 
@@ -418,20 +418,18 @@ binlog 日志的格式：
 
 Update 语句过程中在写完第一个日志后，第二个日志还没有写完期间发生了 crash，会出现什么情况呢?
 
-3. 先写 redo log 后写 binlog
-	假设在 redo log 写完，binlog 还没有写完的时候，MySQL 进程异常重启。由于我们前面说过的，redo log 写完之后，系统即使崩溃，仍然能够把数据恢复回来，所以恢复后这一行 c 的值是 1。  
+1. 先写 redo log 后写 binlog
+	redo 日志成功保存但是 binlog 日志保存失败，导致恢复时主库包含该数据的更改但是从库缺少 binlog 无法更新。
 
-	但是由于 binlog 没写完就 crash 了，这时候 binlog 里面就没有记录这个语句。因此，之后备份日志的时候，存起来的 binlog 里面就没有这条语句。然后你会发现，如果需要用这个 binlog 来恢复临时库的话，由于这个语句的 binlog 丢失，这个临时库就会少了这一次更新，恢复出来的这一行 c 的值就是 0，与原库的值不同。
+2. 先写 binlog 后写 redo log
+	从库可以根据 binlog 日志正常更新，但是主库缺少 redo 日志而无法更新。
 
-4. 先写 binlog 后写 redo log
-	如果在 binlog 写完之后 crash，由于 redo log 还没写，崩溃恢复。以后这个事务无效，所以这一行 c 的值是 0。但是 binlog 里面已经记录了“把 c 从 0 改成 1”这个日志。所以，在之后用 binlog 来恢复的时候就多了一个事务出来，恢复出来的这一行 c 的值就是 1，与原库的值不同。
-
-可以看到，如果不使用“两阶段提交”，那么数据库的状态就有可能和用它的日志恢复出来的库的状态不一致。
+如果不使用“两阶段提交”，那么数据库的状态就有可能和用它的日志恢复出来的库的状态不一致。
 
 ## 3.2. 崩溃时的处理策略
 
 - 在 redo log 写入磁盘后崩溃
-    此时 redo log 是 prepare 阶段，binlog 尚未写入。因此对于这种情况可以直接丢弃 redo log 日志。
+    redo log 是 prepare 阶段，binlog 尚未写入，此时可以直接丢弃 redo log 日志。
 - binlog 写入后崩溃
     此时 binlog 已经写入，准备将 redo log 更新为 commit 的时候崩溃。当崩溃恢复后，进行以下的处理：
     1. 判断恢复的 redo log 日志中是否有 commit 标识，如果有，认为事务已经提交，使用 redolog 日志更新内存中的数据。
@@ -450,73 +448,73 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 ## 3.3. redo log 与 binlog 同时使用的原因
 
-5. redo log 是为了数据崩溃恢复使用的，binlog 是为了记录数据操作使用的。redo log 记录了数据页发生的变化，方便在崩溃时恢复。而 binlog 记录了 sql 的执行操作，用于备份。
-6. redo log 记录是循环写的，比如 4G 的 redo log 日志空间，写到尾部后会回到头部继续写。而 binlog 是追加的。
-7. 两阶段提交的原因是为了让 redo log 有办法处理 binlog 存储失败后的问题。当 binlog 存储失败后，redo log 可以不提交。而如果不采用两阶段提交，那么当 binlog 日志出现问题的时候 redo log 就回滚不了了。
+1. redo log 是为了数据崩溃恢复使用的，binlog 是为了记录数据操作使用的。redo log 记录了数据页发生的变化方便在崩溃时恢复。而 binlog 记录了 sql 的执行操作，用于数据备份。
+2. redo log 记录是循环写的，写到尾部后会回到头部继续写。而 binlog 是追加的。
+3. 两阶段提交的原因是为了让 redo log 有办法处理 binlog 存储失败后的问题。当 binlog 存储失败后，redo log 可以不提交。而如果不采用两阶段提交，那么当 binlog 日志出现问题的时候 redo log 就回滚不了了。
 
 ## 3.4. 组提交策略
 
-通过上面的分析我们可以知道，redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一阶段，我们可以采取组提交策略。对于 redo log 与 binlog 的操作争取一次写盘完成。
+redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一阶段，可以采取组提交策略。对于 redo log 与 binlog 的操作争取一次写盘完成。
 
 ![](https://r2.129870.xyz/img/20220513231453.png)
 
-在将 redo log 写入到磁盘时，刷盘动作延迟到 `binlog write` 到 `page cache` 之后，这样 binlog 与 redo log 就有机会一同写入到磁盘中了。不过通常情况下第 3 步执行得会很快，所以 binlog 的 write 和 fsync 间的间隔时间短，导致能集合到一起持久化的 binlog 比较少，因此 binlog 的组提交的效果通常不如 redo log 的效果那么好。
+在将 redo log 写入到磁盘时，刷盘动作延迟到 `binlog write` 到 `page cache` 之后，这样 binlog 与 redo log 就有机会一同写入到磁盘中。不过通常情况下第 3 步执行得会很快，所以 binlog 的 write 和 fsync 间的间隔时间短，导致能集合到一起持久化的 binlog 比较少，因此 binlog 的组提交的效果通常不如 redo log 的效果那么好。
 
-如果你想提升 binlog 组提交的效果，可以通过设置 `binlog_group_commit_sync_delay` 和 `binlog_group_commit_sync_no_delay_count` 来实现：
+如果想提升 binlog 组提交的效果，可以通过设置 `binlog_group_commit_sync_delay` 和 `binlog_group_commit_sync_no_delay_count` 来实现：
 
 - `binlog_group_commit_sync_delay` 参数，表示延迟多少微秒后才调用 fsync; 
 - `binlog_group_commit_sync_no_delay_count` 参数，表示累积多少次以后才调用 fsync。
 
-这两个条件是或的关系，也就是说只要有一个满足条件就会调用 fsync。所以，当 `binlog_group_commit_sync_delay` 设置为 0 的时候，`binlog_group_commit_sync_no_delay_count` 也无效了。
+这两个条件是或的关系，所以当 `binlog_group_commit_sync_delay` 设置为 0 的时候，`binlog_group_commit_sync_no_delay_count` 也无效了。
 
 组提交策略原理：
 
 - redo log 与 binlog 都是顺序写，磁盘的顺序写比随机写要快。
-- 组提交策略，大幅度降低磁盘的 IOPS 消耗。
+- 组提交策略，大幅度降低磁盘的 IOPS 消耗。大幅降低的本质是**将多个事务的 redo log 和 binlog 进行了合并写入**，如果只是将单个事务的 redo log 和 binglog 合并的话那么性能提升并不是很明显。
 
 # 4. uodo 日志
 
 ## 4.1. `trx_id` 事务 ID
 
-`InnoDB` 记录行格式中：聚簇索引的记录除了会保存完整的用户数据以外，而且还会自动添加名为 `trx_id`、`roll_pointer` 的隐藏列，如果用户没有在表中定义主键以及 UNIQUE 键，还会自动添加一个名为 `row_id` 的隐藏列。所以一条记录在页面中的真实结构看起来就是这样的：
+`InnoDB` 记录行格式中：聚簇索引的记录除了会保存完整的用户数据以外，而且还会自动添加名为 `trx_id`、`roll_pointer` 的隐藏列，如果用户没有在表中定义主键以及 UNIQUE 键，还会自动添加一个名为 `row_id` 的隐藏列：
 
 ![](https://r2.129870.xyz/img/202209192249305.png)
 
-`trx_id` 列就是某个对这个聚簇索引记录做改动的语句所在的事务对应的 `事务 id` 而已（此处的改动可以是 `INSERT`、`DELETE`、`UPDATE` 操作）。
+`trx_id` 列是对这个聚簇索引记录做改动的语句所在的事务对应的 `事务 id` 。
 
 ## 4.2. undo 日志格式
 
-为了实现事务的 `原子性`，`InnoDB` 存储引擎在实际进行增、删、改一条记录时，都需要先把对应的 `undo 日志` 记下来，一般每对一条记录做一次改动，就对应着一条 `undo 日志`，但在某些更新记录的操作中，也可能会对应着 2 条 `undo 日志`。
+为了实现事务的 `原子性`，`InnoDB` 存储引擎在实际进行增、删、改一条记录时，都需要先把对应的 `undo 日志` 记下来，一次改动可能对应一条或者多条日志。
 
-一个事务在执行过程中可能新增、删除、更新若干条记录，也就是说需要记录很多条对应的 `undo 日志`，这些 `undo 日志` 会被从 `0` 开始编号，`第 0 号 undo 日志`、`第 1 号 undo 日志`、...、`第 n 号 undo 日志` 等，这个编号也被称之为 `undo no`。
+一个事务在执行过程中可能产生多条日志，编号递增，这个编号被称之为 `undo no`。
 
-这些 `undo 日志` 是被记录到[[Mysql的存储结构#3 5 File Header（文件头部）|页面类型]]为 `FIL_PAGE_UNDO_LOG`（对应的十六进制是 `0x0002`）的页面中。这些页面可以从系统表空间中分配，也可以从一种专门存放 `undo 日志` 的表空间，也就是所谓的 `undo tablespace` 中分配。
+ `undo 日志` 被记录到[[Mysql的存储结构#3 5 File Header（文件头部）|页面类型]]为 `FIL_PAGE_UNDO_LOG`的页面中。这些页面可以从系统表空间中分配，也可以从一种专门存放 `undo 日志` 的表空间（`undo tablespace`）中分配。
 
 ### 4.2.1. INSERT 操作的 undo 日志
 
-当我们向表中插入一条记录时这条记录被放到了一个数据页中，如果希望回滚这个插入操作，那么把这条记录删除就好了，也就是说在写对应的 `undo` 日志时，主要是把这条记录的主键信息记上。所以 Mysql 设计了一个类型为 `TRX_UNDO_INSERT_REC` 的 `undo 日志`，它的完整结构如下图所示：
+回滚插入操作，在对应的 `undo` 日志把这条记录的主键信息记上即可。所以 Mysql 设计了一个类型为 `TRX_UNDO_INSERT_REC` 的 `undo 日志`：
 
 ![](https://r2.129870.xyz/img/202209192253198.png)
 
-当我们向某个表中插入一条记录时，实际上需要向聚簇索引和所有的二级索引都插入一条记录。不过记录 undo 日志时，我们只需要考虑向聚簇索引插入记录时的情况就好了，因为聚簇索引记录和二级索引记录是一一对应的，我们**在回滚插入操作时，只需要知道这条记录的主键信息，然后根据主键信息做对应的删除操作，做删除操作时就会顺带着把所有二级索引中相应的记录也删除掉**。
+当向某个表中插入一条记录时，实际上需要向聚簇索引和所有的二级索引都插入一条记录。不过记录 undo 日志时，只需要考虑向聚簇索引插入记录时的情况就好了，因为聚簇索引记录和二级索引记录是一一对应的，**在回滚插入操作时，只需要知道这条记录的主键信息，然后根据主键信息做对应的删除操作，做删除操作时就会顺带着把所有二级索引中相应的记录也删除掉**。
 
 #### 4.2.1.1. `roll_pointer` 隐藏列的含义
 
-`roll_pointer` 这个占用 `7` 个字节的字段本质上就是一个指向记录对应的 `undo 日志` 的一个指针。比方说我们向表里插入了 2 条记录，每条记录都有与其对应的一条 `undo 日志`。记录被存储到了类型为 `FIL_PAGE_INDEX` 的页面中，`undo 日志` 被存放到了类型为 `FIL_PAGE_UNDO_LOG` 的页面中。效果如图所示：
+`roll_pointer` 这个占用 `7` 个字节的字段就是一个指向记录对应的 `undo 日志` 的一个指针。比方说我们向表里插入了 2 条记录，每条记录都有与其对应的一条 `undo 日志`。记录被存储到了类型为 `FIL_PAGE_INDEX` 的页面中，`undo 日志` 被存放到了类型为 `FIL_PAGE_UNDO_LOG` 的页面中。效果如图所示：
 
 ![](https://r2.129870.xyz/img/202209192256728.png)
 
 ### 4.2.2. DELETE 操作对应的 undo 日志
 
-插入到页面中的记录会根据记录头信息中的 `next_record` 属性组成一个单向链表，我们把这个链表称之为 `正常记录链表`；在数据页结构中，被删除的记录其实也会根据 [[Mysql的存储结构#2.1.1.3. 记录头信息|记录头信息]]中的 `next_record` 属性组成一个链表，只不过这个链表中的记录占用的存储空间可以被重新利用，所以也称这个链表为 `垃圾链表`。[[Mysql的存储结构#3 4 Page Header（页面头部）|Page Header]] 部分有一个称之为 `PAGE_FREE` 的属性，它指向由被删除记录组成的垃圾链表中的头节点。
+插入到页面中的记录会根据记录头信息中的 `next_record` 属性组成一个单向链表称之为 `正常记录链表`；在数据页结构中，被删除的记录其实也会根据 [[Mysql的存储结构#2.1.1.3. 记录头信息|记录头信息]]中的 `next_record` 属性组成一个链表，只不过这个链表中的记录占用的存储空间可以被重新利用，所以也称这个链表为 `垃圾链表`。[[Mysql的存储结构#3 4 Page Header（页面头部）|Page Header]] 部分有一个称之为 `PAGE_FREE` 的属性，它指向由被删除记录组成的垃圾链表中的头节点。
 
-我们假设某个数据页面中的记录分布情况是这样的：
+假设某个数据页面中的记录分布情况如下：
 
 ![](https://r2.129870.xyz/img/202209192259999.png)
 
-从图中可以看出，`正常记录链表` 中包含了 3 条正常记录，`垃圾链表` 里包含了 2 条已删除记录，在 `垃圾链表` 中的这些记录占用的存储空间可以被重新利用。页面的 `Page Header` 部分的 `PAGE_FREE` 属性的值代表指向 `垃圾链表` 头节点的指针。假设现在我们准备使用 `DELETE` 语句把 `正常记录链表` 中的最后一条记录给删除掉，其实这个删除的过程需要经历两个阶段：
+页面的 `Page Header` 部分的 `PAGE_FREE` 属性的值代表指向 `垃圾链表` 头节点的指针。当使用 `DELETE` 语句删除数据时需要经历两个阶段：
 
-8. 阶段一：仅仅将记录的 `delete_mask` 标识位设置为 `1`
+1. 阶段一：仅仅将记录的 `delete_mask` 标识位设置为 `1`
     其他字段不做修改（其实会修改记录的 `trx_id`、`roll_pointer` 这些隐藏列的值），Mysql 把这个阶段称之为 `delete mark`。**此时被删除的记录并没有被加入到 `垃圾链表`，也就是此时记录处于一个 `中间状态`，在删除语句所在的事务提交之前，被删除的记录一直都处于这种所谓的 `中间状态`**。
 
     ![](https://r2.129870.xyz/img/202209192302780.png)
@@ -524,24 +522,24 @@ redo log 与 binlog 通过事务 id 进行关联。
     > [!note] 只标记不移动的原因
     > </br>
     > 由于该删除操作对应的事务没有提交，因此不能将其移动到垃圾链表中，否则其它事务无法在数据链表中找到该数据。
-9. 阶段二：当该删除语句所在的事务提交之后，会有专门的线程后来真正的把记录删除掉。
-    所谓真正的删除就是把该记录从 `正常记录链表` 中移除，并且加入到 `垃圾链表` 中，然后还要调整一些页面的其他信息，比如页面中的用户记录数量 `PAGE_N_RECS`、上次插入记录的位置 `PAGE_LAST_INSERT`、垃圾链表头节点的指针 `PAGE_FREE`、页面中可重用的字节数量 `PAGE_GARBAGE`、还有页目录的一些信息等等。设计 `InnoDB` 的大叔把这个阶段称之为 `purge`。
+2. 阶段二：当该删除语句所在的事务提交之后，会有专门的线程后来真正的把记录删除掉。
+    把该记录从 `正常记录链表` 中移除，并且加入到 `垃圾链表` 中，然后调整页面的元信息，比如页面中的用户记录数量 `PAGE_N_RECS`、上次插入记录的位置 `PAGE_LAST_INSERT`、垃圾链表头节点的指针 `PAGE_FREE`、页面中可重用的字节数量 `PAGE_GARBAGE`、还有页目录的一些信息等等。这个阶段称之为 `purge`。
 
     ![](https://r2.129870.xyz/img/202209192302031.png)
 
     把 `阶段二` 执行完了，这条记录就算是真正的被删除掉了。这条已删除记录占用的存储空间也可以被重新利用了。
 
-    将被删除记录加入到 `垃圾链表` 时，实际上加入到链表的头节点处，会跟着修改 `PAGE_FREE` 属性的值。页面的 `Page Header` 部分有一个 `PAGE_GARBAGE` 属性，该属性记录着当前页面中可重用存储空间占用的总字节数。每**当有已删除记录被加入到垃圾链表后，都会把这个 `PAGE_GARBAGE` 属性的值加上该已删除记录占用的存储空间大小**。
+    将被删除记录加入到 `垃圾链表` 时，实际上加入到链表的头节点处，并会修改 `PAGE_FREE` 属性的值。页面的 `Page Header` 部分有一个 `PAGE_GARBAGE` 属性，该属性记录着当前页面中可重用存储空间占用的总字节数。每**当有已删除记录被加入到垃圾链表后，都会把这个 `PAGE_GARBAGE` 属性的值加上该已删除记录占用的存储空间大小**。
 
     `PAGE_FREE` 指向垃圾链表的头节点，之后每当新插入记录时，首先判断 `PAGE_FREE` 指向的头节点代表的已删除记录占用的存储空间是否足够容纳这条新插入的记录，**如果不可以容纳，就直接向页面中申请新的空间来存储这条记录**（并不会尝试遍历整个垃圾链表，找到一个可以容纳新记录的节点）**。如果可以容纳，那么直接重用这条已删除记录的存储空间，并且把 `PAGE_FREE` 指向垃圾链表中的下一条已删除记录**。
 
-    但是这里有一个问题，如果新插入的那条记录占用的存储空间大小小于垃圾链表的头节点占用的存储空间大小，那就意味头节点对应的记录占用的存储空间里有一部分空间用不到，这部分空间就被称之为碎片空间。那这些碎片空间岂不是永远都用不到了么？
+    如果新插入的那条记录占用的存储空间大小小于垃圾链表的头节点占用的存储空间大小，那就意味头节点对应的记录占用的存储空间里有一部分空间用不到，这部分空间就被称之为碎片空间。
+    
+    这些碎片空间占用的存储空间大小会被统计到 `PAGE_GARBAGE` 属性中，当页面快满时，如果再插入一条记录，此时页面中并不能分配一条完整记录的空间，这时候会判断 `PAGE_GARBAGE` 的空间和剩余可利用的空间加起来是不是可以容纳下这条记录，如果可以的话，InnoDB 会**尝试重新组织页内的记录**。
 
-    其实也不是，这些碎片空间占用的存储空间大小会被统计到 `PAGE_GARBAGE` 属性中，这些碎片空间在整个页面快使用完前并不会被重新利用，不过当页面快满时，如果再插入一条记录，此时页面中并不能分配一条完整记录的空间，这时候会首先看一看 `PAGE_GARBAGE` 的空间和剩余可利用的空间加起来是不是可以容纳下这条记录，如果可以的话，InnoDB 会**尝试重新组织页内的记录**。
+    重新组织的过程就是先开辟一个临时页面，把页面内的记录依次插入一遍，因为依次插入时并不会产生碎片，之后再把临时页面的内容复制到本页面，从而把碎片空间利用上。
 
-    重新组织的过程就是先开辟一个临时页面，把页面内的记录依次插入一遍，因为依次插入时并不会产生碎片，之后再把临时页面的内容复制到本页面，这样就可以把那些碎片空间都解放出来（很显然重新组织页面内的记录比较耗费性能）。
-
-从上边的描述中我们也可以看出来，**在删除语句所在的事务提交之前，只会经历 `阶段一`，也就是 `delete mark` 阶段**（提交之后我们就不用回滚了，所以只需考虑对删除操作的 `阶段一` 做的影响进行回滚）。Mysql 设计了一种称之为 `TRX_UNDO_DEL_MARK_REC` 类型的 `undo 日志`，它的完整结构如下图所示：
+**在删除语句所在的事务提交之前，只会经历 `阶段一`，也就是 `delete mark` 阶段**（提交之后我们就不用回滚了，所以只需考虑对删除操作的 `阶段一` 做的影响进行回滚）。Mysql 设计了一种称之为 `TRX_UNDO_DEL_MARK_REC` 类型的 `undo 日志`，它的完整结构如下图所示：
 
 ![](https://r2.129870.xyz/img/202209192308065.png)
 
@@ -571,36 +569,36 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 ##### 4.2.3.1.1. 就地更新（in-place update）
 
-更新记录时，对于被更新的每个列来说，如果更新后的列和更新前的列占用的存储空间都一样大，那么就可以进行 `就地更新`，也就是直接在原记录的基础上修改对应列的值。有任何一个被更新的列更新前比更新后占用的存储空间大，或者更新前比更新后占用的存储空间小都不能进行 `就地更新`。
+更新记录时，对于被更新的任意列来说，如果占用的存储空间未发生变化，那么就可以进行 `就地更新`。
 
 ##### 4.2.3.1.2. 删除后插入
 
-在不更新主键的情况下，如果有任何一个被更新的列更新前和更新后占用的存储空间大小不一致，那么就需要先把这条旧的记录从聚簇索引页面中删除掉，然后再根据更新后列的值创建一条新的记录插入到页面中。
+在不更新主键的情况下，如果有任何一个被更新的列存储空间大小不一致，那么就需要先把这条旧的记录从聚簇索引页面中删除掉，然后再根据更新后列的值创建一条新的记录插入到页面中。
 
-这里所说的 `删除` 并不是 `delete mark` 操作，而是真正的删除掉，也就是把这条记录从 `正常记录链表` 中移除并加入到 `垃圾链表` 中，并且修改页面中相应的统计信息（比如 `PAGE_FREE`、`PAGE_GARBAGE` 等这些信息）。不过这里做真正删除操作的线程并不是在 `DELETE` 语句中做 `purge` 操作时使用的另外专门的线程，而是**由用户线程同步执行真正的删除操作，真正删除之后紧接着就要根据各个列更新后的值创建的新记录插入**。
+这里所说的 `删除` 并不是 `delete mark` 操作，而是真正的删除掉，把这条记录从 `正常记录链表` 中移除并加入到 `垃圾链表` 中，并且修改页面中相应的统计信息（比如 `PAGE_FREE`、`PAGE_GARBAGE` 等信息）。删除操作**由用户线程同步执行，真正删除之后紧接着就要根据各个列更新后的值创建的新记录插入**。
 
-这里如果新创建的记录占用的存储空间大小不超过旧记录占用的空间，那么可以直接重用被加入到 `垃圾链表` 中的旧记录所占用的存储空间，否则的话需要在页面中新申请一段空间以供新记录使用，如果本页面内已经没有可用的空间的话，那就需要进行页面分裂操作，然后再插入新记录。
+如果新创建的记录占用的存储空间大小不超过旧记录占用的空间，那么可以直接重用被加入到 `垃圾链表` 中的旧记录所占用的存储空间，否则的话需要在页面中新申请一段空间以供新记录使用，如果本页面内已经没有可用的空间的话，那就需要进行页面分裂操作，然后再插入新记录。
 
-针对 `UPDATE` 不更新主键的情况（包括上边所说的就地更新和先删除旧记录再插入新记录），Mysql 设计了一种类型为 `TRX_UNDO_UPD_EXIST_REC` 的 `undo 日志`，它的完整结构如下：
+针对 `UPDATE` 不更新主键的情况（包括上边所说的就地更新和先删除旧记录再插入新记录），Mysql 设计了一种类型为 `TRX_UNDO_UPD_EXIST_REC` 的 `undo 日志`：
 
 ![](https://r2.129870.xyz/img/202209192315254.png)
 
-大部分属性和 `TRX_UNDO_DEL_MARK_REC` 类型的 `undo 日志` 是类似的，不过还是要注意这么几点：
+大部分属性和 `TRX_UNDO_DEL_MARK_REC` 类型的 `undo 日志` 是类似的：
 
 - `n_updated` 属性表示本条 `UPDATE` 语句执行后将有几个列被更新，后边跟着的 `<pos, old_len, old_value>` 分别表示被更新列在记录中的位置、更新前该列占用的存储空间大小、更新前该列的真实值。
 - 如果在 `UPDATE` 语句中更新的列包含索引列，那么也会添加 `索引列各列信息` 这个部分，否则的话是不会添加这个部分的。
 
 #### 4.2.3.2. 更新主键
 
-在聚簇索引中，记录是按照主键值的大小连成了一个单向链表的，如果我们更新了某条记录的主键值，意味着这条记录在聚簇索引中的位置将会发生改变。新旧两条记录在聚簇索引中就有可能离得非常远，甚至中间隔了好多个页面。针对 `UPDATE` 语句中更新了记录主键值的这种情况，`InnoDB` 在聚簇索引中分了两步处理：
+在聚簇索引中记录按照主键值的大小连成了一个单向链表，如果更新某条记录的主键值，意味着这条记录在聚簇索引中的位置将会发生改变。更新操作在聚簇索引中分了两步处理：
 
-10. 将旧记录进行 `delete mark` 操作
-    这里是 delete mark 操作！也就是说在 `UPDATE` 语句所在的事务提交前，对**旧记录只做一个 `delete mark` 操作，在事务提交后才由专门的线程做 purge 操作，把它加入到垃圾链表中**。这里一定要和我们上边所说的在不更新记录主键值时，先真正删除旧记录，再插入新记录的方式区分开！
+1. 将旧记录进行 `delete mark` 操作
+    这里是 delete mark 操作！也就是说在 `UPDATE` 语句所在的事务提交前，对**旧记录只做一个 `delete mark` 操作，在事务提交后才由专门的线程做 purge 操作，把它加入到垃圾链表中**。
     
     > [!note] 仅标记删除的原因
     > </br>
     > 为什么更新主键时采取 `delete mark` 操作，而不更新主键采取物理清除的方式呢？**因为在主键未更新的情况下可以继续通过该主键定位到数据（定位到新数据，再通过版本链获取老数据），因此可以删除；而主键更新的情况下需要使用老主键定位，所以需要将其保留。**
-11. 根据更新后各列的值创建一条新记录，并将其插入到聚簇索引中
+2. 根据更新后各列的值创建一条新记录，并将其插入到聚簇索引中
     由于更新后的记录主键值发生了改变，所以需要重新从聚簇索引中定位这条记录所在的位置，然后把它插进去。
 
 针对 `UPDATE` 语句更新记录主键值的这种情况，在对该记录进行 `delete mark` 操作前，会记录一条类型为 `TRX_UNDO_DEL_MARK_REC` 的 `undo 日志`；之后插入新记录时，会记录一条类型为 `TRX_UNDO_INSERT_REC` 的 `undo 日志`，也就是说每对一条记录的主键值做改动时，会记录 2 条 `undo 日志`。
@@ -609,27 +607,24 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 ### 4.3.1. undo 日志页面
 
-在介绍[[Mysql的存储结构#5 Mysql 的表空间|表空间]]的时候说过，表空间其实是由许许多多的页面构成的，页面默认大小为 `16KB`。这些页面有不同的类型，比如类型为 `FIL_PAGE_INDEX` 的页面用于存储聚簇索引以及二级索引，类型为 `FIL_PAGE_TYPE_FSP_HDR` 的页面用于存储表空间头部信息的，还有其他各种类型的页面，其中有一种称之为 `FIL_PAGE_UNDO_LOG` 类型的页面是专门用来存储 `undo 日志` 的，这种类型的页面的通用结构如下图所示（以默认的 `16KB` 大小为例）：
+ `undo 日志` 存储在 `FIL_PAGE_UNDO_LOG` 类型的页中：
 
 ![](https://r2.129870.xyz/img/202209192325621.png)
 
-`Undo Page Header` 是 `Undo 页面` 所特有的，我们来看一下它的结构：
+`Undo Page Header` 是 `Undo 页面` 所特有的：
 
 ![](https://r2.129870.xyz/img/202209192325479.png)
 
-- `TRX_UNDO_PAGE_TYPE` ：本页面准备存储什么种类的 `undo 日志`。
-    我们前边介绍了好几种类型的 `undo 日志`，它们可以被分为两个大类：
-    -  `TRX_UNDO_INSERT`（使用十进制 `1` 表示）
-        类型为 `TRX_UNDO_INSERT_REC` 的 `undo 日志` 属于此大类，一般由 `INSERT` 语句产生，或者在 `UPDATE` 语句中有更新主键的情况也会产生此类型的 `undo 日志`。
-    -  `TRX_UNDO_UPDATE`（使用十进制 `2` 表示）
-        除了类型为 `TRX_UNDO_INSERT_REC` 的 `undo 日志`，其他类型的 `undo 日志` 都属于这个大类，比如 `TRX_UNDO_DEL_MARK_REC`、`TRX_UNDO_UPD_EXIST_REC`，一般由 `DELETE`、`UPDATE` 语句产生的 `undo 日志` 属于这个大类。
+- `TRX_UNDO_PAGE_TYPE` ： `undo 日志` 类型
+    -  `TRX_UNDO_INSERT`
+        一般由 `INSERT` 语句产生，或者在 `UPDATE` 语句中有更新主键的情况也会产生此类型的 `undo 日志`。
+    -  `TRX_UNDO_UPDATE`
+        其他类型的 `undo 日志` 都属于这个大类，比如 `TRX_UNDO_DEL_MARK_REC`、`TRX_UNDO_UPD_EXIST_REC`，一般由 `DELETE`、`UPDATE` 语句产生的 `undo 日志` 属于这个大类。
 
-    这个 `TRX_UNDO_PAGE_TYPE` 属性可选的值就是上边的两个，用来标记本页面用于存储哪个大类的 `undo 日志`，不同大类的 `undo 日志` 不能混着存储，比如一个 `Undo 页面` 的 `TRX_UNDO_PAGE_TYPE` 属性值为 `TRX_UNDO_INSERT`，那么这个页面就只能存储类型为 `TRX_UNDO_INSERT_REC` 的 `undo 日志`，其他类型的 `undo 日志` 就不能放到这个页面中了。
+    不同大类的 `undo 日志` 不能混着存储。之所以把 undo 日志分成两个大类，是因为**类型为 TRX_UNDO_INSERT_REC 的 undo 日志在事务提交后可以直接删除掉，而其他类型的 undo 日志还需要进行 MVCC 服务，不能直接删除掉**。
 
-    之所以把 undo 日志分成两个大类，是因为**类型为 TRX_UNDO_INSERT_REC 的 undo 日志在事务提交后可以直接删除掉，而其他类型的 undo 日志还需要为所谓的 MVCC 服务，不能直接删除掉**，对它们的处理需要区别对待。
-
-- `TRX_UNDO_PAGE_START` ：表示在当前页面中是从什么位置开始存储 `undo 日志` 的，或者说表示第一条 `undo 日志` 在本页面中的起始偏移量。
-- `TRX_UNDO_PAGE_FREE` ：与上边的 `TRX_UNDO_PAGE_START` 对应，表示当前页面中存储的最后一条 `undo` 日志结束时的偏移量，或者说从这个位置开始，可以继续写入新的 `undo 日志`。
+- `TRX_UNDO_PAGE_START` ：表示第一条 `undo 日志` 在本页面中的起始偏移量。
+- `TRX_UNDO_PAGE_FREE` ：表示当前页面中存储的最后一条 `undo` 日志结束时的偏移量。
     ![](https://r2.129870.xyz/img/202209192328749.png)
 - `TRX_UNDO_PAGE_NODE` ：代表一个 `List Node` 结构，链表的普通节点。
 
@@ -637,106 +632,100 @@ redo log 与 binlog 通过事务 id 进行关联。
 
 #### 4.3.2.1. 单个事务中的 Undo 页面链表
 
-因为一个事务可能包含多个语句，而且一个语句可能对若干条记录进行改动，而对每条记录进行改动前，都需要记录 1 条或 2 条的 `undo 日志`，所以在一个事务执行过程中可能产生很多 `undo 日志`，这些日志可能一个页面放不下，需要放到多个页面中，这些页面就通过我们上边介绍的 `TRX_UNDO_PAGE_NODE` 属性连成了链表：
+一个事务执行过程中可能产生很多 `undo 日志`，需要放到多个页面中，这些页面通过 `TRX_UNDO_PAGE_NODE` 属性连成了链表：
 
 ![](https://r2.129870.xyz/img/202209192329507.png)
 
-链表中的第一个 `Undo 页面` 称它为 `first undo page`，其余的 `Undo 页面` 称之为 `normal undo page`，这是因为在 `first undo page` 中除了记录 `Undo Page Header` 之外，还会记录其他的一些管理信息。
+链表中的第一个 `Undo 页面` 称它为 `first undo page`，其余的 `Undo 页面` 称之为 `normal undo page`，在 `first undo page` 中除了记录 `Undo Page Header` 之外，还会记录其他的一些管理信息。
 
-在一个事务执行过程中，可能混着执行 `INSERT`、`DELETE`、`UPDATE` 语句，也就意味着会产生不同类型的 `undo 日志`。但是我们前边又强调过，同一个 `Undo 页面` 要么只存储 `TRX_UNDO_INSERT` 大类的 `undo 日志`，要么只存储 `TRX_UNDO_UPDATE` 大类的 `undo 日志`，不能混着存，所以在**一个事务执行过程中就可能需要 2 个 `Undo 页面` 的链表，一个称之为 `insert undo 链表`，另一个称之为 `update undo 链表`** ：
+在一个事务执行过程中可能混着执行 `INSERT`、`DELETE`、`UPDATE` 语句，会产生不同类型的 `undo 日志`。同一个 `Undo 页面` 要么只存储 `TRX_UNDO_INSERT` 大类的 `undo 日志`，要么只存储 `TRX_UNDO_UPDATE` 大类的 `undo 日志`，所以在**一个事务执行过程中就可能需要 2 个 `Undo 页面` 的链表，一个称之为 `insert undo 链表`，另一个称之为 `update undo 链表`** ：
 
 ![](https://r2.129870.xyz/img/202209192330031.png)
 
-另外，Mysql 对**普通表和临时表的记录改动时产生的 `undo 日志` 要分别记录**，所以在一个事务中最多有 4 个以 `Undo 页面` 为节点组成的链表：
+另外，对**普通表和临时表的记录改动时产生的 `undo 日志` 要分别记录**，所以在一个事务中最多有 4 个以 `Undo 页面` 为节点组成的链表：
 
 ![](https://r2.129870.xyz/img/202209192331535.png)
 
-当然，并不是在事务一开始就会为这个事务分配这 4 个链表，而是按需分配，啥时候需要啥时候再分配，不需要就不分配。
+事务进行过程中按需分配这些链表。
 
 #### 4.3.2.2. 多个事务中的 Undo 页面链表
 
-为了尽可能提高 `undo 日志` 的写入效率，不同事务执行过程中产生的 undo 日志需要被写入到不同的 Undo 页面链表中，如以下的例子：
+为了尽可能提高 `undo 日志` 的写入效率，不同事务执行过程中产生的 undo 日志会被写入到不同的 Undo 页面链表中：
 
 ![](https://r2.129870.xyz/img/202209192332187.png)
-
-如果有更多的事务，那就意味着可能会产生更多的 `Undo 页面` 链表。
 
 ### 4.3.3. undo 日志具体写入过程
 
 #### 4.3.3.1. Undo Log Segment Header
 
-Mysql 规定，每一个 `Undo 页面` 链表都对应着一个[[Mysql的存储结构#5 2 1 独立表空间|段]]，称之为 `Undo Log Segment`。也就是说链表中的页面都是从这个段里边申请的，所以他们在 `Undo 页面` 链表的第一个页面，也就是上边提到的 `first undo page` 中设计了一个称之为 `Undo Log Segment Header` 的部分，这个部分中包含了该链表对应的段的 `segment header` 信息以及其他的一些关于这个段的信息，所以 `Undo` 页面链表的第一个页面其实长这样：
+每一个 `Undo 页面` 链表都对应着一个[[Mysql的存储结构#5 2 1 独立表空间|段]]，称之为 `Undo Log Segment`，链表中的页面都是从这个段里边申请的。在 `Undo 页面` 链表的第一个页面 `first undo page` 中有一个 `Undo Log Segment Header` 部分，这个部分中包含了该链表对应的段的 `segment header` 信息以及其他的一些关于这个段的信息：
 
 ![](https://r2.129870.xyz/img/202209192334294.png)
 
-这个 `Undo` 链表的第一个页面比普通页面多了个 `Undo Log Segment Header`，我们来看一下它的结构：
+ `Undo Log Segment Header` 结构如下：
 
 ![](https://r2.129870.xyz/img/202209192335369.png)
 
 其中各个属性的意思如下：
 
-- `TRX_UNDO_STATE` ：本 `Undo 页面` 链表处在什么状态。
-    一个 `Undo Log Segment` 可能处在的状态包括：
-    - `TRX_UNDO_ACTIVE` ：活跃状态，也就是一个活跃的事务正在往这个段里边写入 `undo 日志`。
-    - `TRX_UNDO_CACHED` ：被缓存的状态。处在该状态的 `Undo 页面` 链表等待着之后被其他事务重用。
+- `TRX_UNDO_STATE` ：本 `Undo 页面` 链表状态
+    - `TRX_UNDO_ACTIVE` ：活跃状态，一个活跃的事务正在往这个段里边写入 `undo 日志`。
+    - `TRX_UNDO_CACHED` ：被缓存的状态，处在该状态的 `Undo 页面` 链表等待着之后被其他事务重用。
     - `TRX_UNDO_TO_FREE` ：对于 `insert undo` 链表来说，如果在它对应的事务提交之后，该链表不能被重用，那么就会处于这种状态。
     - `TRX_UNDO_TO_PURGE` ：对于 `update undo` 链表来说，如果在它对应的事务提交之后，该链表不能被重用，那么就会处于这种状态。
     - `TRX_UNDO_PREPARED` ：包含处于 `PREPARE` 阶段的事务产生的 `undo 日志`。
-        事务的 PREPARE 阶段是在所谓的分布式事务中才出现的。
+        事务的 PREPARE 阶段在分布式事务中才出现的。
 - `TRX_UNDO_LAST_LOG` ：本 `Undo 页面` 链表中最后一个 `Undo Log Header` 的位置。
 - `TRX_UNDO_FSEG_HEADER` ：本 `Undo 页面` 链表对应的段的 [[Mysql的存储结构#5 2 1 4 段的结构 INODE Entry|Segment Header]] 信息。
 - `TRX_UNDO_PAGE_LIST` ：`Undo 页面` 链表的基节点。
-    `Undo 页面` 的 `Undo Page Header` 部分有一个 12 字节大小的 `TRX_UNDO_PAGE_NODE` 属性，这个属性代表一个 `List Node` 结构。每一个 `Undo 页面` 都包含 `Undo Page Header` 结构，这些页面就可以通过这个属性连成一个链表。这个 `TRX_UNDO_PAGE_LIST` 属性代表着这个链表的基节点，当然这个基节点只存在于 `Undo 页面` 链表的第一个页面，也就是 `first undo page` 中。
 
 #### 4.3.3.2. Undo Log Header
 
-一个事务在向 `Undo 页面` 中写入 `undo 日志` 时的方式是十分简单暴力的，就是直接往里怼，写完一条紧接着写另一条，各条 `undo 日志` 之间是亲密无间的。写完一个 `Undo 页面` 后，再从段里申请一个新页面，然后把这个页面插入到 `Undo 页面` 链表中，继续往这个新申请的页面中写。
+一个事务在向 `Undo 页面` 中写入 `undo 日志` 是连续写入的。写完一个 `Undo 页面` 后，再从段里申请一个新页面，然后把这个页面插入到 `Undo 页面` 链表中，继续往这个新申请的页面中写。
 
-Mysql 认为同一个事务向一个 `Undo 页面` 链表中写入的 `undo 日志` 算是一个组，比方说 `trx 1` 会分配 3 个 `Undo 页面` 链表，也就会写入 3 个组的 `undo 日志`；`trx 2` 会分配 2 个 `Undo 页面` 链表，也就会写入 2 个组的 `undo 日志`。在每写入一组 `undo 日志` 时，都会在这组 `undo 日志` 前先记录一下关于这个组的一些属性。
-
-Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo 页面` 链表的第一个页面在真正写入 `undo 日志` 前，其实都会被填充 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 这 3 个部分，如图所示：
+同一个事务向一个 `Undo 页面` 链表中写入的 `undo 日志` 算是一个组，在每写入一组 `undo 日志` 时，都会在这组 `undo 日志` 前先记录关于这个组的一些属性：
 
 ![](https://r2.129870.xyz/img/202209192341738.png)
 
-这个 `Undo Log Header` 具体的结构如下：
+`Undo Log Header` 具体的结构如下：
 
 ![](https://r2.129870.xyz/img/202209192341254.png)
 
-- `TRX_UNDO_TRX_ID` ：生成本组 `undo 日志` 的事务 `id`。
-- `TRX_UNDO_TRX_NO` ：事务提交后生成的一个序号，使用此序号来标记事务的提交顺序（先提交的此序号小，后提交的此序号大）。
-- `TRX_UNDO_DEL_MARKS` ：标记本组 `undo` 日志中是否包含由于 `Delete mark` 操作产生的 `undo 日志`。
-- `TRX_UNDO_LOG_START` ：表示本组 `undo` 日志中第一条 `undo 日志` 的在页面中的偏移量。
+- `TRX_UNDO_TRX_ID` ：本组 `undo 日志` 的事务 `id`。
+- `TRX_UNDO_TRX_NO` ：事务提交后生成的一个序号，使用此序号来标记事务的提交顺序。
+- `TRX_UNDO_DEL_MARKS` ：本组 `undo` 日志中是否包含由于 `Delete mark` 操作产生的 `undo 日志`。
+- `TRX_UNDO_LOG_START` ：本组 `undo` 日志中第一条 `undo 日志` 的在页面中的偏移量。
 - `TRX_UNDO_XID_EXISTS` ：本组 `undo 日志` 是否包含 XID 信息。
-- `TRX_UNDO_DICT_TRANS` ：标记本组 `undo 日志` 是不是由 DDL 语句产生的。
-- `TRX_UNDO_TABLE_ID` ：如果 `TRX_UNDO_DICT_TRANS` 为真，那么本属性表示 DDL 语句操作的表的 `table id`。
+- `TRX_UNDO_DICT_TRANS` ：标记本组 `undo 日志` 是否由 DDL 语句产生。
+- `TRX_UNDO_TABLE_ID` ：如果 `TRX_UNDO_DICT_TRANS` 为 true，那么本属性表示 DDL 语句操作的表的 `table id`。
 - `TRX_UNDO_NEXT_LOG` ：下一组的 `undo 日志` 在页面中开始的偏移量。
 - `TRX_UNDO_PREV_LOG` ：上一组的 `undo 日志` 在页面中开始的偏移量。
-    一般来说一个 Undo 页面链表只存储一个事务执行过程中产生的一组 undo 日志，但是在某些情况下，可能会在一个事务提交之后，之后开启的事务重复利用这个 Undo 页面链表，这样就会导致一个 Undo 页面中可能存放多组 Undo 日志。`TRX_UNDO_NEXT_LOG` 和 `TRX_UNDO_PREV_LOG` 就是用来标记下一组和上一组 undo 日志在页面中的偏移量的。。
+    一般来说一个 Undo 页面链表只存储一个事务执行过程中产生的一组 undo 日志，但是在某些情况下，可能会在一个事务提交之后，之后开启的事务重复利用这个 Undo 页面链表，这样就会导致一个 Undo 页面中可能存放多组 Undo 日志。
 - `TRX_UNDO_HISTORY_NODE` ：一个 12 字节的 `List Node` 结构，代表一个称之为 `History` 链表的节点。
 
-对于没有被重用的 `Undo 页面` 链表来说，链表的第一个页面，也就是 `first undo page` 在真正写入 `undo 日志` 前，会填充 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 这 3 个部分，之后才开始正式写入 `undo 日志`。对于其他的页面来说，也就是 `normal undo page` 在真正写入 `undo 日志` 前，只会填充 `Undo Page Header`。链表的 `List Base Node` 存放到 `first undo page` 的 `Undo Log Segment Header` 部分，`List Node` 信息存放到每一个 `Undo 页面` 的 `undo Page Header` 部分，所以画一个 `Undo 页面` 链表的示意图就是这样：
+对于没有被重用的 `Undo 页面` 链表， `first undo page` 在真正写入 `undo 日志` 前，会填充 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 这 3 个部分，之后才开始正式写入 `undo 日志`。对于其他的页面在真正写入 `undo 日志` 前，只会填充 `Undo Page Header`。链表的 `List Base Node` 存放到 `first undo page` 的 `Undo Log Segment Header` 部分：
 
 ![](https://r2.129870.xyz/img/202209192343558.png)
 
 ### 4.3.4. 重用 Undo 页面
 
-我们前边说为了能提高并发执行的多个事务写入 `undo 日志` 的性能，Mysql 决定为每个事务单独分配相应的 `Undo 页面` 链表（最多可能单独分配 4 个链表）。但是这样也造成了一些问题，比如其实大部分事务执行过程中可能只修改了一条或几条记录，针对某个 `Undo 页面` 链表只产生了非常少的 `undo 日志`，这些 `undo 日志` 可能只占用一丢丢存储空间，每开启一个事务就新创建一个 `Undo 页面` 链表（虽然这个链表中只有一个页面）来存储这么一丢丢 `undo 日志` 岂不是太浪费了么？于是决定**在事务提交后在某些情况下重用该事务的 `Undo 页面` 链表**。一个 `Undo 页面` 链表是否可以被重用的条件很简单：
+为了能提高并发执行的多个事务写入 `undo 日志` 的性能，Mysql 为每个事务单独分配相应的 `Undo 页面` 链表。在事务修改数据比较少的情况下页面浪费空间大，于是**在事务提交后在某些情况下可以重用该事务的 `Undo 页面` 链表**：
 
-12. 该链表中只包含一个 `Undo 页面`。
-    如果一个事务执行过程中产生了非常多的 `undo 日志`，那么它可能申请非常多的页面加入到 `Undo 页面` 链表中。在该事物提交后，如果将整个链表中的页面都重用，那就意味着即使新的事务并没有向该 `Undo 页面` 链表中写入很多 `undo 日志`，那该链表中也得维护非常多的页面，那些用不到的页面也不能被别的事务所使用，这样就造成了另一种浪费。所以设计 `InnoDB` 的大叔们规定，只有在 `Undo 页面` 链表中只包含一个 `Undo 页面` 时，该链表才可以被下一个事务所重用。
-13. 该 `Undo 页面` 已经使用的空间小于整个页面空间的 3/4。
+1. 该链表中只包含一个 `Undo 页面`。
+    只有在 `Undo 页面` 链表中只包含一个 `Undo 页面` 时，该链表才可以被下一个事务所重用。不复用更多页面的原因是避免上一个事务的页面无法被充分复用。
+2. 该 `Undo 页面` 已经使用的空间小于整个页面空间的 3/4。
 
-我们前边说过，`Undo 页面` 链表按照存储的 `undo 日志` 所属的大类可以被分为 `insert undo 链表` 和 `update undo 链表` 两种，这两种链表在被重用时的策略也是不同的，我们分别看一下：
+`Undo 页面` 链表按照存储的 `undo 日志` 所属的大类可以被分为 `insert undo 链表` 和 `update undo 链表` 两种，这两种链表在被重用时的策略也是不同的：
 
 - `insert undo 链表`
-    `insert undo 链表` 中只存储类型为 `TRX_UNDO_INSERT_REC` 的 `undo 日志`，这种类型的 `undo 日志` 在事务提交之后就没用了，就可以被清除掉。所以在某个事务提交后，重用这个事务的 `insert undo 链表` 时，可以直接把之前事务写入的一组 `undo 日志` 覆盖掉，从头开始写入新事务的一组 `undo 日志`，如下图所示：
+    `insert undo 链表` 在事务提交之后就可以被清除掉。重用这个事务的 `insert undo 链表` 时，可以直接把之前事务写入的一组 `undo 日志` 覆盖掉，从头开始写入新事务的一组 `undo 日志`：
 
     ![](https://r2.129870.xyz/img/202209192345918.png)
 
-    当然，在重用 Undo 页面链表写入新的一组 undo 日志时，不仅会写入新的 Undo Log Header，还会适当调整 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 中的一些属性，比如 `TRX_UNDO_PAGE_START`、`TRX_UNDO_PAGE_FREE` 等。
+    在重用 Undo 页面链表写入新的一组 undo 日志时，不仅会写入新的 Undo Log Header，还会适当调整 `Undo Page Header`、`Undo Log Segment Header`、`Undo Log Header` 中的一些属性，比如 `TRX_UNDO_PAGE_START`、`TRX_UNDO_PAGE_FREE` 等。
 
 - `update undo 链表`
-    在一个事务提交后，它的 `update undo 链表` 中的 `undo 日志` 也不能立即删除掉（这些日志用于 MVCC）。所以如果之后的事务想重用 `update undo 链表` 时，就不能覆盖之前事务写入的 `undo 日志`。这样就相当于在同一个 `Undo 页面` 中写入了多组的 `undo 日志`，效果看起来就是这样：
+    在一个事务提交后，它的 `update undo 链表` 中的 `undo 日志` 也不能立即删除掉（这些日志用于 MVCC）。所以如果之后的事务想重用 `update undo 链表` 时，就不能覆盖之前事务写入的 `undo 日志`。这样就相当于在同一个 `Undo 页面` 中写入了多组的 `undo 日志`：
 
     ![](https://r2.129870.xyz/img/202209192347690.png)
 
@@ -744,17 +733,14 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo �
 
 #### 4.3.5.1. 回滚段的结构
 
-我们现在知道一个事务在执行过程中最多可以分配 4 个 `Undo 页面` 链表，在同一时刻不同事务拥有的 `Undo 页面` 链表是不一样的，所以在同一时刻系统里其实可以有许许多多个 `Undo 页面` 链表存在。为了更好的管理这些链表，Mysql 又设计了一个称之为 `Rollback Segment Header` 的页面，在这个页面中存放了各个 `Undo 页面` 链表的 `frist undo page` 的 `页号`，他们把这些 `页号` 称之为 `undo slot`。
+为了管理 undo 日志的链表，Mysql 设计了一个称之为 `Rollback Segment Header` 的页面，在这个页面中存放了各个 `Undo 页面` 链表的 `frist undo page` 的 `页号`，这些 `页号` 称之为 `undo slot`。
 
 ![](https://r2.129870.xyz/img/202209192348444.png)
 
-每一个 `Rollback Segment Header` 页面都对应着一个段，这个段就称为 `Rollback Segment`，翻译过来就是 `回滚段`。与我们之前介绍的各种段不同的是，这个 `Rollback Segment` 里其实只有一个页面。我们再来看看这个称之为 `Rollback Segment Header` 的页面的各个部分的含义都是啥意思：
+每一个 `Rollback Segment Header` 页面都对应着一个段，这个段就称为 `Rollback Segment`。这个 `Rollback Segment` 里其实只有一个页面：
 
 - `TRX_RSEG_MAX_SIZE` ：本 `Rollback Segment` 中管理的所有 `Undo 页面` 链表中的 `Undo 页面` 数量之和的最大值。
-    换句话说，本 `Rollback Segment` 中所有 `Undo 页面` 链表中的 `Undo 页面` 数量之和不能超过 `TRX_RSEG_MAX_SIZE` 代表的值。该属性的值默认为无限大，也就是我们想写多少 `Undo 页面` 都可以。
-
-    无限大其实也只是个夸张的说法，4 个字节能表示最大的数也就是 `0xFFFFFFFF`，但是 `0xFFFFFFFF` 这个数有特殊用途，所以实际上 `TRX_RSEG_MAX_SIZE` 的值为 `0xFFFFFFFE`。
-
+    本 `Rollback Segment` 中所有 `Undo 页面` 链表中的 `Undo 页面` 数量之和不能超过 `TRX_RSEG_MAX_SIZE` 代表的值。
 - `TRX_RSEG_HISTORY_SIZE` ：`History` 链表占用的页面数量。
 - `TRX_RSEG_HISTORY` ：`History` 链表的基节点。
 - `TRX_RSEG_FSEG_HEADER` ：本 `Rollback Segment` 对应的 10 字节大小的 `Segment Header` 结构，通过它可以找到本段对应的 `INODE Entry`。
@@ -763,7 +749,7 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo �
 
 #### 4.3.5.2. 从回滚段中申请 Undo 页面链表
 
-初始情况下，由于未向任何事务分配任何 `Undo 页面` 链表，所以对于一个 `Rollback Segment Header` 页面来说，它的各个 `undo slot` 都被设置成了一个特殊的值：`FIL_NULL`（对应的十六进制就是 `0xFFFFFFFF`），表示该 `undo slot` 不指向任何页面。
+初始情况下，由于未向任何事务分配任何 `Undo 页面` 链表，所以对于一个 `Rollback Segment Header` 页面来说，它的各个 `undo slot` 都被设置成了一个特殊的值：`FIL_NULL`，表示该 `undo slot` 不指向任何页面。
 
 随着时间的流逝，开始有事务需要分配 `Undo 页面` 链表了，就从回滚段的第一个 `undo slot` 开始，看看该 `undo slot` 的值是不是 `FIL_NULL` ：
 
@@ -835,20 +821,20 @@ Mysql 把存储这些属性的地方称之为 `Undo Log Header`。所以 `Undo �
 
 接下来我们以事务对普通表的记录做改动为例，给大家梳理一下事务执行过程中分配 `Undo 页面` 链表时的完整过程：
 
-14. 获取回滚段
+3. 获取回滚段
     事务在执行过程中对普通表的记录首次做改动之前，首先会到系统表空间的第 `5` 号页面中分配一个回滚段（其实就是获取一个 `Rollback Segment Header` 页面的地址）。一旦某个回滚段被分配给了这个事务，那么之后该事务中再对普通表的记录做改动时，就不会重复分配了。
 
     使用 `round-robin`（循环使用）方式来分配回滚段。比如当前事务分配了第 `0` 号回滚段，那么下一个事务就要分配第 `33` 号回滚段，下下个事务就要分配第 `34` 号回滚段，简单一点的说就是这些回滚段被轮着分配给不同的事务。
 
-15. 查看是否有可重用页面
+4. 查看是否有可重用页面
     在分配到回滚段后，首先看一下这个回滚段的两个 `cached 链表` 有没有已经缓存了的 `undo slot`，比如如果事务做的是 `INSERT` 操作，就去回滚段对应的 `insert undo cached 链表` 中看看有没有缓存的 `undo slot`；如果事务做的是 `DELETE` 操作，就去回滚段对应的 `update undo cached 链表` 中看看有没有缓存的 `undo slot`。如果有缓存的 `undo slot`，那么就把这个缓存的 `undo slot` 分配给该事务。
-16. 无可重用页面，申请新页面
+5. 无可重用页面，申请新页面
     如果没有缓存的 `undo slot` 可供分配，那么就要到 `Rollback Segment Header` 页面中找一个可用的 `undo slot` 分配给当前事务。
 
     从 `Rollback Segment Header` 页面中分配可用的 `undo slot` 的方式我们上边也说过了，就是从第 `0` 个 `undo slot` 开始，如果该 `undo slot` 的值为 `FIL_NULL`，意味着这个 `undo slot` 是空闲的，就把这个 `undo slot` 分配给当前事务，否则查看第 `1` 个 `undo slot` 是否满足条件，依次类推，直到最后一个 `undo slot`。如果这 `1024` 个 `undo slot` 都没有值为 `FIL_NULL` 的情况，就直接报错喽（一般不会出现这种情况）～
 
-17. 配置 uodo 日志页
+6. 配置 uodo 日志页
     找到可用的 `undo slot` 后，如果该 `undo slot` 是从 `cached 链表` 中获取的，那么它对应的 `Undo Log Segment` 已经分配了，否则的话需要重新分配一个 `Undo Log Segment`，然后从该 `Undo Log Segment` 中申请一个页面作为 `Undo 页面` 链表的 `first undo page`。
-18. 写入 undo 日志
+7. 写入 undo 日志
     然后事务就可以把 `undo 日志` 写入到上边申请的 `Undo 页面` 链表了！
 
