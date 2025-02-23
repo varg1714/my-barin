@@ -43,7 +43,7 @@ PHP is the best programming language.
 Javascript is the best programming language.
 ```
 
-通过分词器将每个文档的内容域拆分成单独的词（我们称它为词条或 Term），创建一个包含所有不重复词条的排序列表，然后列出每个词条出现在哪个文档。这种结构由文档中所有不重复词的列表构成，对于其中每个词都有一个文档列表与之关联。这种由属性值来确定记录的位置的结构就是倒排索引。带有倒排索引的文件我们称为倒排文件。
+通过分词器将每个文档的内容域拆分成单独的词（我们称它为词条或 Term），创建一个包含所有不重复词条的排序列表，然后列出每个词条出现在哪个文档。这个结构称为倒排索引。
 
 ![image.png](https://r2.129870.xyz/img/202309101735990.png)
 
@@ -58,12 +58,12 @@ Javascript is the best programming language.
 - 倒排文件（Inverted File）
     存储倒排索引的物理文件。
 
-从上图我们可以了解到倒排索引主要由两个部分组成：
+即倒排索引主要由两个部分组成：
 
 - 词典
 - 倒排文件
 
-词典和倒排表是 Lucene 中很重要的两种数据结构，是实现快速检索的重要基石。词典和倒排文件是分两部分存储的，词典在内存中而倒排文件存储在磁盘上。
+词典和倒排文件是分两部分存储的，词典在内存中而倒排文件存储在磁盘上。
 
 ## 1.3. 集群
 
@@ -73,7 +73,7 @@ ES 集群由一个或多个 Elasticsearch 节点组成，每个节点配置相�
 
 ### 1.3.1. 集群的发现
 
-[Zen Discovery](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-zen.html) 是 ES 的内置默认发现模块（发现模块的职责是发现集群中的节点以及选举 Master 节点）。它提供单播和基于文件的发现，并且可以扩展为通过插件支持云环境和其他形式的发现。Zen Discovery 可与其他模块集成，例如，节点之间的所有通信都使用 Transport 模块完成。节点使用发现机制通过 Ping 的方式查找其他节点。
+[Zen Discovery](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-zen.html) 是 ES 的内置默认发现模块（发现集群中的节点以及选举 Master 节点）。它提供单播和基于文件的发现，并且可以扩展为通过插件支持云环境和其他形式的发现。Zen Discovery 可与其他模块集成，例如，节点之间的所有通信都使用 Transport 模块完成。节点使用发现机制通过 Ping 的方式查找其他节点。
 
 ![](https://r2.129870.xyz/img/202309110126695.png)
 
@@ -111,12 +111,12 @@ master 节点的选举过程如下：
     3.  包括本节点在内，当前已有超过 minimum_master_nodes 个节点没有连接到 master。
     
     即当一个节点发现包括自己在内的多数派的 master-eligible 节点认为集群没有 master 时，就可以发起 master 选举。
-1. 选举的对象
+2. 选举的对象
     1. 节点的状态越新，优先级越高
         clusterStateVersion 越大数据状态越新。
     2. 当 clusterStateVersion 相同时，节点的 Id 越小，优先级越高。
         根据 ID 是为了保持选举的稳定性。
-1. 选举的流程
+2. 选举的流程
     - 假设 Node_A 选 Node_B 当 Master  
         Node_A 会向 Node_B 发送 join 请求，那么此时会有以下几种情况：
         1. 如果 Node_B 已经成为 Master  
@@ -283,17 +283,13 @@ $$
 shard=hash(routing) \% number\_of\_primary\_shards
 $$
 
-Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个自定义的值。Routing 通过 Hash 函数生成一个数字，然后这个数字再除以 `number_of_primary_shards`（主分片的数量）后得到余数。
-
-因此**在创建索引的时候就需要确定主分片的数量并且永远无法改变这个数量**，因为如果数量变化了，那么所有之前路由的值都会无效，文档也再也找不到了。
+Routing 是一个可变值，默认是文档的 `_id`，也可以设置成一个自定义的值。**在创建索引的时候就需要确定主分片的数量并且永远无法改变这个数量**，因为如果数量变化了，那么所有之前路由的值都会无效。
 
 ES 集群中每个节点都有处理读写请求的能力。在一个写请求被发送到某个节点后，协调节点会根据路由公式计算出需要写到哪个分片上，再将请求转发到该分片的主分片节点上。
 
 ![image.png](https://r2.129870.xyz/img/202309101915606.png)
 
-每次写入的时候，写入请求会先根据_routing 规则选择发给哪个 Shard，Index Request 中可以设置使用哪个 Filed 的值作为路由参数，如果没有设置，则使用 Mapping 中的配置，如果 Mapping 中也没有配置，则使用 id 作为路由参数。然后通过 routing 的 Hash 值选择出 Shard，最后从集群的 Meta 中找出该 Shard 的 Primary 节点。
-
-请求接着会发送给 Primary Shard，在 Primary Shard 上执行成功后，再从 Primary Shard 上将请求同时发送给多个 Replica Shard，请求在多个 Replica Shard 上执行成功并返回给 Primary Shard 后，写入请求执行成功，返回结果给客户端。
+每次写入的时候，写入请求会先通过 routing 的 Hash 值选择出 Shard，最后从集群的 Meta 中找出该 Shard 的 Primary 节点。之后请求会发送给 Primary Shard，在 Primary Shard 上执行成功后，再从 Primary Shard 上将请求同时发送给多个 Replica Shard，请求在多个 Replica Shard 上执行成功并返回给 Primary Shard 后，写入请求执行成功，返回结果给客户端。
 
 这种模式下，写入操作的延时就等于 latency = Latency (Primary Write) + Max (Replicas Write)。只要有副本在，写入延时最小也是两次单 Shard 的写入时延总和，写入效率会较低，但是这样的好处也很明显，避免写入后，单机或磁盘故障导致数据丢失，在数据重要性和性能方面，一般都是优先选择数据，除非一些允许丢数据的特殊场景。
 
@@ -305,16 +301,14 @@ ES 集群中每个节点都有处理读写请求的能力。在一个写请求�
 
 段被写入到磁盘后会生成一个提交点，提交点是一个用来记录所有提交后段信息的文件。一个段一旦拥有了提交点，就说明这个段只有读的权限，失去了写的权限。相反，当段在内存中时，就只有写的权限，而不具备读数据的权限，意味着不能被检索。
 
-段的概念提出主要是因为：在早期全文检索中为整个文档集合建立了一个很大的倒排索引，并将其写入磁盘中。如果索引有更新，就需要重新全量创建一个索引来替换原来的索引。这种方式在数据量很大时效率很低，并且由于创建一次索引的成本很高，所以对数据的更新不能过于频繁，也就不能保证时效性。
-
 索引文件分段存储并且不可修改，那么新增、更新和删除如何处理呢？
 
 - 新增
-    由于数据是新的，所以只需要对当前文档新增一个段就可以了。
+    对当前文档新增一个段即可。
 - 删除
     由于不可修改，所以对于删除操作是通过新增一个 `.del` 文件，文件中会列出这些被删除文档的段信息。这个被标记删除的文档仍然可以被查询匹配到，但它会在最终结果被返回前从结果集中移除。
 - 更新
-    更新相当于是删除和新增这两个动作组成。会将旧的文档在 `.del` 文件中标记删除，然后文档的新版本被索引到一个新的段中。可能两个版本的文档都会被一个查询匹配到，但被删除的那个旧版本文档在结果集返回前就会被移除。
+    更新相当于是删除和新增这两个动作组成。
 
 段被设定为不可修改具有一定的优势也有一定的缺点，优势主要表现在：
 
@@ -336,28 +330,18 @@ ES 集群中每个节点都有处理读写请求的能力。在一个写请求�
 
 每当有新 Document 要写入时，会进行以下操作：
 
-1. 先写入 Index Buffer，作为缓冲区
-2. 将 Index Buffer 写入 Segment（内存），然后文档就可以被查询到了
-3. 将 Index Buffer 同时写入 Transaction Log（WAL 机制），用于断电恢复数据
-4. 将 Segments 落盘
-
-其中第 2、3 两步合并成为 Refresh，默认 1 秒（`index.refresh_interval`）执行一次，这也就是为什么 ES 是近实时搜索引擎的原因（高版本的 ES 默认落盘）；另外 Index Buffer 被写满时也会触发，默认大小是 JVM 内存的 10%
-
-其中第 4 步，其实是归属于 Flush 操作的一个步骤。Flush 默认 30 分钟执行一次，或者 Transaction Log 满（默认 512MB）也会触发。Flush 执行包含的流程有
-
-1. 调用 Refresh
-2. 调用 fsync，将 Segments 落盘
-3. 清空 Transaction Log
+1. 同时写入 Transaction Log 和 Index Buffer
+    新文档首先会被**同时追加到 Transaction Log（WAL）和 Index Buffer**中。Transaction Log 用于崩溃恢复，确保数据持久性；Index Buffer 作为内存缓冲区，临时存储待处理的文档。
+2. Refresh 操作生成内存中的 Segment
+    每隔一定时间（默认 1 秒），ES 执行 `refresh` 操作：将 Index Buffer 中的文档转换为内存中的**新 Segment**。此时文档**变为可搜索**（近实时搜索，NRT）。Index Buffer 随后被清空。Index Buffer 被写满时也会触发，默认大小是 JVM 内存的 10%
+3. Flush 操作将 Segment 落盘并清理 Transaction Log
+    周期性 `flush` 操作（默认 30 分钟或 Transaction Log 大小触发）将内存中的 Segment**写入磁盘**（持久化）。同时，**已落盘的日志条目会被删除**（Transaction Log 是追加的，仅清理已提交部分，而非完全清空）。
 
 这里有几个关键点：
 
-1. 写入时机  
-    和数据库不同，数据库是先写 CommitLog，然后再写内存，而 Elasticsearch 是先写内存，最后才写 TransLog。
-    
-    一种可能的原因是 Lucene 的内存写入会有很复杂的逻辑，很容易失败，比如分词，字段长度超过限制等，比较重，为了避免 TransLog 中有大量无效记录，减少 recover 的复杂度和提高速度，所以就把写 Lucene 放在了最前面。
-2. 写 Lucene 内存后，并不是可被搜索的，内存中的对象转成完整的 Segment 后方可被搜索到
-3. 当通过 GetById 时可以直接从 TransLog 中查询，这时候就成了 RT（Real Time）实时系统
-4. 定时刷新 segment 到磁盘，此后会清空掉旧的 TransLog
+1. 写 Lucene 内存后，并不是可被搜索的，内存中的对象转成完整的 Segment 后方可被搜索到
+2. 当通过 GetById 时可以直接从 TransLog 中查询，这时候就成了 RT（Real Time）实时系统
+3. 定时刷新 segment 到磁盘，此后会清空掉旧的 TransLog
 
 #### 2.3.1.2. Update 流程
 
@@ -366,13 +350,13 @@ ES 集群中每个节点都有处理读写请求的能力。在一个写请求�
 Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实现该功能，具体流程如下：
 
 1. 读取历史数据
-    收到 Update 请求后，从 Segment 或者 TransLog 中读取同 id 的完整 Doc，记录版本号为 V1。
+    收到 Update 请求后，读取同 id 的完整 Doc，记录版本号为 V1。
 2. 合并新旧数据
-    将版本 V1 的全量 Doc 和请求中的部分字段 Doc 合并为一个完整的 Doc，同时更新内存中的 VersionMap。获取到完整 Doc 后，Update 请求就变成了 Index 请求。
+    将版本 V1 的全量 Doc 和请求中的部分字段 Doc 合并为一个完整的 Doc。
 3. 加锁
     锁是 Refresh Lock，禁止 refresh 该条数据。
 4. 再次检查版本
-    再次从 versionMap 中读取该 id 的最大版本号 V2，如果 versionMap 中没有，则从 Segment 或者 TransLog 中读取，这里基本都会从 versionMap 中获取到。
+    再次从 versionMap 中读取该 id 的最大版本号 V2，如果 versionMap 中没有则从 Segment 或者 TransLog 中读取，这里基本都会从 versionMap 中获取到。
     
     检查版本是否冲突： `V1 == V2`，如果冲突，则回退到开始的“Update doc” 阶段，重新执行。如果不冲突，则执行最新的 Add 请求。
 5. 更新数据
@@ -412,7 +396,7 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
     5. Add Doc To Lucene
         这一步开始的时候对数据进行加锁，并判断当前数据的版本和之前获取到的是否一致。若不一致则退回起点重新操作，如果版本一致则进行数据更新操作。
         
-        这一步中有个问题是，如何保证 Delete-Then-Add 的原子性，怎么避免中间状态时被 Refresh？答案是在开始 Delete 之前，会加一个 Refresh Lock，禁止被 Refresh，只有等 Add 完后释放了 Refresh Lock 后才能被 Refresh，这样就保证了 Delete-Then-Add 的原子性。
+        为了保证 Delete-Then-Add 的原子性，在开始 Delete 之前会加一个 Refresh Lock，禁止被 Refresh，只有等 Add 完后释放了 Refresh Lock 后才能被 Refresh，这样就保证了 Delete-Then-Add 的原子性。
         
         > [!info] Lucene 字段写入过程
         > </br> Lucene 的 UpdateDocument 接口中就只是处理多个 Field，会遍历每个 Field 逐个处理，处理顺序是 invert index，store field，doc values，point dimension。
@@ -437,7 +421,7 @@ Lucene 中不支持部分字段的 Update，所以需要在 Elasticsearch 中实
         > [!attention]  副本写入失败的后果
         > </br> 如果一个 Replica 写失败了，Primary 会将这个信息报告给 Master，然后 Master 会在 Meta 中更新这个 Index 的 InSyncAllocations 配置，将这个 Replica 从中移除，移除后它就不再承担读请求。在 Meta 更新到各个 Node 之前，用户可能还会读到这个 Replica 的数据，但是更新了 Meta 之后就不会了。所以这个方案并不是非常的严格，考虑到 ES 本身就是一个近实时系统，数据写入后需要 refresh 才可见，所以一般情况下，在短期内读到旧数据应该也是可接受的。
         
-    11. Receive Response From Replicas
+    10. Receive Response From Replicas
         Replica 中请求都处理完后，会更新 Primary Node 的 LocalCheckPoint。
 3. Replica Node 执行过程
     Replica Node 执行过程和 Primary Node 执行过程基本一致，只不过少了同步 Replica Node 与转化 Update 请求的过程。
@@ -558,25 +542,25 @@ Elasticsearch 通过在后台定期进行[[数据密集型系统设计1：引入
     如果自定义 doc_id 的话，则 ES 在写入过程中会多一步判断的过程，即先 Get 下该 doc_id 是否已经存在。如果存在的话则执行 Update 操作，不存在则创建新的 doc。
     
     因此如果我们对索引 doc_id 没有特别要求，则建议让 ES 自动生成 doc_id，这样可提升一定的写入性能。
-2. 提前创建索引，使用固定的索引 mapping。
+8. 提前创建索引，使用固定的索引 mapping。
     创建索引及新加字段都是更新元数据操作，需要 master 节点将新版本的元数据同步到所有节点。
     
     因此在集群规模比较大，写入 qps 较高的场景下，特别容易出现 master 更新元数据超时的问题，这可导致 master 节点中有大量的 pending_tasks 任务堆积，从而造成集群不可用，甚至出现集群无主的情况。
-3. 实时性要求不高的索引增大 refresh_interval 的时间。
+9. 实时性要求不高的索引增大 refresh_interval 的时间。
     ES 默认的 refresh_interval 是 1s，即 doc 写入 1s 后即可被搜索到。如果业务对数据实时性要求不高的话，如日志场景，可将索引模版的 refresh_interval 设置成 30s，这能够避免过多的小 segment 文件的生成及段合并的操作。
-4. 追求写入效率的场景，可先将索引副本数设置为单副本，写入完成后再打开副本。
+10. 追求写入效率的场景，可先将索引副本数设置为单副本，写入完成后再打开副本。
     例如迁移数据时可先将副本数设置为 0，迁移完毕后再设置回来。
-5. 使用 Bulk 批量插入数据时，控制单词 bulk 数量在 10M 左右。
+11. 使用 Bulk 批量插入数据时，控制单词 bulk 数量在 10M 左右。
     通常我们建议一次 Bulk 的数据量控制在 10M 以下，一次 Bulk 的 doc 数在 10000 上下浮动。
-6. 使用自定义 routing 功能，尽量将请求转发到较少的分片。
+12. 使用自定义 routing 功能，尽量将请求转发到较少的分片。
     协调节点是异步将数据发送给所有的分片，但是却需要等待所有的分片响应后才能返回给客户端，因此一次 Bulk 的延迟则取决于响应最慢的那个分片所在的节点。这就是分布式系统的长尾效应。
     
     因此，我们可以自定义 routing 值，这样写入、查询均带有路由字段信息。请求只会发送给部分分片，避免全量分片扫描。这些节点完成查询后将结果返回给请求节点，由请求节点汇聚各个节点的结果返回给客户端。
     
     ![image.png](https://r2.129870.xyz/img/202309110033326.png)
     
-7. 尽量选择 SSD 磁盘类型。
-8. 冻结历史索引，释放内存空间。
+13. 尽量选择 SSD 磁盘类型。
+14. 冻结历史索引，释放内存空间。
     
     ![image.png](https://r2.129870.xyz/img/202309110034464.png)
     
@@ -718,19 +702,19 @@ REALLOCATED_REPLICA ：确定更好的副本位置被标定使用，导致现有
       }
     }
     ```
-2. 分片数量超过 21 亿条限制
+16. 分片数量超过 21 亿条限制
     该限制是分片维度而不是索引维度的。因此出现这种异常，通常是由于我们的索引分片设置的不是很合理。
     
     解决方法：切换写入到新索引，并修改索引模版，合理设置主分片数。
-3. 主分片所在节点掉线
+17. 主分片所在节点掉线
     这种情况通常是由于某个节点故障或者由于负载较高导致的掉线。
     
     解决方法：找到节点掉线原因并重新启动节点加入集群，等待分片恢复。
-4. 索引所需属性与节点属性不匹配
+18. 索引所需属性与节点属性不匹配
     解决方法：重新设置索引所需的属性，和节点保持一致。因为如果重新设置节点属性，则需要重启节点，代价较高。
-5. 节点长时间掉线后重新加入集群，引入了脏数据
+19. 节点长时间掉线后重新加入集群，引入了脏数据
     解决方法：通过 reroute API 来重新分配一个主分片。
-6. 未分配分片太多，达到了分片恢复的阈值，其他分片排队等待
+20. 未分配分片太多，达到了分片恢复的阈值，其他分片排队等待
     这种情况通常出现在集群重启，或者某一个节点重启后。且由于设置的分片并发恢复的值较低导致。为了尽快恢复集群健康状态，可以通过调用下面的 API 来提升分片恢复的速度和并发度：
     
     ```bash
@@ -763,9 +747,9 @@ Rollover 的原理是使用一个别名指向真正的索引，当指向的索�
       }
     }
     ```
-2. 通过别名写入数据
+22. 通过别名写入数据
     例如 `POST /myro_write_alias/_bulk`
-3. 执行 rollover 操作
+23. 执行 rollover 操作
     
     rollover 的 3 个条件是或关系，任意一个条件满足就会发生 rollover：
     
@@ -805,7 +789,7 @@ ES 一直在索引管理这块进行优化迭代，从 6.7 版本推出了索引
     
     ![image.png](https://r2.129870.xyz/img/202309110202931.png)
     
-2. 建立索引模版
+25. 建立索引模版
     
     ```bash
     PUT /_template/myes_template
@@ -841,7 +825,7 @@ ES 一直在索引管理这块进行优化迭代，从 6.7 版本推出了索引
     - 模版匹配以索引名称 myes- 开头的索引。
     - 所有使用此模版创建的索引都有一个别名 myes_reade_alias 用于方便查询数据；
     - 模版绑定了上面创建的 Lifecycle 策略，并且用于 rollover 的别名是 myes_write_alias。
-3. 创建索引
+26. 创建索引
     
     ```bash
     PUT /myes-testindex-000001
@@ -855,11 +839,11 @@ ES 一直在索引管理这块进行优化迭代，从 6.7 版本推出了索引
     注意:
     - 索引的名称是 .\*-d 的形式；
     - 索引的别名用于 lifecycle 做 rollover。
-4. 查看索引配置
+27. 查看索引配置
     `GET /myes-testindex-000001`
-5. 写入数据
+28. 写入数据
     `POST /myes_write_alias/_bulk`
-6. 配置 Lifecycle 自动 Rollover 的时间间隔
+29. 配置 Lifecycle 自动 Rollover 的时间间隔
     由于 ES 是一个准实时系统，很多操作都不能实时生效。Lifecycle 的 rollover 之所以不用每次手动执行 rollover 操作是因为 ES 会隔一段时间判断一次索引是否满足 rollover 的条件，ES 检测 ILM 策略的时间默认为 10min。如果需要手动修改这个时间间隔的话可以修改 Lifecycle 配置：
     
     ```bash
