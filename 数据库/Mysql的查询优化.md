@@ -1066,24 +1066,26 @@ SELECT * FROM  (
 
 - `SIMPLE`
     查询语句中不包含 `UNION` 或者子查询的查询都算作是 `SIMPLE` 类型。
-- `PRIMARY`
-    对于包含 `UNION`、`UNION ALL` 或者子查询的大查询来说，它是由几个小查询组成的，其中最左边的那个查询的 `select_type` 值就是 `PRIMARY`。
-- `UNION`
-    对于包含 `UNION` 或者 `UNION ALL` 的大查询来说，它是由几个小查询组成的，其中除了最左边的那个小查询以外，其余的小查询的 `select_type` 值就是 `UNION`。
-- `UNION RESULT`
-    `MySQL` 选择使用临时表来完成 `UNION` 查询的去重工作，针对该临时表的查询的 `select_type` 就是 `UNION RESULT`。
-- `SUBQUERY`
-    如果包含子查询的查询语句不能够转为对应的 `semi-join` 的形式，并且该子查询是不相关子查询，并且查询优化器决定采用将该子查询物化的方案来执行该子查询时，该子查询的第一个 `SELECT` 关键字代表的那个查询的 `select_type` 就是 `SUBQUERY`。被物化的子查询只需要执行一遍。
-- `DEPENDENT SUBQUERY`
-    如果包含子查询的查询语句不能够转为对应的 `semi-join` 的形式，并且该子查询是相关子查询，则该子查询的第一个 `SELECT` 关键字代表的那个查询的 `select_type` 就是 `DEPENDENT SUBQUERY`。
+- 联合查询
+    - `PRIMARY`
+        对于包含 `UNION`、`UNION ALL` 或者子查询的大查询来说，它是由几个小查询组成的，其中最左边的那个查询的 `select_type` 值就是 `PRIMARY`。
+    - `UNION`
+        对于包含 `UNION` 或者 `UNION ALL` 的大查询来说，它是由几个小查询组成的，其中除了最左边的那个小查询以外，其余的小查询的 `select_type` 值就是 `UNION`。
+    - `UNION RESULT`
+        `MySQL` 选择使用临时表来完成 `UNION` 查询的去重工作，针对该临时表的查询的 `select_type` 就是 `UNION RESULT`。
+    - `DEPENDENT UNION`
+        在包含 `UNION` 或者 `UNION ALL` 的大查询中，如果各个小查询都依赖于外层查询的话，那除了最左边的那个小查询之外，其余的小查询的 `select_type` 的值就是 `DEPENDENT UNION`。
+- 子查询 
+    - `SUBQUERY`
+        如果包含子查询的查询语句不能够转为对应的 `semi-join` 的形式，并且该子查询是不相关子查询，并且查询优化器决定采用将该子查询物化的方案来执行该子查询时，该子查询的第一个 `SELECT` 关键字代表的那个查询的 `select_type` 就是 `SUBQUERY`。被物化的子查询只需要执行一遍。
+    - `DEPENDENT SUBQUERY`
+        如果包含子查询的查询语句不能够转为对应的 `semi-join` 的形式，并且该子查询是相关子查询，则该子查询的第一个 `SELECT` 关键字代表的那个查询的 `select_type` 就是 `DEPENDENT SUBQUERY`。
     
-    select_type 为 `DEPENDENT SUBQUERY` 的查询可能会被执行多次。
-- `DEPENDENT UNION`
-    在包含 `UNION` 或者 `UNION ALL` 的大查询中，如果各个小查询都依赖于外层查询的话，那除了最左边的那个小查询之外，其余的小查询的 `select_type` 的值就是 `DEPENDENT UNION`。
-- `DERIVED`
+        select_type 为 `DEPENDENT SUBQUERY` 的查询可能会被执行多次。
+    -  `MATERIALIZED`
+        当查询优化器在执行包含子查询的语句时，选择将子查询物化之后与外层查询进行连接查询时，该子查询对应的 `select_type` 属性就是 `MATERIALIZED`。
+- 派生表查询 `DERIVED`
     对于采用物化的方式执行的包含派生表的查询，该派生表对应的子查询的 `select_type` 就是 `DERIVED`。
-- `MATERIALIZED`
-    当查询优化器在执行包含子查询的语句时，选择将子查询物化之后与外层查询进行连接查询时，该子查询对应的 `select_type` 属性就是 `MATERIALIZED`。
 - `UNCACHEABLE SUBQUERY`
     不常用。
 - `UNCACHEABLE UNION`

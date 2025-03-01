@@ -320,6 +320,9 @@ Mysql 提出了一个全局变量 `checkpoint_lsn` 来代表当前系统中可�
 - `Pages flushed up to` ： `flush 链表` 中被最早修改的那个页面对应的 `oldest_modification` 属性值
 - `Last checkpoint at` ：当前系统的 `checkpoint_lsn` 值
 
+> [!question]- 可以只使用 flushed_to_disk_lsn 不使用 checkpoint_lsn 吗？
+>  flushed_to_disk_lsn 用于标记当前已刷新到磁盘的日志的位置，而 checkpoint_lsn 代表可被覆盖的 redo 日志的起点。日志被刷新到磁盘并不代表日志可以被覆盖，只有当日志对应的脏页被刷新到磁盘后该日志才可以被覆盖，因此 checkpoint_lsn 必不可少。
+
 ## 1.7. 崩溃恢复
 
 ### 1.7.1. 确定恢复的起点
@@ -362,7 +365,7 @@ Mysql 提出了一个全局变量 `checkpoint_lsn` 来代表当前系统中可�
 
 ![](https://r2.129870.xyz/img/20220513230808.png)
 
-系统给 binlog cache 分配了一片内存，每个线程一个，但是共用同一份 binlog 文件。参数 `binlog_cache_size` 控制单个线程内 binlog cache 所占内存的大小。若超过该参数值，就要暂存到磁盘的临时文件 (不是最终的 binlog 文件)。事务提交时，执行器把 binlog cache 里的完整事务写入 binlog，并清空 binlog cache。所以如果经常有大事物的化可以考虑增大这个值来减少刷盘的次数。
+系统给 binlog cache 分配了一片内存，每个线程一个，但是共用同一份 binlog 文件。参数 `binlog_cache_size` 控制单个线程内 binlog cache 所占内存的大小。若超过该参数值，就要暂存到磁盘的临时文件 (不是最终的 binlog 文件)。事务提交时，执行器把 binlog cache 里的完整事务写入 binlog，并清空 binlog cache。所以如果经常有大事物则可以考虑增大这个值来减少刷盘的次数。
 
 ## 2.2. binlog 写盘状态与控制
 
@@ -404,7 +407,7 @@ binlog 日志的格式：
 - mixed 格式
 	因为有些 statement 格式的 binlog 可能会导致主备不一致，所以要使用 row 格式。但 row 格式很占空间，在 sql 影响条数很大的情况下，不仅会占用更大的日志空间，同时写 binlog 也要耗费 IO 资源，影响执行速度。
 
-	mixed 格式 binlog，混合日志。MySQL 自动根据 SQL 语句是否可能引起主备不一致的可能性判断使用 row 格式或者 statement 格式。即 mixed 格式可以利用 statment 格式的优点，同时又避免了数据不一致的风险。
+	mixed 为混合日志，MySQL 自动根据 SQL 语句是否可能引起主备不一致的可能性判断使用 row 格式或者 statement 格式。即 mixed 格式可以利用 statment 格式的优点，同时又避免了数据不一致的风险。
 
 # 3. binlog 日志与 redo 日志的合作
 
@@ -440,9 +443,10 @@ Update 语句过程中在写完第一个日志后，第二个日志还没有写�
     2. 没有 commit 标识，进行 binlog 日志的判断
         1. binlog 日志不完整，回滚事务，**正是由于这种崩溃后仍会回滚事务的场景，所以才需要将该事务对应的 undo 日志也写入磁盘，否则无法对其回滚**。
         2. binlog 日志完整，进行 redo log 日志的提交。
-            一个事务的 binlog 是有完整格式的：
-            - Statement 格式的 binlog，最后会有 `COMMIT`。
-            - Row 格式的 binlog，最后会有一个 `XID event`。
+        
+        一个事务的 binlog 是有完整格式的：
+        - Statement 格式的 binlog，最后会有 `COMMIT`。
+        - Row 格式的 binlog，最后会有一个 `XID event`。
 
 redo log 与 binlog 通过事务 id 进行关联。
 
@@ -737,7 +741,7 @@ redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一
 
 ![](https://r2.129870.xyz/img/202209192348444.png)
 
-每一个 `Rollback Segment Header` 页面都对应着一个段，这个段就称为 `Rollback Segment`。这个 `Rollback Segment` 里其实只有一个页面：
+每一个 `Rollback Segment Header` 页面都对应着一个段，这个 `Rollback Segment` 里其实只有一个页面：
 
 - `TRX_RSEG_MAX_SIZE` ：本 `Rollback Segment` 中管理的所有 `Undo 页面` 链表中的 `Undo 页面` 数量之和的最大值。
     本 `Rollback Segment` 中所有 `Undo 页面` 链表中的 `Undo 页面` 数量之和不能超过 `TRX_RSEG_MAX_SIZE` 代表的值。
@@ -749,19 +753,19 @@ redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一
 
 #### 4.3.5.2. 从回滚段中申请 Undo 页面链表
 
-初始情况下，由于未向任何事务分配任何 `Undo 页面` 链表，所以对于一个 `Rollback Segment Header` 页面来说，它的各个 `undo slot` 都被设置成了一个特殊的值：`FIL_NULL`，表示该 `undo slot` 不指向任何页面。
+初始时 `Rollback Segment Header` 的 `undo slot` 都被设置成了一个特殊的值：`FIL_NULL`，表示该 `undo slot` 不指向任何页面。
 
-随着时间的流逝，开始有事务需要分配 `Undo 页面` 链表了，就从回滚段的第一个 `undo slot` 开始，看看该 `undo slot` 的值是不是 `FIL_NULL` ：
+当有事务需要分配 `Undo 页面` 链表时，就从回滚段的第一个 `undo slot` 开始寻找状态不是 `FIL_NULL` 的页面：
 
 - 如果是 `FIL_NULL`，那么在表空间中新创建一个段（也就是 `Undo Log Segment`），然后从段里申请一个页面作为 `Undo 页面` 链表的 `first undo page`，然后把该 `undo slot` 的值设置为刚刚申请的这个页面的页号，这样也就意味着这个 `undo slot` 被分配给了这个事务。
-- 如果不是 `FIL_NULL`，说明该 `undo slot` 已经指向了一个 `undo 链表`，也就是说这个 `undo slot` 已经被别的事务占用了，那就跳到下一个 `undo slot`，判断该 `undo slot` 的值是不是 `FIL_NULL`，重复上边的步骤。
+- 如果不是 `FIL_NULL`，说明该 `undo slot` 已经指向了一个 `undo 链表`。
 
 一个 `Rollback Segment Header` 页面中包含 `1024` 个 `undo slot`，如果这 `1024` 个 `undo slot` 的值都不为 `FIL_NULL`，这就意味着这 `1024` 个 `undo slot` 都已经被分配给了某个事务，此时由于新事务无法再获得新的 `Undo 页面` 链表，就会回滚这个事务并且给用户报错：`Too many active concurrent transactions`。
 
-当一个事务提交时，它所占用的 `undo slot` 有两种命运：
+当一个事务提交时：
 
-- 如果该 `undo slot` 指向的 `Undo 页面` 链表**符合被重用的条件**（就是我们上边说的 `Undo 页面` 链表只占用一个页面并且已使用空间小于整个页面的 3/4）。
-    该 `undo slot` 就设置为被缓存的状态，这时该 `Undo 页面` 链表的 `TRX_UNDO_STATE` 属性（该属性在 `first undo page` 的 `Undo Log Segment Header` 部分）会被设置为 `TRX_UNDO_CACHED`。
+- 如果 `undo slot` 指向的 `Undo 页面` 链表**符合被重用的条件**。
+    该 `undo slot` 就设置为被缓存的状态，这时该 `Undo 页面` 链表的 `TRX_UNDO_STATE` 属性会被设置为 `TRX_UNDO_CACHED`。
 
     被缓存的 `undo slot` 都会被加入到一个链表，根据对应的 `Undo 页面` 链表的类型不同，也会被加入到不同的链表：
 
@@ -770,15 +774,15 @@ redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一
 
     一个回滚段就对应着上述两个 `cached 链表`，如果有**新事务要分配 `undo slot` 时，先从对应的 `cached 链表` 中找。如果没有被缓存的 `undo slot`，才会到回滚段的 `Rollback Segment Header` 页面中再去找**。
 
-- 如果该 `undo slot` 指向的 `Undo 页面` 链表不符合被重用的条件，那么针对该 `undo slot` 对应的 `Undo 页面` 链表类型不同，也会有不同的处理：
-    - 如果对应的 `Undo 页面` 链表是 `insert undo 链表`，则该 `Undo 页面` 链表的 `TRX_UNDO_STATE` 属性会被设置为 `TRX_UNDO_TO_FREE`，之后该 `Undo 页面` 链表对应的段会被释放掉（也就意味着段中的页面可以被挪作他用），然后把该 `undo slot` 的值设置为 `FIL_NULL`。
-    - 如果对应的 `Undo 页面` 链表是 `update undo 链表`，则该 `Undo 页面` 链表的 `TRX_UNDO_STATE` 属性会被设置为 `TRX_UNDO_TO_PRUGE`，则会将该 `undo slot` 的值设置为 `FIL_NULL`，然后**将本次事务写入的一组 `undo` 日志放到所谓的 `History 链表` 中**（需要注意的是，这里并不会将 `Undo 页面` 链表对应的段给释放掉，因为这些 `undo` 日志还会被使用到 MVCC 中）。
+- 如果该 `undo slot` 指向的 `Undo 页面` 链表不符合被重用的条件：
+    -  `insert undo 链表`：该 `Undo 页面` 链表的 `TRX_UNDO_STATE` 属性会被设置为 `TRX_UNDO_TO_FREE`，之后该 `Undo 页面` 链表对应的段会被释放掉，然后把该 `undo slot` 的值设置为 `FIL_NULL`。
+    -  `update undo 链表`：该 `Undo 页面` 链表的 `TRX_UNDO_STATE` 属性会被设置为 `TRX_UNDO_TO_PRUGE`，则会将该 `undo slot` 的值设置为 `FIL_NULL`，然后**将本次事务写入的一组 `undo` 日志放到 `History 链表` 中**。
 
 #### 4.3.5.3. 多个回滚段
 
-我们说一个事务执行过程中最多分配 `4` 个 `Undo 页面` 链表，而一个回滚段里只有 `1024` 个 `undo slot`，很显然 `undo slot` 的数量有点少。所以 Mysql 定义了 `128` 个回滚段，也就相当于有了 `128 × 1024 = 131072` 个 `undo slot`。**假设一个读写事务执行过程中只分配 `1` 个 `Undo 页面` 链表，那么就可以同时支持 `131072` 个读写事务并发执行**。
+一个事务执行过程中最多分配 `4` 个 `Undo 页面` 链表，而一个回滚段里只有 `1024` 个 `undo slot`，很显然 `undo slot` 的数量有点少。所以 Mysql 定义了 `128` 个回滚段，也就相当于有了 `128 × 1024 = 131072` 个 `undo slot`。**假设一个读写事务执行过程中只分配 `1` 个 `Undo 页面` 链表，那么就可以同时支持 `131072` 个读写事务并发执行**。
 
-每个回滚段都对应着一个 `Rollback Segment Header` 页面，有 128 个回滚段，自然就要有 128 个 `Rollback Segment Header` 页面，这些页面的地址总得找个地方存一下吧！于是 Mysql [[Mysql的存储结构#5 2 2 系统表空间|系统表空间]]的第 `5` 号页面的某个区域包含了 128 个 8 字节大小的格子：
+每个回滚段都对应着一个 `Rollback Segment Header` 页面，有 128 个回滚段，自然就要有 128 个 `Rollback Segment Header` 页面，这些页面的地址存放在 Mysql [[Mysql的存储结构#5 2 2 系统表空间|系统表空间]]的第 `5` 号页面中，该区域包含了 128 个 8 字节大小的格子：
 
 ![](https://r2.129870.xyz/img/202209192357369.png)
 
@@ -791,50 +795,40 @@ redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一
 - 4 字节大小的 `Space ID`，代表一个表空间的 ID。
 - 4 字节大小的 `Page number`，代表一个页号。
 
-也就是说每个 8 字节大小的 `格子` 相当于一个指针，指向某个表空间中的某个页面，这些页面就是 `Rollback Segment Header`。这里需要注意的一点事，要定位一个 `Rollback Segment Header` 还需要知道对应的表空间 ID，这也就意味着不同的回滚段可能分布在不同的表空间中。
-
-所以通过上边的叙述我们可以大致清楚，在系统表空间的第 `5` 号页面中存储了 128 个 `Rollback Segment Header` 页面地址，每个 `Rollback Segment Header` 就相当于一个回滚段。在 `Rollback Segment Header` 页面中，又包含 `1024` 个 `undo slot`，每个 `undo slot` 都对应一个 `Undo 页面` 链表。我们画个示意图：
+每个 8 字节大小的指针指向某个表空间中的 `Rollback Segment Header`。要定位一个 `Rollback Segment Header` 还需要知道对应的表空间 ID，这也就意味着不同的回滚段可能分布在不同的表空间中。
 
 ![](https://r2.129870.xyz/img/202209192358989.png)
 
 #### 4.3.5.4. 回滚段分类
 
-我们把这 128 个回滚段给编一下号，最开始的回滚段称之为 `第 0 号回滚段`，之后依次递增，最后一个回滚段就称之为 `第 127 号回滚段`。这 128 个回滚段可以被分成两大类：
+128 个回滚段可以被分成两大类：
 
-- 普通表回滚段：第 `0` 号、第 `33～127` 号回滚段属于一类。
+- 普通表回滚段：第 `0` 号、第 `33～127` 号回滚段
     其中**第 `0` 号回滚段必须在系统表空间中**，第 `33～127` 号回滚段既可以在系统表空间中，也可以在自己配置的 `undo` 表空间中。
 
     如果一个事务在执行过程中由于对普通表的记录做了改动需要分配 `Undo 页面` 链表时，必须从这一类的段中分配相应的 `undo slot`。
 
-- 临时表回滚段：第 `1～32` 号回滚段属于一类。
-    这些回滚段必须在临时表空间（对应着数据目录中的 `ibtmp1` 文件）中。如果一个事务在执行过程中由于对临时表的记录做了改动需要分配 `Undo 页面` 链表时，必须从这一类的段中分配相应的 `undo slot`。
+- 临时表回滚段：第 `1～32` 号回滚段
+    这些回滚段必须在临时表空间（对应着数据目录中的 `ibtmp1` 文件）中。
 
 也就是说如果一个事务在执行过程中既对普通表的记录做了改动，又对临时表的记录做了改动，那么需要为这个记录分配 2 个回滚段，再分别到这两个回滚段中分配对应的 `undo slot`。
 
-为啥要把针对普通表和临时表来划分不同种类的 `回滚段` 呢？这个还得从 `Undo 页面` 本身说起，我们说 `Undo 页面` 其实是类型为 `FIL_PAGE_UNDO_LOG` 的页面的简称，说到底它也是一个普通的页面。我们前边说过，在修改页面之前一定要先把对应的 `redo 日志` 写上，这样在系统奔溃重启时才能恢复到奔溃前的状态。
-
-我们向 `Undo 页面` 写入 `undo 日志` 本身也是一个写页面的过程，Mysql 为此还设计了许多种 `redo 日志` 的类型，比方说 `MLOG_UNDO_HDR_CREATE`、`MLOG_UNDO_INSERT`、`MLOG_UNDO_INIT` 等，也就是说我们对 `Undo 页面` 做的任何改动都会记录相应类型的 `redo 日志`。但是对于临时表来说，因为**修改临时表而产生的 `undo 日志` 只需要在系统运行过程中有效**，如果系统奔溃了，那么在重启时也不需要恢复这些 `undo` 日志所在的页面，所以在写针对临时表的 `Undo 页面` 时，并不需要记录相应的 `redo 日志`。
-
-总结一下针对普通表和临时表划分不同种类的 `回滚段` 的原因：**在修改针对普通表的回滚段中的 undo 页面时，需要记录对应的 redo 日志，而修改针对临时表的回滚段中的 undo 页面时，不需要记录对应的 redo 日志**。
+针对普通表和临时表划分不同种类的 `回滚段` 的原因：**在修改针对普通表的回滚段中的 undo 页面时，需要记录对应的 redo 日志，而修改针对临时表的回滚段中的 undo 页面时，不需要记录对应的 redo 日志**。
 
 #### 4.3.5.5. 为事务分配 Undo 页面链表详细过程
 
-接下来我们以事务对普通表的记录做改动为例，给大家梳理一下事务执行过程中分配 `Undo 页面` 链表时的完整过程：
+以事务对普通表的记录做改动为例，事务执行过程中分配 `Undo 页面` 链表时的完整过程如下：
 
-3. 获取回滚段
-    事务在执行过程中对普通表的记录首次做改动之前，首先会到系统表空间的第 `5` 号页面中分配一个回滚段（其实就是获取一个 `Rollback Segment Header` 页面的地址）。一旦某个回滚段被分配给了这个事务，那么之后该事务中再对普通表的记录做改动时，就不会重复分配了。
+1. 获取回滚段
+    事务在执行过程中对普通表的记录首次做改动之前，首先会到系统表空间的第 `5` 号页面中分配一个回滚段（获取一个 `Rollback Segment Header` 页面的地址）。一旦某个回滚段被分配给了这个事务，那么之后该事务中再对普通表的记录做改动时，就不会重复分配了。
 
-    使用 `round-robin`（循环使用）方式来分配回滚段。比如当前事务分配了第 `0` 号回滚段，那么下一个事务就要分配第 `33` 号回滚段，下下个事务就要分配第 `34` 号回滚段，简单一点的说就是这些回滚段被轮着分配给不同的事务。
-
-4. 查看是否有可重用页面
-    在分配到回滚段后，首先看一下这个回滚段的两个 `cached 链表` 有没有已经缓存了的 `undo slot`，比如如果事务做的是 `INSERT` 操作，就去回滚段对应的 `insert undo cached 链表` 中看看有没有缓存的 `undo slot`；如果事务做的是 `DELETE` 操作，就去回滚段对应的 `update undo cached 链表` 中看看有没有缓存的 `undo slot`。如果有缓存的 `undo slot`，那么就把这个缓存的 `undo slot` 分配给该事务。
-5. 无可重用页面，申请新页面
+    使用  `round-robin` 的方式来分配回滚段，回滚段被轮着分配给不同的事务。
+2. 查看是否有可重用页面
+    在分配到回滚段后，首先看一下这个回滚段的两个 `cached 链表` 有没有已经缓存了的 `undo slot`，如果事务做的是 `INSERT` 操作，就去回滚段对应的 `insert undo cached 链表` 中看看有没有缓存的 `undo slot`；如果事务做的是 `DELETE` 操作，就去回滚段对应的 `update undo cached 链表` 中看看有没有缓存的 `undo slot`。如果有缓存的 `undo slot`，那么就把这个缓存的 `undo slot` 分配给该事务。
+3. 无可重用页面，申请新页面
     如果没有缓存的 `undo slot` 可供分配，那么就要到 `Rollback Segment Header` 页面中找一个可用的 `undo slot` 分配给当前事务。
-
-    从 `Rollback Segment Header` 页面中分配可用的 `undo slot` 的方式我们上边也说过了，就是从第 `0` 个 `undo slot` 开始，如果该 `undo slot` 的值为 `FIL_NULL`，意味着这个 `undo slot` 是空闲的，就把这个 `undo slot` 分配给当前事务，否则查看第 `1` 个 `undo slot` 是否满足条件，依次类推，直到最后一个 `undo slot`。如果这 `1024` 个 `undo slot` 都没有值为 `FIL_NULL` 的情况，就直接报错喽（一般不会出现这种情况）～
-
-6. 配置 uodo 日志页
+4. 配置 uodo 日志页
     找到可用的 `undo slot` 后，如果该 `undo slot` 是从 `cached 链表` 中获取的，那么它对应的 `Undo Log Segment` 已经分配了，否则的话需要重新分配一个 `Undo Log Segment`，然后从该 `Undo Log Segment` 中申请一个页面作为 `Undo 页面` 链表的 `first undo page`。
-7. 写入 undo 日志
-    然后事务就可以把 `undo 日志` 写入到上边申请的 `Undo 页面` 链表了！
+5. 写入 undo 日志
+    事务把 `undo 日志` 写入到申请的 `Undo 页面` 链表中。
 
