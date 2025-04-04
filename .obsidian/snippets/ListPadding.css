@@ -1,0 +1,22 @@
+.markdown-reading-view ul>li ol:nth-of-type(1),
+.markdown-reading-view ol>li ul:nth-of-type(1),
+.markdown-reading-view ol>li ol:nth-of-type(1),
+.markdown-reading-view ul>li ul:nth-of-type(1) {
+    margin-top: 10px;
+}
+.markdown-reading-view ol li:last-of-type,
+.markdown-reading-view ul li:last-of-type {
+    margin-bottom: 10px;
+}
+
+.markdown-reading-view ol li:has( br),
+.markdown-reading-view ul li:has( br) {
+    margin-bottom: 10px!important;
+}
+
+.markdown-reading-view ol>li br:first-of-type,
+.markdown-reading-view ul>li br:first-of-type {
+    content: "";
+    display: block;
+    margin-top: 10px!important;
+}

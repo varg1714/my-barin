@@ -18,6 +18,8 @@ bin-release/
 # information for Eclipse / Flash Builder.
 
 .obsidian/*
+!.obsidian/snippets
+!.obsidian/snippets/**
 .idea/
 .DS_Store
 学习计划.md

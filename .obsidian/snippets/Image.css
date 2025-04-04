@@ -1,0 +1,9 @@
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+ .markdown-source-view.mod-cm6 .cm-content > * {
+    margin: auto;
+}

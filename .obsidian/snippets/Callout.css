@@ -1,0 +1,10 @@
+li .callout-content > p {
+  margin-block-start: var(--p-spacing) !important;
+  margin-block-end: var(--p-spacing) !important;
+}
+
+li .callout.drop-shadow {
+
+  margin-left: 0.1rem;
+
+}

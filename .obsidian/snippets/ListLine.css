@@ -1,0 +1,12 @@
+li{position: relative;}
+li::after {
+  content: "";
+  position: absolute;
+  border-left: var(--indentation-guide-width) solid var(--indentation-guide-color);
+  bottom: var(--size-2-1);
+  left: calc(-0.855555 * var(--font-text-size));
+  height: calc(100% - 2.15 * var(--font-text-size));
+}
+ul::before, ol::before {
+  display: none !important;
+}

@@ -1,0 +1,18 @@
+.markdown-preview-view pre,
+.markdown-preview-view code :not(pre) {
+  overflow-x: auto;
+  overflow-y: auto;
+  white-space: pre;
+  max-height: 500px!important;
+}
+
+.markdown-rendered div > pre > code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.markdown-preview-view code[class*="lang"] {
+  overflow-x: auto;
+  white-space: pre;
+}

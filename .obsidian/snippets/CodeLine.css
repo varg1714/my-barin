@@ -1,0 +1,4 @@
+li > code,p > code,.cm-s-obsidian span.cm-inline-code {
+    background-color: #fff5f5 !important;
+    color: #ff502c !important;
+}
