@@ -1,5 +1,7 @@
 ---
 create: 2023-11-13 00:43
+read: true
+knowledge: true
 ---
 
 # 
