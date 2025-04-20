@@ -2,6 +2,9 @@
 source: https://mp.weixin.qq.com/s/ybiN5Q89wI0CnLURGUz4vw
 create: 2025-04-17 21:40
 read: false
+tags:
+  - 分布式
+  - Redis
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_gif/zxoLaeCI28ScrmicT97WFoANMxkASDibKKQibcusZanbHuS4VFwfofSeSTjCiccYOk5UgcpsvHPiaZYqzoyiavWvUTlA/640?wx_fmt=gif)
 

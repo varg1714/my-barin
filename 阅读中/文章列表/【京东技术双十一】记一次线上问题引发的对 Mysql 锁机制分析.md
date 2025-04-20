@@ -2,6 +2,9 @@
 source: https://mp.weixin.qq.com/s/ssXSwqlXjE0jv-yeq7GX9A
 create: 2023-11-14 09:05
 read: true
+tags:
+  - 数据库
+  - Mysql
 ---
 
 最近双十一开门红期间组内出现了一次因 Mysql 死锁导致的线上问题，当时从监控可以看到数据库活跃连接数飙升，导致应用层数据库连接池被打满，后续所有请求都因获取不到连接而失败。

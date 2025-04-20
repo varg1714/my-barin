@@ -2,6 +2,8 @@
 source: https://blog.51cto.com/jackl/2797630
 create: 2024-01-18 16:02
 read: true
+tags:
+  - 系统架构
 ---
 
 # 海量用户标签系统之存储架构设计（Bigmap 算法）_liu_dudu 的技术博客_51CTO 博客

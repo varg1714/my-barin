@@ -2,6 +2,8 @@
 source: https://mp.weixin.qq.com/s/r4Qs2mSIhDOvOMDzmoUKtQ
 create: 2025-04-17 21:39
 read: false
+tags:
+  - Spring
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naLFZ2mB9wuDGL8DRZg7Rf2qPuzNhvG7snQ8v1LWAPPOCOjZhRrrcRpBmjibCv0Xm92SlMv1MbciaZ7Q/640?wx_fmt=jpeg&from=appmsg)
 

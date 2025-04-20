@@ -2,6 +2,9 @@
 create: 2023-11-13 14:53
 source: https://zhuanlan.zhihu.com/p/409158265
 read: true
+tags:
+  - Java
+  - JVM
 ---
 
 # Java 为什么比 Go 消耗更多内存？

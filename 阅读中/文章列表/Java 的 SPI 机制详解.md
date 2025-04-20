@@ -2,6 +2,9 @@
 source: https://mp.weixin.qq.com/s/jDwv_UQsaUSOlEDffXn3lg
 create: 2025-04-17 21:40
 read: false
+tags:
+  - Java
+  - JVM
 ---
 # **1.SPI 简介**
 

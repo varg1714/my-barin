@@ -2,7 +2,7 @@
 source: https://tech.meituan.com/2016/06/24/java-hashmap.html
 create: 2023-12-18 15:37
 tags:
-  - 美团技术团队
+  - 数据结构
 ---
 
 # Java 8 系列之重新认识 HashMap - 美团技术团队

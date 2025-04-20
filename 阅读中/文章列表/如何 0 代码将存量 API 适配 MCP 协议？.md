@@ -2,6 +2,8 @@
 source: https://mp.weixin.qq.com/s/rSN-8quzA1JMeq_FWQnfTQ
 create: 2025-04-17 21:39
 read: false
+tags:
+  - 大模型
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naKnBKKKf6OzmbdxRAJt4Y2jOfibVEyECUe5525EZV95h1emjPcYRee1AIYs2M0M6CTro569FRUIpVA/640?wx_fmt=jpeg&from=appmsg)
 

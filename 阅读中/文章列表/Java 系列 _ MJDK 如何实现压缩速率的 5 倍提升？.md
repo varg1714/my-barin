@@ -2,6 +2,9 @@
 create: 2023-11-13 00:44
 read: true
 knowledge: true
+knowledge-date: 2025-04-18
+tags:
+  - Java
 ---
 
 # Java 系列 _ MJDK 如何实现压缩速率的 5 倍提升？

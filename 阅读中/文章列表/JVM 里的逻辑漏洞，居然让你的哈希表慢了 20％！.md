@@ -2,6 +2,9 @@
 source: https://mp.weixin.qq.com/s/skSOtM-rfVLf-7LDb7F9Hg
 create: 2025-04-17 21:40
 read: false
+tags:
+  - Java
+  - JVM
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naIsfJwL4olaBdnAibSaPMEGFcsOOibchdtTYyTbRmibZ7ABg2un4c7goTZJia1XUCibPsVicAE9gSfOsRnw/640?wx_fmt=jpeg&from=appmsg)
 
