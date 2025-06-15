@@ -1,10 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/jDwv_UQsaUSOlEDffXn3lg
 create: 2025-04-17 21:40
-read: false
+read: true
 tags:
   - Java
   - JVM
+knowledge: true
+knowledge-date: 2025-06-15
 ---
 # **1.SPI 简介**
 
