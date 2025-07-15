@@ -188,19 +188,15 @@ master 节点的选举过程如下：
 
 对于数据节点的缩容，为了保证数据安全需要先把这个 Node 上的 Shards 迁移到其他节点上。首先设置 allocation [规则](https://www.elastic.co/guide/en/elasticsearch/reference/current/allocation-filtering.html)，禁止分配 Shard 到要缩容的机器上，然后让集群进行 rebalance。
 
-````ad-example
-title: 规则示例
-
-```bash
-PUT _cluster/settings
-{
-  "transient" : {
-    "cluster.routing.allocation.exclude._ip" : "10.0.0.1"
-  }
-}
-```
-
-````
+> [!example] 示例
+> ```bash
+> PUT _cluster/settings
+> {
+>   "transient" : {
+>     "cluster.routing.allocation.exclude._ip" : "10.0.0.1"
+>   }
+> }
+> ```
 
 #### 1.3.6.2. 主节点
 
@@ -291,7 +287,7 @@ ES 集群中每个节点都有处理读写请求的能力。在一个写请求�
 
 每次写入的时候，写入请求会先通过 routing 的 Hash 值选择出 Shard，最后从集群的 Meta 中找出该 Shard 的 Primary 节点。之后请求会发送给 Primary Shard，在 Primary Shard 上执行成功后，再从 Primary Shard 上将请求同时发送给多个 Replica Shard，请求在多个 Replica Shard 上执行成功并返回给 Primary Shard 后，写入请求执行成功，返回结果给客户端。
 
-这种模式下，写入操作的延时就等于 latency = Latency (Primary Write) + Max (Replicas Write)。只要有副本在，写入延时最小也是两次单 Shard 的写入时延总和，写入效率会较低，但是这样的好处也很明显，避免写入后，单机或磁盘故障导致数据丢失，在数据重要性和性能方面，一般都是优先选择数据，除非一些允许丢数据的特殊场景。
+这种模式下，写入操作的延时：$latency = Latency (Primary Write) + Max (Replicas Write)$。只要有副本在，写入延时最小也是两次单 Shard 的写入时延总和，写入效率会较低，但是这样的好处也很明显，避免写入后，单机或磁盘故障导致数据丢失，在数据重要性和性能方面，一般都是优先选择数据，除非一些允许丢数据的特殊场景。
 
 ## 2.3. 数据存储原理
 

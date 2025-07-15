@@ -7,6 +7,6 @@ li::after {
   left: calc(-0.855555 * var(--font-text-size));
   height: calc(100% - 2.15 * var(--font-text-size));
 }
-ul::before, ol::before {
+ul:not(.floating-toc)::before, ol:not(.floating-toc)::before {
   display: none !important;
 }
