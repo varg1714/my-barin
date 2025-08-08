@@ -475,6 +475,18 @@ redo log 与 binlog 在事务提交时会发生两次写盘，为了优化这一
 - redo log 与 binlog 都是顺序写，磁盘的顺序写比随机写要快。
 - 组提交策略，大幅度降低磁盘的 IOPS 消耗。大幅降低的本质是**将多个事务的 redo log 和 binlog 进行了合并写入**，如果只是将单个事务的 redo log 和 binglog 合并的话那么性能提升并不是很明显。
 
+## 3.5 主从复制时日志提交情况
+
+当有从库存在的情况下，日志提交时需要进行额外处理。
+
+### 3.5.1. 半同步方式
+
+![Mermaid Chart - Create complex, visual diagrams with text. A smarter way of creating diagrams.-2025-07-19-152333.svg|200](https://r2.129870.xyz/img/2025/55ec4ff2274a5ecd2bddf412021b631c.svg)
+
+### 3.5.2. 同步方式对比
+
+![Mermaid Chart - Create complex, visual diagrams with text. A smarter way of creating diagrams.-2025-07-19-151819.svg](https://r2.129870.xyz/img/2025/7a5a231f50b91e27547e32ac6410779b.svg)
+
 # 4. uodo 日志
 
 ## 4.1. `trx_id` 事务 ID
