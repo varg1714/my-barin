@@ -1,8 +1,11 @@
 ---
 source: https://mp.weixin.qq.com/s/5_rsVC7Oh8amdxC90W7W_A
 create: 2025-08-11 14:08
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-08-11
+tags:
+  - Spring
 ---
 ### 拦截器概述
 

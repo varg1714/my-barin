@@ -1,8 +1,11 @@
 ---
 source: https://mp.weixin.qq.com/s/ATzkEaRe9GlPVnM_W0Wt3g?poc_token=HM2ImWij0LuxaU5IJ1t1u9OXSu3IGEOufTnQ6xkU
 create: 2025-08-11 14:08
-read: false
-knowledge: false
+read: true
+knowledge: true
+tags:
+  - Spring
+knowledge-date: 2025-08-11
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/GvtDGKK4uYlxaXicHAcv5XXhpA0Vo918DllviaVV8fUW7OmwbibozhPssvqcMrKdhBIvYmc1Xz4T5eteKHRruTRcA/640?wx_fmt=jpeg)
 
