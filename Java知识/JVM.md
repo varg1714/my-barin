@@ -1331,6 +1331,40 @@ MESI 协议很复杂，以上只是列表了 MESI 协议的一部分，实际上
 
 这样的话 CPU 要修改数据，先写入 Store Buffer 中，然后马上返回，之后再由 Store Buffer 异步执行发送广播消息和写入 cache 的操作，于是 CPU 执行写的效率就得到了极大的提升。
 
+> [!info] 引入 StoreBuffer 后带来的问题
+> ```java
+> static int x = 0, y = 0;
+> static int a = 0, b = 0;
+> 
+> public static void main(String[] args) throws InterruptedException {
+>     for (int i = 0; true; i++) {
+>         x = 0; y = 0; a = 0; b = 0;
+>         Thread one = new Thread(new Runnable() {
+>             public void run() {
+>                 a = 1;
+>                 x = b;
+>             }
+>         });
+>         Thread other = new Thread(new Runnable() {
+>             public void run() {
+>                 b = 1;
+>                 y = a;
+>             }
+>         });
+>         one.start();other.start();
+>         one.join();other.join();
+>         if (x == 0 && y == 0) {
+>             System.err.println("bingo！i: " + i);
+>             break;
+>         }
+>     }
+> }
+> ```
+> 由于 StoreBuffer 的存在，出现了预期以外的现象：
+> 
+> ![StoreBuffer.svg](https://r2.129870.xyz/img/2025/4b883df1b53d2ae0e98397a252c58729.svg)
+
+
 这里需要注意一下 Cache 和 Store buffer 的区别，Cache 一般指数据的副本，如果 Cache 中的数据没了，还可以从 Memory 中加载，但 Store Buffer 则不是，它更像是蓄水池的作用，先存储一堆数据，然后再异步执行操作，我们可以把它想像成课代表，先把所有同学的作业收集好再一次性交给老师，如果 Store Buffer 中的数据丢了，那就彻底丢失了。
 
 Store Bufferes 的确提高了 CPU 的资源利用率，不过优化了带来了新的问题，如果数据写入了 Store Buffer 但还没来得及更新，如果此时 CPU 接到了一个读取的指令，那么 CPU 这时候会从自己的缓存中去读取共享变量的数据，而当前缓存中的数据并不是最新的，那么这是一个很明显的问题。要解决这个问题就必须要求 **CPU 读取数据时得先看 Store Bufer 里面有没有，如果有则直接读取 Store Bufer 里的值，如果没有才能读取自己缓存里面的数据**，这也就是所谓的“Store Forward”。

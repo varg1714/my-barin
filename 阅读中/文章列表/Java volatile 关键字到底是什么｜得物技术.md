@@ -1,9 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/4tlE5t4oysoHop6OlswSlg
 create: 2025-08-04 22:49
-read: false
-knowledge: false
+read: true
+knowledge: true
 tags:
+  - JVM
+  - 计算机原理
+knowledge-date: 2025-08-11
 ---
 **目录**
 
@@ -39,7 +42,7 @@ volatile 作为 Java 的基础关键字，一直是个熟悉又神秘的存在�
 
 **在了解指令重排序问题之前，我们先来看一个由指令重排序造成并发问题的例子：**
 
-```
+```java
 static int x = 0, y = 0;
 static int a = 0, b = 0;
 
@@ -281,7 +284,7 @@ int func(int a, int b, int c, int d) {
 
 再来看另一个示例：
 
-```
+```java
 private static boolean running = true;
 
 public static void main(String[] args) {
