@@ -1,8 +1,11 @@
 ---
 source: https://mp.weixin.qq.com/s/PsRA9kB6KE9EB17-G-kOlA
 create: 2025-08-04 22:48
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-08-11
+tags:
+  - Redis
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe97bCSICdmD5k5Jibib2IpkhLFtkOzvD2504vSVCg0ricAJ8DBknMIDgGN2c7LmRtoAwLDibBkZTMCkALA/640?wx_fmt=png&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1&tp=webp&randomid=uhpx8hlk)
 
