@@ -1,8 +1,11 @@
 ---
 source: https://mp.weixin.qq.com/s/lMV9vIM-aPAZ0ftzKSERqg
 create: 2025-08-04 22:48
-read: false
-knowledge: false
+read: true
+knowledge: true
+tags:
+  - JVM
+knowledge-date: 2025-08-14
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naIBeQJB5fNWyGOLK6Zun0MxibqKtdcowbV5MS5X3fj9SibVcr6HyYC4kkX4lec883VgDKwsc3mSPGmw/640?wx_fmt=jpeg&from=appmsg&randomid=tf6h4w31)
 
