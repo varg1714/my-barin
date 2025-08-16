@@ -2,3 +2,27 @@
     font-weight: 500;
     color: #333;
 }
+
+.cm-header-1 {
+    color: var(--h1-color);
+}
+
+.cm-header-2 {
+    color: var(--h2-color);
+}
+
+.cm-header-3 {
+    color: var(--h3-color);
+}
+
+.cm-header-4 {
+    color: var(--h4-color);
+}
+
+.cm-header-5 {
+    color: var(--h5-color);
+}
+
+.cm-header-6 {
+    color: var(--h6-color);
+}
