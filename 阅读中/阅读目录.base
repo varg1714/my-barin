@@ -1,0 +1,80 @@
+formulas:
+  遗留天数: now() - create
+  创建时间: file.ctime.format("yyyy-MM-DD")
+  知识化时间: note["knowledge-date"]
+properties:
+  note.create:
+    displayName: 创建时间
+  note.source:
+    displayName: 原文章
+views:
+  - type: table
+    name: 阅读中
+    filters:
+      and:
+        - file.inFolder("阅读中/文章列表")
+        - read != true
+    order:
+      - file.name
+      - file.tags
+      - create
+      - formula.遗留天数
+    sort:
+      - property: formula.遗留天数
+        direction: ASC
+      - property: create
+        direction: DESC
+      - property: file.ctime
+        direction: ASC
+    columnSize:
+      file.name: 496
+      file.tags: 175
+      note.create: 175
+  - type: table
+    name: 已阅读待整理
+    filters:
+      and:
+        - file.inFolder("阅读中/文章列表")
+        - read == true
+        - knowledge != true
+    order:
+      - file.name
+      - file.tags
+      - formula.创建时间
+      - formula.遗留天数
+    sort:
+      - property: formula.创建时间
+        direction: DESC
+  - type: table
+    name: 知识化
+    filters:
+      and:
+        - file.inFolder("阅读中/文章列表")
+        - knowledge == true
+    order:
+      - file.name
+      - file.tags
+      - formula.创建时间
+      - formula.知识化时间
+    sort:
+      - property: formula.知识化时间
+        direction: DESC
+      - property: file.name
+        direction: ASC
+    columnSize:
+      file.name: 469
+      file.tags: 150
+      formula.创建时间: 132
+  - type: table
+    name: 总结化
+    filters:
+      and:
+        - file.inFolder("阅读中/阅读总结")
+    order:
+      - file.name
+      - source
+      - formula.创建时间
+    columnSize:
+      file.name: 469
+      note.source: 324
+      formula.创建时间: 132
