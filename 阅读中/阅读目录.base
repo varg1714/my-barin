@@ -27,7 +27,7 @@ views:
       - property: file.ctime
         direction: ASC
     columnSize:
-      file.name: 496
+      file.name: 462
       file.tags: 175
       note.create: 175
   - type: table
@@ -62,7 +62,7 @@ views:
       - property: file.name
         direction: ASC
     columnSize:
-      file.name: 469
+      file.name: 418
       file.tags: 150
       formula.创建时间: 132
   - type: table

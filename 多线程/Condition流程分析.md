@@ -19,8 +19,10 @@ Condition 对象有 await，signal 等方法。Object 有 wait，notify 等方�
 ## 3.1. Condition 何时唤醒阻塞中的线程
 
 当其它线程调用 signal 方法后，会从 Condition 等待队列中将节点移动到 AQS 等待队列，从而进行锁的抢占。抢占到锁的线程继续按原有的代码执行，未抢占到的线程继续阻塞，等待其它线程释放锁。
-**这里需要注意的一点是别忽略 Condition 是仅有一个线程可以进入的！**就算 Condition 调用了 `signalAll();` 语句，也只是意味着线程可以都开始抢占锁，但是还是需要在 AQS 阻塞队列中按 FIFO 特性进行获取锁的。
-也就是意味着 `Signal()` 仅仅意味着线程可以开始抢占锁了，但是能不能够抢占到还是需要看锁获取情况的。
+
+**需要注意的是 Condition 仅有一个线程可以进入！**即使 Condition 调用了 `signalAll();` 语句，也只是意味着线程可以都开始抢占锁，但是仍需要在 AQS 阻塞队列中按 FIFO 特性进行获取锁。
+
+即意味着 `Signal()` 仅仅意味着线程可以开始抢占锁了，但是能否抢占到锁取决于锁的获取情况。
 
 ## 3.2. Condition 中何时会抛出 InterruptedException 异常？
 

@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247505019&idx=1&sn=9905bb2caad9178a330783a9b90fbdef&scene=21#wechat_redirect
 create: 2025-07-15 17:46
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-08-22
+tags:
+  - JVM
+  - Java
+summary: "[[CMS原理]]"
 ---
 FSAC 未来超级架构师
 
