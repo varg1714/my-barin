@@ -1,8 +1,10 @@
 ---
 source: https://tech.meituan.com/2020/08/06/new-zgc-practice-in-meituan.html
 create: 2025-07-11 22:30
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-08-27
+summary: "[[阅读中/阅读总结/新一代垃圾回收器 ZGC 的探索与实践 - 美团技术团队|新一代垃圾回收器 ZGC 的探索与实践 - 美团技术团队]]"
 ---
 [ZGC](https://wiki.openjdk.java.net/display/zgc/Main)（The Z Garbage Collector）是 JDK 11 中推出的一款低延迟垃圾回收器，它的设计目标包括：
 

@@ -3,6 +3,7 @@ source: https://mp.weixin.qq.com/s/4zmVxalm_oCVdqgoT_T95Q
 create: 2025-07-15 17:46
 read: true
 knowledge: true
+summary: "[[阅读中/阅读总结/阿里面试：如何选 GC？ZGC 底层原理是什么？染色指针、转发表 是什么 ？90％ 的程序员都答错了！|阿里面试：如何选 GC？ZGC 底层原理是什么？染色指针、转发表 是什么 ？90％ 的程序员都答错了！]]"
 ---
 FSAC 未来超级架构师
 
