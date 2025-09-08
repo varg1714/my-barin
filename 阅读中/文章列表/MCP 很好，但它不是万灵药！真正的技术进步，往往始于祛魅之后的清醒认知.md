@@ -1,10 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/Zs2yF1MovpBD_a12bIVibg
 create: 2025-06-10 19:02
-read: false
-knowledge: false
+read: true
+knowledge: true
 tags:
   - 大模型
+knowledge-date: 2025-09-07
+summary: "[[阅读中/阅读总结/MCP 很好，但它不是万灵药！真正的技术进步，往往始于祛魅之后的清醒认知|MCP 很好，但它不是万灵药！真正的技术进步，往往始于祛魅之后的清醒认知]]"
 ---
 ![](https://mmbiz.qpic.cn/sz_mmbiz_gif/j3gficicyOvasVeMDmWoZ2zyN8iaSc6XWYj79H3xfgvsqK9TDxOBlcUa6W0EE5KBdxacd2Ql6QBmuhBJKIUS4PSZQ/640?wx_fmt=gif&from=appmsg)
 

@@ -17,19 +17,19 @@ views:
     order:
       - file.name
       - file.tags
-      - create
+      - formula.创建时间
       - formula.遗留天数
     sort:
-      - property: formula.遗留天数
-        direction: ASC
       - property: create
         direction: DESC
+      - property: formula.遗留天数
+        direction: ASC
       - property: file.ctime
         direction: ASC
     columnSize:
-      file.name: 462
+      file.name: 489
+      formula.创建时间: 136
       file.tags: 175
-      note.create: 175
   - type: table
     name: 已阅读待整理
     filters:
@@ -62,9 +62,9 @@ views:
       - property: file.name
         direction: ASC
     columnSize:
-      file.name: 418
-      file.tags: 150
-      formula.创建时间: 132
+      file.name: 510
+      file.tags: 187
+      formula.创建时间: 130
   - type: table
     name: 总结化
     filters:
@@ -74,7 +74,10 @@ views:
       - file.name
       - source
       - formula.创建时间
+    sort:
+      - property: formula.创建时间
+        direction: DESC
     columnSize:
-      file.name: 469
-      note.source: 324
+      file.name: 455
+      note.source: 344
       formula.创建时间: 132
