@@ -1,6 +1,6 @@
 formulas:
   遗留天数: now() - create
-  创建时间: file.ctime.format("yyyy-MM-DD")
+  创建时间: if(create, create, file.ctime).format("yyyy-MM-DD")
   知识化时间: note["knowledge-date"]
 properties:
   note.create:
