@@ -1051,7 +1051,7 @@ ZGC 调优配置：
         ZGC 的 STW 时间虽然短，但与 GC Roots 的数量成正比。如果 STW 时间超过预期（如 10ms），需要排查 GC Roots。
 
         * ClassLoader 数量过多
-            * 原因分析：GC 日志中 “Pause Roots ClassLoaderDataGraph” 耗时较长。在[[阅读中/文章列表/新一代垃圾回收器 ZGC 的探索与实践 - 美团技术团队|美团的案例]]中，是由于 Aviator 表达式引擎为每个表达式都创建了一个新的 ClassLoader，导致 ClassLoader 实例上万。
+            * 原因分析：GC 日志中 “Pause Roots ClassLoaderDataGraph” 耗时较长。在[[阅读中/文章列表/文章收藏/新一代垃圾回收器 ZGC 的探索与实践 - 美团技术团队|美团的案例]]中，是由于 Aviator 表达式引擎为每个表达式都创建了一个新的 ClassLoader，导致 ClassLoader 实例上万。
             * 解决方法：这不是一个 JVM 参数调优问题，而是**应用层面的优化**。通过升级 Aviator 组件版本，使其复用 ClassLoader，从而从根本上解决了问题。
         
         * CodeCache 过大

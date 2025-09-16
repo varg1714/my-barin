@@ -285,6 +285,41 @@ ZooKeeper 是怎么检测出某个客户端已经崩溃了呢？实际上，每�
 #### 2.7.4. bigkey 排查
 
 - Redis 可以在执行 `redis-cli` 命令时带上 `–bigkeys` 选项，进而对整个数据库中的键值对大小情况进行统计分析。
+    一个典型的扫描结果会是下面这样：
+    ```bash
+    # Scanning the entire keyspace to find biggest keys as well as
+    # average sizes per key type.  You can use -i 0.1 to sleep 0.1 sec
+    # per 100 SCAN commands (not usually needed).
+    
+    [00.00%] Biggest string found so far 'user:session:12345' with 1024 bytes
+    [15.77%] Biggest list   found so far 'mq:job_queue' with 5000 items
+    [33.45%] Biggest hash   found so far 'user:profile:9876' with 250 fields
+    [78.90%] Biggest set    found so far 'online_users' with 15000 members
+    [99.98%] Biggest zset   found so far 'leaderboard:2024' with 20000 members
+    
+    -------- summary -------
+    
+    Sampled 123456 keys in the keyspace!
+    Total key length in bytes is 2469120 (avg len 20.00)
+    
+    Biggest string found 'user:session:12345' has 1024 bytes
+    Biggest list   found 'mq:job_queue' has 5000 items
+    Biggest hash   found 'user:profile:9876' has 250 fields
+    Biggest set    found 'online_users' has 15000 members
+    Biggest zset   found 'leaderboard:2024' has 20000 members
+    
+    50000 strings with 5000000 bytes (100.00% of keys, avg size 100.00)
+    25000 lists with 125000 items (50.00% of keys, avg size 5.00)
+    10000 hashes with 50000 fields (20.00% of keys, avg size 5.00)
+    5000 sets with 25000 members (10.00% of keys, avg size 5.00)
+    1000 zsets with 10000 members (2.00% of keys, avg size 10.00)
+    ```
+    
+    
+    从这个示例结果可以看出：
+    
+    - **`Biggest ... found`** 部分列出了每种数据类型中最大的 key、它的名称以及大小（对于 string 是字节数，对于集合类型是成员数量）。
+    - **`summary`** 部分则提供了更全面的统计信息，包括总共扫描的 key 数量、各类 key 的总数、平均大小等。
 - 使用 scan 命令扫描 key，然后手动统计。可以使用 `MEMORY USAGE` 命令查询某个 key 占用的内存空间。
 - 利用第三方工具，如 `rdb-tools`。这是基于 rdb 文件统计的一个工具。
 
@@ -1080,7 +1115,7 @@ listpack 头包含两个属性，分别记录了 listpack 总字节数和元素�
 
 GEO 类型的底层数据结构就是用 `Sorted Set` 来实现的，其中 `Set` 的 key 为数据的 key，而 **value 为经纬度的编码值**。
 
-为了能高效地对经纬度进行比较，Redis 采用了业界广泛使用的 [[阅读中/文章列表/GeoHash 算法学习讲解、解析及原理分析|GeoHash 编码方法]]，这个方法的基本原理就是 `二分区间，区间编码`。
+为了能高效地对经纬度进行比较，Redis 采用了业界广泛使用的 [[阅读中/文章列表/文章收藏/GeoHash 算法学习讲解、解析及原理分析|GeoHash 编码方法]]，这个方法的基本原理就是 `二分区间，区间编码`。
 
 在进行第一次二分区时，经度范围\[-180, 180]会被分成两个子区间：\[-180, 0) 和\[0, 180]。此时，我们可以查看一下要编码的经度值落在了左分区还是右分区。如果是落在左分区，我们就用 0 表示；如果落在右分区，就用 1 表示。
 

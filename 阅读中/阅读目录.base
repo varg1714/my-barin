@@ -20,10 +20,12 @@ views:
       - formula.创建时间
       - formula.遗留天数
     sort:
+      - property: formula.创建时间
+        direction: DESC
+      - property: file.name
+        direction: ASC
       - property: create
         direction: DESC
-      - property: formula.遗留天数
-        direction: ASC
       - property: file.ctime
         direction: ASC
     columnSize:
@@ -43,6 +45,8 @@ views:
       - formula.创建时间
       - formula.遗留天数
     sort:
+      - property: file.name
+        direction: ASC
       - property: formula.创建时间
         direction: DESC
   - type: table
@@ -63,7 +67,7 @@ views:
         direction: ASC
     columnSize:
       file.name: 510
-      file.tags: 187
+      file.tags: 242
       formula.创建时间: 130
   - type: table
     name: 总结化
@@ -77,6 +81,8 @@ views:
     sort:
       - property: formula.创建时间
         direction: DESC
+      - property: file.name
+        direction: ASC
     columnSize:
       file.name: 455
       note.source: 344
