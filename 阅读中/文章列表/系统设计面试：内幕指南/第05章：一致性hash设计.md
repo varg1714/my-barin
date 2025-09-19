@@ -1,6 +1,14 @@
 ---
-source: "https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2005%EF%BC%9ADESIGN%20CONSISTENT%20HASHING.md"
-create: "2025-09-15 10:33"
+source: https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2005%EF%BC%9ADESIGN%20CONSISTENT%20HASHING.md
+create: 2025-09-15 10:33
+read: true
+knowledge: true
+knowledge-date: 2025-09-19
+tags:
+  - 系统架构
+  - 分布式
+  - 数据结构
+summary: "[[阅读中/阅读总结/系统设计面试：内幕指南/第05章：一致性hash设计|第05章：一致性hash设计]]"
 ---
 [Open in github.dev](https://github.dev/) [Open in a new github.dev tab](https://github.dev/) [Open in codespace](https://github.com/codespaces/new/Admol/SystemDesign/tree/main?resume=1)
 
@@ -14,29 +22,7 @@ create: "2025-09-15 10:33"
 
 如果你有n个缓存服务器，平衡负载的一个常用方法是使用以下哈希方法：
 
-$s
-  e
-  r
-  v
-  e
-  r
-  I
-  n
-  d
-  e
-  x
-  =
-  h
-  a
-  s
-  h
-  (
-  k
-  e
-  y
-  )
-  mod
-  N$ ，其中N是服务器池的大小
+$serverIndex=hash(key)mod N$，其中N是服务器池的大小
 
 让我们用一个例子来说明它是如何工作的。如表5-1所示，我们有4个服务器和8个字符串键及其哈希值。
 
@@ -85,66 +71,11 @@ $s
 
 #### 一致性哈希
 
-引用自维基百科：“一致性哈希是一种特殊的哈希，当重新调整哈希表的大小并使用一致性哈希时，平均只需要重新映射 $k
-  
-    /
-  
-  n$ 个键，其中 $k$ 是键的数量， $n$ 是槽的数量。 相比之下，在大多数传统的哈希表中，数组槽数量的变化导致几乎所有键都被重新映射 [^1]:”
+引用自维基百科：“一致性哈希是一种特殊的哈希，当重新调整哈希表的大小并使用一致性哈希时，平均只需要重新映射 $k/n$ 个键，其中 $k$ 是键的数量， $n$ 是槽的数量。 相比之下，在大多数传统的哈希表中，数组槽数量的变化导致几乎所有键都被重新映射 [^1]:”
 
 #### 哈希空间和哈希环
 
-现在我们了解了一致性哈希的定义，让我们看看它是如何工作的。假设使用 `SHA-1` 作为哈希函数 `f` ，哈希函数的输出范围为： $x
-    0
-  
-  ,
-  
-    x
-    1
-  
-  ,
-  
-    x
-    2
-  
-  ,
-  
-    x
-    3
-  
-  ,
-  .
-  .
-  .
-  ,
-  
-    x
-    n$ 。 在密码学中， `SHA-1` 的哈希空间从 $0$ 到 $2
-    
-      160
-    
-  
-  
-    –
-  
-  1$ 。也就是说， $x
-    0$ 对应 $0$ ， $x
-    n$ 对应 $2
-    
-      160
-    
-  
-  
-    –
-  
-  1$ ，中间的所有其他哈希值都在 $0$ 和 $2
-    
-      160
-    
-  
-  
-    –
-  
-  1$ 之间。 图 5-3 显示了哈希空间。
+现在我们了解了一致性哈希的定义，让我们看看它是如何工作的。假设使用 `SHA-1` 作为哈希函数 `f` ，哈希函数的输出范围为： $x0,x1,x2,x3,...,xn$ 。 在密码学中， `SHA-1` 的哈希空间从 $0$ 到 $2160–1$ 。也就是说， $x0$ 对应 $0$ ， $xn$ 对应 $2160–1$ ，中间的所有其他哈希值都在 $0$ 和 $2160–1$ 之间。 图 5-3 显示了哈希空间。
 
 [![](https://github.com/Admol/SystemDesign/raw/main/images/chapter5/figure5-3.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter5/figure5-3.jpg)
 
@@ -160,11 +91,15 @@ $s
 
 #### 哈希键
 
-值得一提的是，这里使用的哈希函数与“rehashing problem”中的哈希函数不同，没有模运算。 如图5-6所示，4个缓存键（key0、key1、key2、key3）被哈希到哈希环Server lookup。 [![](https://github.com/Admol/SystemDesign/raw/main/images/chapter5/figure5-6.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter5/figure5-6.jpg)
+值得一提的是，这里使用的哈希函数与“rehashing problem”中的哈希函数不同，没有模运算。如图5-6所示，4个缓存键（key0、key1、key2、key3）被哈希到哈希环Server lookup。 
+
+[![](https://github.com/Admol/SystemDesign/raw/main/images/chapter5/figure5-6.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter5/figure5-6.jpg)
 
 #### 服务器查找
 
-为了确定键存放在哪个服务器上，我们从键在环上的位置顺时针查找，直到找到一个服务器。 图5-7解释了这个过程。顺时针方向查找， `key0` 存储在 `server0` ； `key1` 存储在 `server1` ； `key2` 存储在 `server2` ， `key3` 存储在 `server3` 。 [![](https://github.com/Admol/SystemDesign/raw/main/images/chapter5/figure5-7.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter5/figure5-7.jpg)
+为了确定键存放在哪个服务器上，我们从键在环上的位置顺时针查找，直到找到一个服务器。图5-7解释了这个过程。顺时针方向查找， `key0` 存储在 `server0` ； `key1` 存储在 `server1` ； `key2` 存储在 `server2` ， `key3` 存储在 `server3` 。 
+
+[![](https://github.com/Admol/SystemDesign/raw/main/images/chapter5/figure5-7.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter5/figure5-7.jpg)
 
 #### 添加一台服务器
 

@@ -1,7 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/FySv5L0bCdrlb5MoSfQtAA
 create: 2024-06-20 15:30
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-09-19
+tags:
+  - Spring
+  - 多线程
+summary: "[[Spring 中 Async 注解底层异步线程池原理]]"
 ---
 
 # 浅析 Spring 中 Async 注解底层异步线程池原理｜得物技术

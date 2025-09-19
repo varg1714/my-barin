@@ -1,6 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/yZC6VJGxt1ANZkn0SljZBg
 create: 2024-01-24 16:24
+read: true
+knowledge: true
+knowledge-date: 2025-09-17
+tags:
+  - 分布式
+  - 系统架构
+summary: "[[Redis、ZooKeeper、Etcd 实现的分布式锁分析]]"
 ---
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/VY8SELNGe94cQiccAo2zibZETiaOnMVLNQAO0Zne2x8KlehRMR8AsOTW90m1pAicBEw5wBJFkQiax8ricKGbKibEKV8gQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
