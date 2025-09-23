@@ -85,5 +85,5 @@ views:
         direction: ASC
     columnSize:
       file.name: 455
-      note.source: 344
+      note.source: 369
       formula.创建时间: 132
