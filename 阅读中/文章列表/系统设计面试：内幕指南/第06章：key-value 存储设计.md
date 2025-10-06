@@ -1,6 +1,12 @@
 ---
-source: "https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2006%EF%BC%9ADESIGN%20A%20KEY-VALUE%20STORE.md"
-create: "2025-09-15 10:33"
+source: https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2006%EF%BC%9ADESIGN%20A%20KEY-VALUE%20STORE.md
+create: 2025-09-15 10:33
+read: true
+knowledge: true
+knowledge-date: 2025-09-30
+tags:
+  - 系统架构
+summary: "[[阅读中/阅读总结/系统设计面试：内幕指南/第06章：key-value 存储设计|第06章：key-value 存储设计]]"
 ---
 [Open in github.dev](https://github.dev/) [Open in a new github.dev tab](https://github.dev/) [Open in codespace](https://github.com/codespaces/new/Admol/SystemDesign/tree/main?resume=1)
 

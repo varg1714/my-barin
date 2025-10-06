@@ -1051,7 +1051,7 @@ ZGC 调优配置：
         ZGC 的 STW 时间虽然短，但与 GC Roots 的数量成正比。如果 STW 时间超过预期（如 10ms），需要排查 GC Roots。
 
         * ClassLoader 数量过多
-            * 原因分析：GC 日志中 “Pause Roots ClassLoaderDataGraph” 耗时较长。在[[阅读中/文章列表/文章收藏/新一代垃圾回收器 ZGC 的探索与实践 - 美团技术团队|美团的案例]]中，是由于 Aviator 表达式引擎为每个表达式都创建了一个新的 ClassLoader，导致 ClassLoader 实例上万。
+            * 原因分析：GC 日志中 “Pause Roots ClassLoaderDataGraph” 耗时较长。在[[阅读中/文章列表/文章收藏/2025-09/新一代垃圾回收器 ZGC 的探索与实践 - 美团技术团队|美团的案例]]中，是由于 Aviator 表达式引擎为每个表达式都创建了一个新的 ClassLoader，导致 ClassLoader 实例上万。
             * 解决方法：这不是一个 JVM 参数调优问题，而是**应用层面的优化**。通过升级 Aviator 组件版本，使其复用 ClassLoader，从而从根本上解决了问题。
         
         * CodeCache 过大
@@ -1124,7 +1124,7 @@ Java 虚拟机把描述类的数据从 Class 文件加载到内存，并对数�
 2. 使用 `java.lang.reflect` 包的方法对类型进行反射调用的时候，如果类型没有进行过初始化，则需要先触发其初始化
 3. 当初始化类的时候，如果发现其父类还没有进行过初始化，则需要先触发其父类的初始化
 4. 当虚拟机启动时，用户需要指定一个要执行的主类（包含 `main()` 方法的那个类），虚拟机会先初始化这个主类
-5. ）当使用 JDK 7 新加入的动态语言支持时，如果一个 `java.lang.invoke.MethodHandle` 实例最后的解析结果为 REF_getStatic、REF_putStatic、REF_invokeStatic、REF_newInvokeSpecial 四种类型的方法句柄，并且这个方法句柄对应的类没有进行过初始化，则需要先触发其初始化
+5. 当使用 JDK 7 新加入的动态语言支持时，如果一个 `java.lang.invoke.MethodHandle` 实例最后的解析结果为 REF_getStatic、REF_putStatic、REF_invokeStatic、REF_newInvokeSpecial 四种类型的方法句柄，并且这个方法句柄对应的类没有进行过初始化，则需要先触发其初始化
 6. 当一个接口中定义了 JDK 8 新加入的默认方法（被 default 关键字修饰的接口方法）时，如果有这个接口的实现类发生了初始化，那该接口要在其之前被初始化
 
 对于这六种会触发类型进行初始化的场景，《Java 虚拟机规范》中使用了一个非常强烈的限定语 ——“有且只有”，这六种场景中的行为称为对一个类型进行主动引用。**除此之外，所有引用类型的方式都不会触发初始化，称为被动引用**。
