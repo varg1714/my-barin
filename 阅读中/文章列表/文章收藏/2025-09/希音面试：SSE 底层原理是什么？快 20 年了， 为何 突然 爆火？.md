@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/vct-YamYF2XFi4VatVRWMw
 create: 2025-09-11 21:13
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-09
+tags:
+  - 计算机原理
+  - 网络
+summary: "[[SSE 原理]]"
 ---
 FSAC 未来超级架构师
 

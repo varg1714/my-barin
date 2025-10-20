@@ -1,8 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/apKmEMkiJR2u9LqOUfQ6KQ
 create: 2025-09-15 11:05
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-18
+tags:
+  - 系统架构
+summary: "[[阅读中/阅读总结/系统设计面试：内幕指南/第08章：短网址设计|第08章：短网址设计]]"
 ---
 2025年08月26日 14:12@小林coding 2025年08月26日 14:12
 

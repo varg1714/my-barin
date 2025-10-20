@@ -66,7 +66,7 @@ views:
       - property: file.name
         direction: ASC
     columnSize:
-      file.name: 510
+      file.name: 453
       file.tags: 242
       formula.创建时间: 130
   - type: table

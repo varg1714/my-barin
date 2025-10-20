@@ -270,7 +270,7 @@ log.info("request a={}", () -> a);
 
 [^4]: https://www.aliyun.com/product/xtrace
 
-[^5]: https://www.slf4j.org/manual.html #fluent  
+[^5]: https://www.slf4j.org/manual.html#fluent  
 
 [^6]: https://www.slf4j.org/manual.htm
 

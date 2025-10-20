@@ -1,8 +1,12 @@
 ---
 source: https://pdai.tech/md/spring/spring-x-framework-ioc-source-3.html
 create: 2025-10-03 14:12
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-13
+tags:
+  - Spring
+summary: "[[Spring 的三级缓存]]"
 ---
 
 上文，我们看了 IOC 设计要点和设计结构；以及 Spring 如何实现将资源配置（以 xml 配置为例）通过加载，解析，生成 BeanDefination 并注册到 IoC 容器中的；容器中存放的是 Bean 的定义即 BeanDefinition 放到 beanDefinitionMap 中，本质上是一个 `ConcurrentHashMap<String, Object>`；并且 BeanDefinition 接口中包含了这个类的 Class 信息以及是否是单例等。那么如何从 BeanDefinition 中实例化 Bean 对象呢，这是本文主要研究的内容？@pdai
@@ -37,7 +41,7 @@ knowledge: false
 
 ![](https://pdai.tech/images/spring/springframework/spring-framework-ioc-source-74.png)
 
-## [#](#beanfactory中getbean的主体思路) BeanFactory 中 getBean 的主体思路
+## BeanFactory 中 getBean 的主体思路
 
 上文中我们知道 BeanFactory 定义了 Bean 容器的规范，其中包含根据 bean 的名字, Class 类型和参数等来得到 bean 实例。
 

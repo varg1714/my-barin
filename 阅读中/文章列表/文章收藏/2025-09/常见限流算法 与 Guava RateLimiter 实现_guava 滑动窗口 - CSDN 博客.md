@@ -1,7 +1,13 @@
 ---
 source: https://blog.csdn.net/LCBUSHIHAHA/article/details/125954347
 create: 2024-02-19 14:19
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-19
+tags:
+  - Java
+  - 框架原理
+summary: "[[Guava RateLimiter 实现]]"
 ---
 
 # 常见限流算法 与 Guava RateLimiter 实现_guava 滑动窗口 - CSDN 博客
@@ -110,7 +116,7 @@ stable interval 表示多久产生一个令牌，也就是正常情况下令牌�
 *   梯形的面积是旁边矩形（x 轴：0 -> thresholdPermits 和 y 轴：0 -> stable interval 围成的面积）的两倍。  
     由上面两个假设，我们已知预热时间（由用户设定）和 stable interval(通过用户设定计算得出) 可以计算出以下的值。
 
-```
+```java
 //预热时间=2倍的矩形面积
 warmupPeriod = 2  * stableInterval  *  thresholdPermits
 //由此可以推出
@@ -123,7 +129,7 @@ maxPermits = thresholdPermits + 2.0 * warmupPeriod / (stableInterval + coldInter
 
 从图中还可以看出，在系统最冷的时候，获取一个令牌所花的时间是正常情况下令牌发放速度的三倍。这里要注意，在`SmoothBursty`中获取令牌桶中存储的令牌时不用等待的，也就是说在`SmoothWarmingUp`中，从令牌桶中获取令牌最快也得等待`stable interval`，最慢为 3*`stable interval`。为什么是 3 倍呢？因为程序里面写死了。
 
-```
+```java
 public static RateLimiter create(double permitsPerSecond, long warmupPeriod, TimeUnit unit) {warmupPeriod);
     return create(
         permitsPerSecond, warmupPeriod, unit, 3.0, SleepingStopwatch.createFromSystemTimer());
@@ -134,14 +140,14 @@ public static RateLimiter create(double permitsPerSecond, long warmupPeriod, Tim
 
 ### 3.1. RateLimiter 成员变量
 
-```
+```java
 //用来计时
 private final SleepingStopwatch stopwatch;
 ```
 
 ### 3.2. SmoothRateLimiter 成员变量
 
-```
+```java
 //当前令牌桶中存储的令牌数
   double storedPermits;
   //最大可以存储的令牌数
@@ -158,14 +164,14 @@ private final SleepingStopwatch stopwatch;
 
 ### 4.1. 成员变量
 
-```
+```java
 //存储最大突发秒数，默认是1S，通过这个最大突发秒数计算最大可以存储多少令牌
 final double maxBurstSeconds;
 ```
 
 ### 4.2. 构造函数
 
-```
+```java
 SmoothBursty(SleepingStopwatch stopwatch, double maxBurstSeconds) {
 	//计时器
       super(stopwatch);
@@ -176,7 +182,7 @@ SmoothBursty(SleepingStopwatch stopwatch, double maxBurstSeconds) {
 
 ### 4.3. 创建
 
-```
+```java
 static RateLimiter create(double permitsPerSecond, SleepingStopwatch stopwatch) {
   	
     RateLimiter rateLimiter = new SmoothBursty(stopwatch, 1.0 /* maxBurstSeconds */);
@@ -186,7 +192,7 @@ static RateLimiter create(double permitsPerSecond, SleepingStopwatch stopwatch) 
   }
 ```
 
-```
+```java
 public final void setRate(double permitsPerSecond) {
     checkArgument(
         permitsPerSecond > 0.0 && !Double.isNaN(permitsPerSecond), "rate must be positive");
@@ -198,7 +204,7 @@ public final void setRate(double permitsPerSecond) {
   }
 ```
 
-```
+```java
 com.google.common.util.concurrent.SmoothRateLimiter#doSetRate(double, long)
  @Override
   final void doSetRate(double permitsPerSecond, long nowMicros) {
@@ -225,7 +231,7 @@ void resync(long nowMicros) {
   }
 ```
 
-```
+```java
 com.google.common.util.concurrent.SmoothRateLimiter.SmoothBursty#doSetRate
 void doSetRate(double permitsPerSecond, double stableIntervalMicros) {
       double oldMaxPermits = this.maxPermits;
@@ -254,7 +260,7 @@ void doSetRate(double permitsPerSecond, double stableIntervalMicros) {
 
 #### 4.4.1. acquire 方法
 
-```
+```java
 public double acquire(int permits) {
   	//计算需要等待多长时间才能获取到指定的令牌数
     long microsToWait = reserve(permits);
@@ -278,7 +284,7 @@ public double acquire(int permits) {
   }
 ```
 
-```
+```java
 @Override
   final long reserveEarliestAvailable(int requiredPermits, long nowMicros) {
     resync(nowMicros);
@@ -300,7 +306,7 @@ public double acquire(int permits) {
 
 storedPermitsToWaitTime() 方法是实现`SmoothWarmingUp`与`SmoothBursty`的核心方法。`SmoothBursty`很简单，就是直接返回 0，表示从令牌桶中获取令牌不需要付出任何代价。但是`SmoothWarmingUp`就会复杂一些。
 
-```
+```java
 long storedPermitsToWaitTime(double storedPermits, double permitsToTake) {
       return 0L;
     }
@@ -308,7 +314,7 @@ long storedPermitsToWaitTime(double storedPermits, double permitsToTake) {
 
 #### 4.4.2. tryAcquire 方法获取令牌
 
-```
+```java
 public boolean tryAcquire() {
     return tryAcquire(1, 0, MICROSECONDS);
   }
@@ -371,7 +377,7 @@ private boolean canAcquire(long nowMicros, long timeoutMicros) {
 
 ### 5.1. 成员变量
 
-```
+```java
 //预热时间
 	private final long warmupPeriodMicros;
 	//斜率
@@ -384,7 +390,7 @@ private boolean canAcquire(long nowMicros, long timeoutMicros) {
 
 ### 5.2. 构造方法
 
-```
+```java
 SmoothWarmingUp(
         SleepingStopwatch stopwatch, long warmupPeriod, TimeUnit timeUnit, double coldFactor) {
       super(stopwatch);
@@ -396,7 +402,7 @@ SmoothWarmingUp(
 
 ### 5.3. 创建
 
-```
+```java
 //创建时会设置预热时间
  public static RateLimiter create(double permitsPerSecond, Duration warmupPeriod) {
     return create(permitsPerSecond, toNanosSaturated(warmupPeriod), TimeUnit.NANOSECONDS);
@@ -422,7 +428,7 @@ SmoothWarmingUp(
   }
 ```
 
-```
+```java
 @Override
     void doSetRate(double permitsPerSecond, double stableIntervalMicros) {
       double oldMaxPermits = maxPermits;
@@ -456,7 +462,7 @@ SmoothWarmingUp(
 
 获取令牌的令牌与 SmoothBursty 基本一致，唯一有区别的地方就是从令牌桶中获取令牌的逻辑。这个方面也有提到，看漏了的可以回看。
 
-```
+```java
 @Override
     long storedPermitsToWaitTime(double storedPermits, double permitsToTake) {
       double availablePermitsAboveThreshold = storedPermits - thresholdPermits;

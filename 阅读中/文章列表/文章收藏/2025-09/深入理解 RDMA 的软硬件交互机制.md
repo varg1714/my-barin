@@ -1,7 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/mppfRPxGALSOWdP9vXplUg
 create: 2024-07-09 15:38
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-09
+tags:
+  - 计算机原理
+summary: "[[阅读中/阅读总结/文章收藏/2025-10/深入理解 RDMA 的软硬件交互机制|深入理解 RDMA 的软硬件交互机制]]"
 ---
 
 # 深入理解 RDMA 的软硬件交互机制
@@ -86,7 +91,7 @@ RDMA 的内存管理
 
 这样讲可能会有一些抽象，以一个实际的例子来看看 RDMA 是怎么注册内存的：
 
-```
+```c
 // 扫描 RDMA 设备，找到我们要用的设备
 int num_devices = 0, i;
 struct ibv_device ** device_list = ibv_get_device_list(&num_devices);
@@ -112,12 +117,12 @@ posix_memalign(&alloc_region, sysconf(_SC_PAGESIZE), 8192);
 struct ibv_mr* reg_mr = ibv_reg_mr(pd, alloc_region, mr_len, IBV_ACCESS_LOCAL_WRITE);
 ```
 
-```
+```shell
 echo "file mr.c +p" > /sys/kernel/debug/dynamic_debug/control
 echo "file mem.c +p" > /sys/kernel/debug/dynamic_debug/control
 ```
 
-```
+```shell
 infiniband mlx5_0: mlx5_ib_reg_user_mr:1300:(pid 100804): start 0xdb1000, virt_addr 0xdb1000, length 0x2000, access_flags 0x100007
 infiniband mlx5_0: mr_umem_get:834:(pid 100804): npages 2, ncont 2, order 1, page_shift 12
 infiniband mlx5_0: get_cache_mr:484:(pid 100804): order 2, cache index 0
@@ -126,14 +131,14 @@ infiniband mlx5_0: __mlx5_ib_populate_pas:158:(pid 100804): pas[0] 0x3e07a92003
 infiniband mlx5_0: __mlx5_ib_populate_pas:158:(pid 100804): pas[1] 0x3e106a6003
 ```
 
-```
+```shell
 mkey 0xdd5d
 virt_addr 0xdb1000, length 0x2000, access_flags 0x100007
 pas[0] 0x3e07a92003
 pas[1] 0x3e106a6003
 ```
 
-```
+```c
 uint32_t send_demo(struct ibv_qp *qp, struct ibv_mr *mr)
 {
     struct ibv_send_wr sq_wr = {}, *bad_wr_send = NULL;
@@ -241,7 +246,7 @@ RDMA 的软硬交换的基础单元是 Work Queue。Work Queue 是一个单生�
 
 还是以一个实际的例子进行分析，这样才能深入理解全流程：
 
-```
+```c
 uint32_t send_demo(struct ibv_qp *qp, struct ibv_mr *mr)
 {
     struct ibv_send_wr sq_wr = {}, *bad_wr_send = NULL;

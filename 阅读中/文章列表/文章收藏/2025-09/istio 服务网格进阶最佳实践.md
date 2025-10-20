@@ -1,6 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s?__biz=MzI1NjEwMTM4OA==&mid=2651234684&idx=1&sn=947f2958af56323e317ee0dc360cb207&chksm=f1d9dc1fc6ae55098384440792be70ffc3b1dca1befba180df27ce1e438f309ba6b73d630e14&mpshare=1&scene=1&srcid=1031qigbakG1HsfyPvjNeeZr&sharer_shareinfo=b7776596c78782c47ea21f9dc77173e7&sharer_shareinfo_first=b7776596c78782c47ea21f9dc77173e7#rd
 create: 2023-11-13 17:10
+read: true
+knowledge: true
+knowledge-date: 2025-10-13
+tags:
+  - 分布式
+  - 系统架构
+summary: "[[istio 服务网格学习步骤分享]]"
 ---
 
 ❝

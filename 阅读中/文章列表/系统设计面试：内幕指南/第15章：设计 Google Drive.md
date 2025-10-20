@@ -1,6 +1,12 @@
 ---
-source: "https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2015%EF%BC%9ADESIGN%20GOOGLE%20DRIVE.md"
-create: "2025-09-15 10:35"
+source: https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2015%EF%BC%9ADESIGN%20GOOGLE%20DRIVE.md
+create: 2025-09-15 10:35
+read: true
+knowledge: true
+knowledge-date: 2025-10-16
+tags:
+  - 系统架构
+summary: "[[阅读中/阅读总结/系统设计面试：内幕指南/第15章：设计 Google Drive|第15章：设计 Google Drive]]"
 ---
 
 [Open in github.dev](https://github.dev/) [Open in a new github.dev tab](https://github.dev/) [Open in codespace](https://github.com/codespaces/new/Admol/SystemDesign/tree/main?resume=1)
@@ -66,43 +72,9 @@ create: "2025-09-15 10:35"
 - 用户获得10 GB 的可用空间。
 - 假设用户每天上传2 个文件。平均文件大小为 500 KB。
 - 1:1 的读写比。
-- 分配的总空间： $5000
-	  万
-	  ×
-	  10
-	  G
-	  B
-	  =
-	  500
-	  P
-	  B$
-- 上传 API 的 QPS： $1000
-	  万
-	  ×
-	  2
-	  次
-	  上
-	  传
-	  
-	    /
-	  
-	  24
-	  小
-	  时
-	  
-	    /
-	  
-	  3600
-	  秒
-	  ≈
-	  240$
-- 峰值 QPS: $Q
-	  P
-	  S
-	  ×
-	  2
-	  =
-	  480$
+- 分配的总空间： $5000万×10GB=500PB$
+- 上传 API 的 QPS： $1000万×2次上传/24小时/3600秒≈240$
+- 峰值 QPS: $QPS×2=480$
 
 ## 第2步：提出高层次的设计方案并获得认同
 
@@ -127,16 +99,23 @@ API 是什么样子的？我们主要需要 3 个 API：上传文件、下载文
 1. 上传文件到 Google Drive
 	支持两种类型的上传：
 	- 简单上传。当文件较小时使用此上传类型。
-	- 可恢复上传。当文件很大并且网络中断的可能性很高时，请使用此上传类型。
-	以下是可恢复上传 API 的示例： `https://api.example.com/files/upload?uploadType=resumable`
-	参数：
-	- `uploadType=resumable`
-	- `data`: 待上传的本地文件
-	可恢复上传通过以下 3 个步骤 [^2]: 实现：
-	- 发送初始请求以检索可恢复 URL。
-	- 上传数据并监控上传状态。
-	- 如果上传受到干扰，请继续上传。
-2. 从Google Drive下载文件
+	- 可恢复上传
+    	
+    	当文件很大并且网络中断的可能性很高时，请使用此上传类型。
+    	
+    	以下是可恢复上传 API 的示例： `https://api.example.com/files/upload?uploadType=resumable`
+    	
+    	参数：
+    	
+        - `uploadType=resumable`
+        - `data`: 待上传的本地文件
+    	
+    	可恢复上传通过以下 3 个步骤 [^2]: 实现：
+    	
+    	- 发送初始请求以检索可恢复 URL。
+    	- 上传数据并监控上传状态。
+    	- 如果上传受到干扰，请继续上传。
+1. 从Google Drive下载文件
 	示例 API： `https://api.example.com/files/download`
 	参数：
 	- `path` ：下载文件路径
@@ -148,11 +127,12 @@ API 是什么样子的？我们主要需要 3 个 API：上传文件、下载文
 	}
 	```
 
-3. 获取文件修订
+2. 获取文件修订
 	示例 API： `https://api.example.com/files/list_revisions`
 	参数：
 	- `path` ：要获取修订历史记录的文件的路径
 	- 要返回的最大修订数。
+	
 	示例参数：
 
 	```

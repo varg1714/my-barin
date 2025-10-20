@@ -1,8 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/Fa15GoM3_2CUnjdHQ3I7Nw
 create: 2025-09-16 20:48
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-16
+tags:
+  - 大模型
+summary: "[[阅读中/阅读总结/文章收藏/2025-10/为什么 Claude Code 放弃代码索引，使用 50 年前的 grep 技术？|为什么 Claude Code 放弃代码索引，使用 50 年前的 grep 技术？]]"
 ---
 余志臻@腾讯云开发者 2025年09月16日 08:45
 

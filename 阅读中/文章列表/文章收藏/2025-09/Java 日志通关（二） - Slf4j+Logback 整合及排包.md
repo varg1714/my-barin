@@ -300,7 +300,7 @@ Slf4j 发现了多个适配层，一般在这条错误日志后，会列出所�
 
 [^2]: https://logging.apache.org/log4j/2.x/manual/extending.html  
 
-[^3]: https://www.slf4j.org/faq.html #changesInVersion200
+[^3]: https://www.slf4j.org/faq.html#changesInVersion200
 
 [^4]: https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html
 
@@ -310,7 +310,7 @@ Slf4j 发现了多个适配层，一般在这条错误日志后，会列出所�
 
 [^7]: https://logback.qos.ch/news.html
 
-[^8]: https://docs.spring.io/spring-boot/docs/current/reference/html/features.html #features.logging
+[^8]: https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.logging
 
 [^9]: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-logging
 
@@ -318,7 +318,7 @@ Slf4j 发现了多个适配层，一般在这条错误日志后，会列出所�
 
 [^11]: https://github.com/spring-projects/spring-boot/issues/12649
 
-[^12]: https://github.com/spring-projects/spring-boot/issues/12649 #issuecomment -1569448932
+[^12]: https://github.com/spring-projects/spring-boot/issues/12649#issuecomment -1569448932
 
 [^13]: https://stackoverflow.com/questions/55441430/what-does-this-all-exclude-means-in-gradle-transitive-dependency
 

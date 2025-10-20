@@ -1,6 +1,12 @@
 ---
-source: "https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2014%EF%BC%9ADESIGN%20YOUTUBE.md"
-create: "2025-09-15 10:34"
+source: https://github.com/Admol/SystemDesign/blob/main/CHAPTER%2014%EF%BC%9ADESIGN%20YOUTUBE.md
+create: 2025-09-15 10:34
+read: true
+knowledge: true
+knowledge-date: 2025-10-15
+tags:
+  - 系统架构
+summary: "[[第14章：设计 YouTub]]"
 ---
 
 [Open in github.dev](https://github.dev/) [Open in a new github.dev tab](https://github.dev/) [Open in codespace](https://github.com/codespaces/new/Admol/SystemDesign/tree/main?resume=1)
@@ -84,37 +90,11 @@ YouTube 看起来很简单：内容创作者上传视频，观众点击播放。
 - 用户每天观看 5 个视频。
 - 10%的用户每天上传 1 个视频。
 - 假设平均视频大小为 300MB。
-- 每天需要的总存储空间。 $500
-	  万
-	  ×
-	  10$
+- 每天需要的总存储空间。 $500万×10$
 - CDN 成本
 	- 当云计算 CDN 提供视频时，你要为从 CDN 传输出来的数据付费。
 	- 让我们使用亚马逊的 CDN CloudFront 进行成本估算（图 14-2）[^3]。假设 100%的流量都来自美国。每 GB 的平均成本为 0.02 美元。为简单起见，我们只计算视频流的成本。
-	- $500
-		  万
-		  ×
-		  5
-		  个
-		  视
-		  频
-		  ×
-		  0.3
-		  G
-		  B
-		  ×
-		  0.02
-		  美
-		  元
-		  =
-		  15
-		  万
-		  美
-		  元
-		  
-		    /
-		  
-		  天$
+	- $500万×5个视频×0.3GB×0.02美元=15万美元/天$
 
 从粗略的成本估算中，我们知道从 CDN 提供视频的成本很高。即使云供应商愿意为大客户大幅降低 CDN 成本，但成本仍然很高。我们将深入讨论降低 CDN 成本的方法。
 
@@ -324,7 +304,9 @@ DAG 调度器把 DAG 图分割成各阶段的任务，并把它们放在资源�
 
 [![](https://github.com/Admol/SystemDesign/raw/main/images/chapter14/figure14-22.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter14/figure14-22.jpg)
 
-这允许在前一次上传失败时快速恢复上传。按 GOP 分割视频文件的工作可以由客户端实现，以提高上传速度，如图 14-23 所示。 [![](https://github.com/Admol/SystemDesign/raw/main/images/chapter14/figure14-23.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter14/figure14-23.jpg)
+这允许在前一次上传失败时快速恢复上传。按 GOP 分割视频文件的工作可以由客户端实现，以提高上传速度，如图 14-23 所示。 
+
+[![](https://github.com/Admol/SystemDesign/raw/main/images/chapter14/figure14-23.jpg)](https://github.com/Admol/SystemDesign/blob/main/images/chapter14/figure14-23.jpg)
 
 **速度优化：将上传中心放在靠近用户的地方**
 

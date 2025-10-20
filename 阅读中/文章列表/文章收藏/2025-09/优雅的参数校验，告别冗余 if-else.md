@@ -1,9 +1,14 @@
 ---
 source: https://mp.weixin.qq.com/s/r4Qs2mSIhDOvOMDzmoUKtQ
 create: 2025-04-17 21:39
-read: false
+read: true
 tags:
   - Spring
+  - Java
+  - 框架使用
+knowledge: true
+knowledge-date: 2025-10-20
+summary: "[[Spring 的参数校验]]"
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naLFZ2mB9wuDGL8DRZg7Rf2qPuzNhvG7snQ8v1LWAPPOCOjZhRrrcRpBmjibCv0Xm92SlMv1MbciaZ7Q/640?wx_fmt=jpeg&from=appmsg)
 
@@ -37,7 +42,7 @@ spring-boot-starter-validation 是 Spring Boot 框架中的一个模块，它构
 
 在这里搭建一个简单的 SpringBoot 项目，并引入如下依赖：
 
-```
+```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-validation</artifactId>
@@ -50,7 +55,7 @@ spring-boot-starter-validation 是 Spring Boot 框架中的一个模块，它构
 
 **2.1 全局异常处理**
 
-```
+```java
 @Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -103,7 +108,7 @@ public class GlobalExceptionHandler {
 
 2.2.1 实体类
 
-```
+```java
 @Data
 public class UserCreateVO {
     @NotBlank(message = "用户名不能为空")
@@ -120,7 +125,7 @@ public class UserCreateVO {
 }
 ```
 
-```
+```java
 @Data
 public class UserUpdateVO {
 
@@ -143,7 +148,7 @@ public class UserUpdateVO {
 
 2.2.1 定义请求接口
 
-```
+```java
 @Validated
 @RestController
 @RequestMapping("/user")
@@ -177,7 +182,7 @@ public class UserController {
 
 有时候我们是通过 @Pathvariable 注解实现参数传递的，这个时候校验如下：
 
-```
+```java
 @GetMapping("getUserById/{id}")
 public Result getUserById(@PathVariable @Size(min=2,max=5,message = "id长度不符合要求") String id){
     return Result.ok("参数校验成功");
@@ -198,7 +203,7 @@ public Result getUserById(@PathVariable @Size(min=2,max=5,message = "id长度不
 
 2.4.1 定义分组校验接口
 
-```
+```java
 //分组校验
 public class UserGroup {
     public interface CreateGroup extends Default {
@@ -210,7 +215,7 @@ public class UserGroup {
 
 2.4.2 统一 VO 校验类
 
-```
+```java
 @Data
 public class UserVo {
 
@@ -239,7 +244,7 @@ public class UserVo {
 
 参数上边添加 @Validated 接口，并指定分组名称, 并统一使用 UserVO 类接收参数。
 
-```
+```java
 @Validated
 @RestController
 @RequestMapping("/user")
@@ -278,7 +283,7 @@ public class UserController {
 
 2.5.1 添加一个角色实体
 
-```
+```java
 @Data
 public class Role {
     @NotBlank(message = "角色名称不能为空")
@@ -290,7 +295,7 @@ public class Role {
 
 在 User 类中引入角色实体，并加入 @Valid 注解。
 
-```
+```java
 @Data
 public class UserVo {
 
@@ -333,7 +338,7 @@ public class UserVo {
 
 默认 validation 的校验规则默认会检查所有属性的校验规则，在每一条规则都校验完成后才抛出异常，这样子难免效率会很低，我们希望在发现错误后就不再向后检查，可以通过 “快速失败” 配置解决，参考代码如下：
 
-```
+```java
 /**
  * 参数校验相关配置
  */
@@ -375,7 +380,7 @@ public class ValidConfig {
 
 2.7.1 定义注解
 
-```
+```java
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE, ElementType.CONSTRUCTOR, ElementType.PARAMETER, ElementType.TYPE_USE})
@@ -401,7 +406,7 @@ public @interface PhoneValid {
 
 在 ConstraintValidator 中，第一个参数为注解，即 Annotation，第二个参数是泛型。
 
-```
+```java
 public class PhoneValidator implements ConstraintValidator<PhoneValid,Object> {
     /**
      * 11位手机号的正则表达式,以13、14、15、17、18头
