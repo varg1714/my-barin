@@ -1,7 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/XpukKx9Ovl4bqil8cNDP0g
 create: 2024-07-31 10:51
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-28
+tags:
+  - 数据库
+  - Mysql
+summary: "[[Mysql的查询优化]]"
 ---
 
 阿里妹导读

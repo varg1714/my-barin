@@ -1,7 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/3P9lkbwJwORW42dZxuPAfg
 create: 2024-06-20T15:43:00
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-28
+tags:
+  - 框架使用
+summary: "[[Git 最佳实践]]"
 ---
 
 # Git 最佳实践，这样用就对了

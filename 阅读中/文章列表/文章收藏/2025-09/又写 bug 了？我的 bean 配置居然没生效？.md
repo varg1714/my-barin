@@ -1,7 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/rWorrPuxZaneGsjoGMe-Pw
 create: 2024-07-31 10:52
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-27
+tags:
+  - Spring
+  - 框架使用
+summary: "[[Spring 中不同依赖注入的区别]]"
 ---
 
 阿里妹导读
@@ -14,7 +20,7 @@ read: false
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/33P2FdAnjuicXVHCbAgl692Siap9rCib6ztl1SjssonsliaVCxiao5kbqw7BM8ibxkhklmK0zBJp8gTUCzhENcm5eZeA/640?wx_fmt=png&from=appmsg)
 
-```
+```java
 @Configuration
 @Slf4j(topic = "config")
 public class XxxTairConfig {
@@ -111,7 +117,7 @@ public class XxxTairConfig {
 
 以本次用到的 bean 配置为例：
 
-```
+```java
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -142,7 +148,7 @@ public class XxxTairConfig {
 
 还是以本次用到的 bean 配置为例：
 
-```
+```java
 @Configuration
 @Slf4j(topic = "config")
 public class XxxTairConfig {
@@ -167,21 +173,11 @@ public class XxxTairConfig {
 }
 ```
 
-```
-   @Bean
-    public TairAccessor tmgXxxTairAccessor(TairManager tmgXxxTairManager) {
-        TairAccessorImpl tairAccessor = new TairAccessorImpl();
-        tairAccessor.setTairManager(tmgXxxTairManager);
-        tairAccessor.setNamespace(namespace);
-        return tairAccessor;
-    }
-```
-
 为什么我的 bean 配置没生效？
 
 最早，在胖客户端中，是通过 Java 配置类配置的 tair 的 bean。最早的代码如下：
 
-```
+```java
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -289,7 +285,7 @@ Spring 框架在处理 @Bean 方法中的参数时，默认的行为与 @Autow
 
 例如本文中涉及到的 tmgXxxTairManager 参数，注入的并不一定是上面定义的 tmgXxxTairManager bean。
 
-```
+```java
 @Configuration
 @Slf4j(topic = "config")
 public class XxxTairConfig {
@@ -326,7 +322,7 @@ public class XxxTairConfig {
 
 这也解释了为什么中间改成用 xml 配置是没问题的。
 
-```
+```java
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -355,7 +351,7 @@ public class XxxTairConfig {
 
 通过 @Qualifier 指定 bean，避免受 @Primary 等因素的影响。
 
-```
+```java
 @Configuration
 @Slf4j(topic = "config")
 public class XxxTairConfig {

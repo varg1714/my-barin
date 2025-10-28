@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/9z8u1FWJq6xoW6hFhfxR6Q
 create: 2025-10-13 21:41
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-22
+tags:
+  - 多线程
+  - Java
+summary: "[[TTL Agent 的原理及注意事项]]"
 ---
 ![](http://mmbiz.qpic.cn/mmbiz_gif/AAQtmjCc74DZeqm2Rc4qc7ocVLZVd8FOASKicbMfKsaziasqIDXGPt8yR8anxPO3NCF4a4DkYCACam4oNAOBmSbA/640?wx_fmt=gif&wxfrom=5&wx_lazy=1#imgIndex=0)
 
@@ -60,7 +65,7 @@ Java 中每个线程，允许为每个线程创建一个独立的绑定变量副
 
 最早 Java 应用如果要把线程的上下文在线程池之间透传，需要手搓 wrap。
 
-```
+```java
 import java.util.concurrent.*;
 
 publicclassTLWrapDemo {
@@ -124,7 +129,7 @@ publicclassTLWrapDemo {
 
 线程 MTC 透传，TTL 示例：
 
-```
+```java
 import com.alibaba.ttl.TransmittableThreadLocal;
 import com.alibaba.ttl.threadpool.TtlExecutors;
 import java.util.concurrent.*;
@@ -222,7 +227,7 @@ JavaAgent 是 Java 提供的一种机制，允许你在类加载（load）到 JV
 
 JavaAgent 依赖 **Instrumentation** 接口。你需要实现一个 Agent 类，并实现一个特殊的方法：
 
-```
+```java
 public static void premain(String agentArgs, Instrumentation inst)
 ```
 
@@ -232,7 +237,7 @@ public static void premain(String agentArgs, Instrumentation inst)
 
 来个简单的 demo：
 
-```
+```java
 import java.lang.instrument.*;
 import javassist.*;
 

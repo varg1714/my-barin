@@ -134,6 +134,24 @@ Spring 使用三个独立的缓存（本质是 Map）协同工作，构成了解
 - **只用二级缓存可以吗？**
     **可以，但不优雅**。如果只用二级缓存，就必须在 Bean 实例化后，立即判断是否需要 AOP 并创建代理，然后将代理对象放入二级缓存。这**破坏了 Spring 将 AOP 逻辑后置到初始化阶段的设计原则**，并且会造成**性能浪费**（为很多并未卷入循环依赖的 Bean 过早地创建了代理）。
 
+
+#### 1.1.4. 案例研究：`@Transactional` 与 `@Validated` 的代理时机差异
+
+这两种常见的注解完美地诠释了 `SmartInstantiationAwareBeanPostProcessor` 和普通 `BeanPostProcessor` 在循环依赖场景下的不同行为。
+
+- **`@Transactional`**
+    - **代理创建处理器**: `InfrastructureAdvisorAutoProxyCreator` (或类似的自动代理创建器)
+    - **实现的关键接口**: `SmartInstantiationAwareBeanPostProcessor`
+    - **代理创建时机**: **早期**。在 `getEarlyBeanReference()` 方法中被调用，即当三级缓存的 `ObjectFactory` 被执行以解决循环依赖时。
+    - **在循环依赖中的行为**: **安全**。因为代理在最早的时机就已经创建，所以提前暴露给其他 Bean 的就是最终的代理对象。这保证了在整个容器中，对该 Bean 的引用是一致的。
+- **`@Validated`**
+    - **代理创建处理器**: `MethodValidationPostProcessor`
+    - **实现的关键接口**: `BeanPostProcessor` (它没有实现 `SmartInstantiationAwareBeanPostProcessor`)
+    - **代理创建时机**: **晚期**。在 `postProcessAfterInitialization()` 方法中被调用，这发生在 Bean 生命周期的初始化阶段末尾，远晚于循环依赖的解决阶段。
+    - **在循环依赖中的行为**: **危险**。当循环依赖发生时，由于 `MethodValidationPostProcessor` 还没有机会执行，所以 Spring 只能将**原始对象**的引用提前暴露出去。但是，当该 Bean 的生命周期继续进行到初始化后期时，它又被包装成了一个新的**代理对象**。这就导致了之前注入的“原始对象”和最终的“代理对象”不一致，Spring 会检测到这种状态冲突并抛出异常，导致启动失败。
+
+一个 Bean 能否在循环依赖中安全地被代理，关键在于其代理机制是否通过实现 `SmartInstantiationAwareBeanPostProcessor` 接口，从而参与到 Spring 的“早期引用”创建过程中。
+
 ### 1.2. Part 2: 宏观蓝图 - Bean 的完整生命周期
 
 Bean 的生命周期是理解 Spring 所有高级功能（AOP、事务、事件等）的基础。它定义了一个对象如何从一个简单的类定义，演变为一个功能完备、被容器管理的组件。
@@ -191,15 +209,15 @@ Bean 的生命周期是理解 Spring 所有高级功能（AOP、事务、事件�
 
 #### 1.3.2. 详细区别对比
 
-| 特性 | BeanFactory | ApplicationContext |
-| :--- | :--- | :--- |
-| **继承关系** | 根接口，定义基础规范 | `BeanFactory` 的子接口，功能超集 |
-| **Bean 实例化** | **懒加载 (Lazy Loading)**：默认在 `getBean()` 时才创建。 | **预加载 (Eager Loading)**：默认在容器启动时就创建所有单例 Bean。 |
-| **优点/缺点** | **优点**：启动快，内存占用少。<br>**缺点**：运行时才暴露配置错误，首次访问慢。 | **优点**：启动时 fail-fast，运行时响应快。<br>**缺点**：启动慢，消耗更多资源。 |
-| **功能支持** | 仅基础 DI 和生命周期管理。 | **企业级功能**：国际化(i18n)、事件发布、AOP 集成、Web 环境支持等。 |
-| **后置处理器** | 需要**手动编码注册** `BeanPostProcessor` 等。 | **自动发现并注册**，使得 `@Autowired`、AOP 等功能开箱即用。 |
-| **开发者体验** | 原始、繁琐，需要深入理解底层。 | 友好、自动化，是现代 Spring 开发的标准。 |
-| **典型实现** | `XmlBeanFactory` (已废弃) | `ClassPathXmlApplicationContext`, `AnnotationConfigApplicationContext` 等。 |
+| 特性           | BeanFactory                                   | ApplicationContext                                                        |
+| :----------- | :-------------------------------------------- | :------------------------------------------------------------------------ |
+| **继承关系**     | 根接口，定义基础规范                                    | `BeanFactory` 的子接口，功能超集                                                   |
+| **Bean 实例化** | **懒加载 (Lazy Loading)**：默认在 `getBean()` 时才创建。  | **预加载 (Eager Loading)**：默认在容器启动时就创建所有单例 Bean。                             |
+| **优点/缺点**    | **优点**：启动快，内存占用少。<br>**缺点**：运行时才暴露配置错误，首次访问慢。 | **优点**：启动时 fail-fast，运行时响应快。<br>**缺点**：启动慢，消耗更多资源。                        |
+| **功能支持**     | 仅基础 DI 和生命周期管理。                               | **企业级功能**：国际化(i18n)、事件发布、AOP 集成、Web 环境支持等。                                |
+| **后置处理器**    | 需要**手动编码注册** `BeanPostProcessor` 等。           | **自动发现并注册**，使得 `@Autowired`、AOP 等功能开箱即用。                                  |
+| **开发者体验**    | 原始、繁琐，需要深入理解底层。                               | 友好、自动化，是现代 Spring 开发的标准。                                                  |
+| **典型实现**     | `XmlBeanFactory` (已废弃)                        | `ClassPathXmlApplicationContext`, `AnnotationConfigApplicationContext` 等。 |
 
 #### 1.3.3. 揭秘：为什么在 Spring Boot 中感觉不到“选择”？
 
@@ -210,3 +228,19 @@ Bean 的生命周期是理解 Spring 所有高级功能（AOP、事务、事件�
 ![beanfactory.svg](https://r2.129870.xyz/img/2025/220aa3721458d8d3a4d8f61b48784dc8.svg)
 
 **结论**：我们面向 `ApplicationContext` 编程，但实际的 Bean 创建工作由其内部的 `BeanFactory` 引擎完成。Spring Boot 将这个“创建并指挥”的过程完全自动化，提供了无缝的开发体验。理解这一层委托关系，是打通 Spring IoC 知识体系的“最后一公里”。
+
+### 1.4. 实践中的陷阱
+
+理论上，Spring 可以解决单例的属性注入循环依赖。但在实践中，我们可能会遇到应用有时能启动，有时又会因循环依赖而失败的诡异情况。
+
+其根源在于 Spring 的 Bean 扫描和加载顺序在默认情况下是不确定的。它受到以下因素影响：
+
+- 文件系统和类加载器：不同操作系统或不同启动批次，ClassLoader 读取 `.class` 文件的顺序可能不同。
+- 打包方式：IDE 直接运行和打包成 `JAR/WAR` 后运行，类的顺序可能不同。
+
+这种不确定性导致进入同一个依赖环的“入口 Bean”可能是不同的。正如从一次启动失败深入剖析：[[从一次启动失败深入剖析：Spring 循环依赖的真相｜得物技术|Spring 循环依赖的真相]] 中的案例：
+
+- 成功路径：从 NewSpuApplyCheckServiceImpl (无特殊代理) 进入循环，提前暴露的是它的原始对象，后续流程一致，启动成功。
+- 失败路径：从 SpuCheckDomainServiceImpl (有 @Validated 代理) 进入循环，提前暴露的是它的原始对象，但最终它被包装成代理对象，导致不一致，启动失败。
+
+永远不要依赖隐式的 Bean 加载顺序。一个健壮的应用架构应该从设计上避免循环依赖，或者使用 @Lazy 等方式显式地管理它们，而不是寄希望于某次“幸运的”启动顺序。

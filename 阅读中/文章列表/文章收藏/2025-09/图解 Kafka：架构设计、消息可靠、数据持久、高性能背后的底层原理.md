@@ -1,7 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/2PEYaSiKzNfB_Ijq69UOJQ
 create: 2024-07-16 10:02
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-28
+tags:
+  - 框架原理
+  - 消息队列
+summary: "[[Kafka：架构设计、消息可靠、数据持久、高性能背后的底层原理]]"
 ---
 
 👉目录

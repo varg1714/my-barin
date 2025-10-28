@@ -14,7 +14,7 @@ read: false
 
 下面是一段比较简单常见的 stream 操作代码，经过映射与过滤操作后，最后得到的 endList=["ab"]，下文讲解都会以此代码为例。
 
-```
+```java
 List<String> startlist = Lists.newArrayList("a","b","c");
 List<String> endList = startlist.stream().map(r->r+"b").filter(r->r.startsWith("a")).collect(Collectors.toList());
 ```
@@ -103,7 +103,7 @@ StreamSupport.stream() 返回了 ReferencPipeline$Head 类。
 
 对数据进行映射，对每个元素后接 "b"。
 
-```
+```java
 Stream<String> mapStream =startlist.stream().map(r->r+"b");
 ```
 
@@ -123,7 +123,7 @@ map() 方法是在 ReferencePipline 中被实现的，返回一个无状态操�
 
 filter 对元素进行过滤，只留存以 “a” 开头的数据元素。
 
-```
+```java
 Stream<String> filterStream =startlist.stream().map(r->r+"b").filter(r->r.startsWith("a"));
 ```
 
@@ -147,7 +147,7 @@ StatelessOp 的基类 AbstractPipline 中有个构造方法帮助构造了双向
 
 ### 3.1. collect() 运行结果
 
-```
+```java
 List<String> endList = startlist.stream().map(r->r+"b").filter(r->r.startsWith("a")).collect(Collectors.toList());
 ```
 
