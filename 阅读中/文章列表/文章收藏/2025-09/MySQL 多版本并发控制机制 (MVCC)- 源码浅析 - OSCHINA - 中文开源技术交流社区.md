@@ -1,7 +1,12 @@
 ---
 source: https://my.oschina.net/alchemystar/blog/1927425
 create: 2024-07-23 15:56
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-06
+tags:
+  - Mysql
+summary: "[[Mysql大纲]]"
 ---
 
 # MySQL 多版本并发控制机制 (MVCC)- 源码浅析 - OSCHINA - 中文开源技术交流社区

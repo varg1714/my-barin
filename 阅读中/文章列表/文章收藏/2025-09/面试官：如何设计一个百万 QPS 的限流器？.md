@@ -1,8 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/m6sWOf5NMPuNmJjDSnXxbQ
 create: 2025-09-15 11:04
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-03
+tags:
+  - 系统架构
+summary: "[[阅读中/阅读总结/系统设计面试：内幕指南/第04章：设计一个限流器|第04章：设计一个限流器]]"
 ---
 2025年08月27日 14:12@小林coding 2025年08月27日 14:12
 

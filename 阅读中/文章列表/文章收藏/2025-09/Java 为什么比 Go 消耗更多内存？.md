@@ -5,6 +5,10 @@ read: true
 tags:
   - Java
   - JVM
+  - 框架原理
+knowledge: true
+knowledge-date: 2025-10-30
+summary: "[[Java 与 GO 占用内存差异分析]]"
 ---
 
 # Java 为什么比 Go 消耗更多内存？

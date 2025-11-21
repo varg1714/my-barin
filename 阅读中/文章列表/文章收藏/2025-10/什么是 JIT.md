@@ -4,6 +4,7 @@ create: 2025-10-11 15:27
 read: false
 knowledge: false
 ---
+
 FSAC 未来超级架构师
 
 架构师总动员  
@@ -11,34 +12,32 @@ FSAC 未来超级架构师
 
 ## 尼恩说在前面
 
-在 45 岁老架构师 尼恩的**读者交流群** (50+) 中，最近有小伙伴拿到了一线互联网企业如得物、阿里、滴滴、极兔、有赞、希音、百度、网易、美团的面试资格，遇到很多很重要的面试题：
+在 45 岁老架构师尼恩的**读者交流群** (50+) 中，最近有小伙伴拿到了一线互联网企业如得物、阿里、滴滴、极兔、有赞、希音、百度、网易、美团的面试资格，遇到很多很重要的面试题：
 
-*   什么是 JIT，JIT 什么优势？什么是 类的生命周期七个阶段 ？
-    
-*   什么是 字节码增强？
-    
+*   什么是 JIT，JIT 什么优势？什么是类的生命周期七个阶段 ？
+*   什么是字节码增强？
 
-最近有小伙伴在面试京东、  阿里、希音等大厂，又遇到了相关的面试题。  小伙伴 没系统化学习， 支支吾吾的说了几句，面试官不满意， **挂了**。
+最近有小伙伴在面试京东、阿里、希音等大厂，又遇到了相关的面试题。小伙伴没系统化学习，支支吾吾的说了几句，面试官不满意， **挂了**。
 
-针对上面的面试题， 接下来 尼恩结合互联网上的一些实际案例， 大家做一下系统化、体系化的梳理。  使得大家内力猛增，可以充分展示一下大家雄厚的 “技术肌肉”，**让面试官爱到 “不能自已、口水直流”**，然后实现”offer 直提”。
+针对上面的面试题，接下来尼恩结合互联网上的一些实际案例，大家做一下系统化、体系化的梳理。使得大家内力猛增，可以充分展示一下大家雄厚的 “技术肌肉”，**让面试官爱到 “不能自已、口水直流”**，然后实现”offer 直提”。
 
-当然，这道面试题，以及参考答案， 会收入咱们的 《[尼恩 Java 面试宝典 PDF](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247497474&idx=1&sn=54a7b194a72162e9f13695443eabe186&scene=21#wechat_redirect)》V175 版本，供后面的小伙伴参考 ，帮助大家进大厂 / 做架构。
+当然，这道面试题，以及参考答案，会收入咱们的《[尼恩 Java 面试宝典 PDF](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247497474&idx=1&sn=54a7b194a72162e9f13695443eabe186&scene=21#wechat_redirect)》V175 版本，供后面的小伙伴参考，帮助大家进大厂 / 做架构。
 
-最新《尼恩 架构笔记》《尼恩高并发三部曲》《尼恩 Java 面试宝典》的 PDF，请关注本公众号【技术自由圈】获取，回复：领电子书
+最新《尼恩架构笔记》《尼恩高并发三部曲》《尼恩 Java 面试宝典》的 PDF，请关注本公众号【技术自由圈】获取，回复：领电子书
 
 ## 1、什么是字节码？
 
-在 Java 之前， 跨平台 是一个难题。  而 Java  跨平台 的优势： “一次编译，到处运行” 。
+在 Java 之前，跨平台是一个难题。而 Java  跨平台的优势： “一次编译，到处运行” 。
 
-构成 Java 生态 跨平台 的基石—— Java  字节码。
+构成 Java 生态跨平台的基石—— Java  字节码。
 
 无论在何种环境下编译，Java 源代码都能生成标准格式的字节码（.class 文件），由 JVM 解释执行。
 
-为啥要从 字节码入手。
+为啥要从字节码入手。
 
 对开发者而言，了解字节码有助于更深入、直观地理解 Java 语言的底层机制。
 
-例如，通过查看字节码，可以清楚地看到 `volatile`关键字是如何生效的。
+例如，通过查看字节码，可以清楚地看到 `volatile` 关键字是如何生效的。
 
 例如，字节码增强技术在 Spring AOP、ORM 框架及热部署等领域应用广泛，掌握其原理对我们大有裨益。
 
@@ -46,7 +45,7 @@ FSAC 未来超级架构师
 
 从字节码的视角学习这些语言，往往能够更深刻地理解其设计思路。
 
-我们通常使用 `javac`命令将 `.java`源文件编译为字节码文件
+我们通常使用 `javac` 命令将 `.java` 源文件编译为字节码文件
 
 字节码文件由十六进制数值构成，JVM 按一组两个十六进制值（即一个字节）为单位进行读取。
 
@@ -54,9 +53,9 @@ FSAC 未来超级架构师
 
 ## 2、字节码文件的结构
 
-`.java`文件经 `javac`编译后生成 `.class`文件。
+`.java` 文件经 `javac` 编译后生成 `.class` 文件。
 
-编译后得到的 `ByteCodeDemo.class`文件以十六进制形式打开后，表现形式如下：
+编译后得到的 `ByteCodeDemo.class` 文件以十六进制形式打开后，表现形式如下：
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDY6GPNNY3eS3OGZSSuQcXNHUgtFPhmxl6icZWw1iaps1iaYW9WibkRlqZ7A/640?from=appmsg&watermark=1#imgIndex=1)
 
@@ -66,7 +65,7 @@ JVM 规范要求字节码文件必须按以下十部分顺序构成：
 
 **（1）魔数（Magic Number）**
 
-每个 `.class`文件的前 4 个字节是固定的魔数值：`0xCAFEBABE`。
+每个 `.class` 文件的前 4 个字节是固定的魔数值：`0xCAFEBABE`。
 
 JVM 通过该标志，快速判断文件是否为可能有效的字节码文件。
 
@@ -76,35 +75,33 @@ JVM 通过该标志，快速判断文件是否为可能有效的字节码文件�
 
 魔数之后的 4 个字节是版本号信息：前 2 个字节表示次版本号（Minor Version），后 2 个字节表示主版本号（Major Version）。
 
-例如 `00 00 00 34`表示次版本号为 0，主版本号为 52（十六进制 0x34），对应 Java 8。
+例如 `00 00 00 34` 表示次版本号为 0，主版本号为 52（十六进制 0x34），对应 Java 8。
 
 **（3）常量池（Constant Pool）**
 
 版本号之后是常量池，它是字节码文件中的资源仓库，主要存放两大类常量：
 
 *   **字面量**
-    
-    如 `final`修饰的常量值、文本字符串等；
-    
+
+    如 `final` 修饰的常量值、文本字符串等；
+
 *   **符号引用**
-    
+
     包括类 / 接口的全限定名、字段名称与描述符、方法名称与描述符等。
-    
 
 常量池的结构分为两部分：
 
 *   **常量池计数器（constant_pool_count）**
-    
+
     2 个字节，表示常量池中的常量数量（实际数量为 `计数值 - 1`）；
-    
+
 *   **常量池数据区**
-    
-    由多个 `cp_info`表项组成，每个 `cp_info`对应一个常量。
-    
+
+    由多个 `cp_info` 表项组成，每个 `cp_info` 对应一个常量。
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDpvEtYV4cIIJOiaeBHc3vkYVUulS1Bmfm8DaUcOa4obnlFbf65lmgxuQ/640?from=appmsg&watermark=1#imgIndex=3)
 
-JVM 共定义了 14 种 `cp_info`类型，其通用结构如下：
+JVM 共定义了 14 种 `cp_info` 类型，其通用结构如下：
 
 ```
     u1 tag;          // 常量类型标识
@@ -115,13 +112,13 @@ JVM 共定义了 14 种 `cp_info`类型，其通用结构如下：
 
 ```
 
-通过 `javap -verbose ByteCodeDemo`可查看反编译后的常量池内容，更直观易懂
+通过 `javap -verbose ByteCodeDemo` 可查看反编译后的常量池内容，更直观易懂
 
 **（4）访问标志（Access Flags）**
 
-常量池后的 2 个字节是访问标志，用于标识类或接口的访问权限及属性，例如是否为 `public`、`final`、`abstract`等。
+常量池后的 2 个字节是访问标志，用于标识类或接口的访问权限及属性，例如是否为 `public`、`final`、`abstract` 等。
 
-JVM 使用位掩码表示多个标志组合，例如 `public final`类对应的标志值为 `0x0001 | 0x0010 = 0x0011`。
+JVM 使用位掩码表示多个标志组合，例如 `public final` 类对应的标志值为 `0x0001 | 0x0010 = 0x0011`。
 
 **（5）当前类名**
 
@@ -140,9 +137,7 @@ JVM 使用位掩码表示多个标志组合，例如 `public final`类对应的�
 字段表用于描述类中声明的字段（类变量和实例变量），不包括方法内的局部变量。结构分为两部分：
 
 *   字段计数器（2 字节）：表示字段个数；
-    
 *   字段信息表（field_info）：每个字段的详细信息。
-    
 
 字段信息结构如下：
 
@@ -159,20 +154,18 @@ JVM 使用位掩码表示多个标志组合，例如 `public final`类对应的�
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDdmrlLMdEfibAqqtfGx2iawYddcWtDjomZOa48Bm0V0P4vC87Dql40lpQ/640?from=appmsg&watermark=1#imgIndex=4)
 
-案例中`private int a`，0002 对应为 Private。
+案例中 `private int a`，0002 对应为 Private。
 
 通过索引下标在常量池查询 #7 号常量，得到字段名为 “a”，描述符为 “I”（代表 int）。
 
-综上，就可以唯一确定出一个类中声明的变量`private int a`。
+综上，就可以唯一确定出一个类中声明的变量 `private int a`。
 
 **（9）方法表（Methods Table）**
 
 方法表存储所有方法的信息，也分为两部分：
 
 *   方法计数器（2 字节）：表示方法个数；
-    
 *   方法信息表（method_info）：每个方法的详细信息。
-    
 
 方法信息结构如下：
 
@@ -189,14 +182,11 @@ JVM 使用位掩码表示多个标志组合，例如 `public final`类对应的�
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDXZjbmibutZOP7dVWRxhN2093hodwfsq2C8zPsAz2wvLGqYWkC02l4Yw/640?from=appmsg&watermark=1#imgIndex=5)
 
-通过 `javap -verbose`可查看方法表的详细信息，可以看到主要包括以下三个部分：
+通过 `javap -verbose` 可查看方法表的详细信息，可以看到主要包括以下三个部分：
 
 *   “Code 区”：源代码对应的 JVM 指令操作码，在进行字节码增强时重点操作的就是 “Code 区” 这一部分。
-    
 *   “LineNumberTable”：行号表，将 Code 区的操作码和源代码中的行号对应，Debug 时会起到作用（源代码走一行，需要走多少个 JVM 指令操作码）。
-    
 *   “LocalVariableTable”：本地变量表，包含 This 和局部变量，之所以可以在每一个方法内部都可以调用 This，是因为 JVM 将 This 作为每一个方法的第一个参数隐式进行传入。当然，这是针对非 Static 方法而言。
-    
 
 **（10）附加属性表（Additional Attributes）**
 
@@ -225,32 +215,24 @@ JVM 的指令集是基于栈而不是寄存器，基于栈可以具备很好的�
 JVM：基于栈的虚拟机，这个是 java 慢的一个核心原因之一
 
 *   **JVM 字节码**
-    
+
      是一种中间语言，运行在虚拟机上。
-    
+
 *   它的指令操作主要依赖于**操作数栈（operand stack）**，而不是寄存器。
-    
 *   例如，`iadd` 指令会从栈顶弹出两个整数，相加后再压回栈中。
-    
 *   优点：指令集简洁，跨平台，容易实现。
-    
 *   缺点：性能相对较低，因为频繁的栈操作。
-    
 
 Go 基于寄存器的机器码，这个是 Go 快的一个核心原因之一
 
 *   Go 是**静态编译型语言**，编译器（如 `gc`）会将 Go 代码直接编译成**目标平台的机器码**（如 x86-64、ARM）。
-    
 *   这些机器码是**基于寄存器的**，因为现代 CPU 架构（如 x86、ARM）本身就是寄存器架构。
-    
 *   Go 编译器在生成代码时，会使用寄存器来存储变量、参数、返回值等，而不是像 JVM 那样用栈。
-    
 *   所以，Go 的 “指令集” 其实就是目标平台的机器指令集，是寄存器驱动的。
-    
 
 我们在上文所说的操作码或者操作集合，其实控制的就是这个 JVM 的操作数栈。
 
-为了更直观地感受操作码是如何控制操作数栈的，以及理解常量池、变量表的作用，这里 将 add() 方法的对操作数栈的操作制作为 GIF 动图，如下图所示。
+为了更直观地感受操作码是如何控制操作数栈的，以及理解常量池、变量表的作用，这里将 add() 方法的对操作数栈的操作制作为 GIF 动图，如下图所示。
 
 GIF 动图中，仅截取了常量池中被引用的部分，以指令 iconst_2 开始到 ireturn 结束，与方法表 Code 区 0~17 的指令一一对应：
 
@@ -260,7 +242,7 @@ GIF 动图中，仅截取了常量池中被引用的部分，以指令 iconst_2 
 
 为了缓解性能问题，JVM 引入了 JIT（即时编译）技术，将热点代码编译为本地机器码执行。
 
-理论 上，  JIT 最终吐出来的东西一定是 “**基于寄存器的真正机器码**”，因为只有这样才能在物理 CPU 上直接跑。
+理论上，  JIT 最终吐出来的东西一定是 “**基于寄存器的真正机器码**”，因为只有这样才能在物理 CPU 上直接跑。
 
 但 JIT  不是一次性把整个 Java 字节码 “平移” 成机器码，而是先把**基于栈的 byte-code** 当输入，经过一次 “**栈→寄存器**” 的转换，再生成宿主 CPU 的寄存器指令。
 
@@ -290,7 +272,7 @@ c. **全局寄存器分配**（图着色、线性扫描等）：把虚拟寄存�
 
 e. **优化 + 重排 + 发射**：最终得到可在 CPU 上直接运行的机器码片段。
 
-**3、 输出：基于寄存器的机器码**
+**3、输出：基于寄存器的机器码**
 
 上面 4 条字节码可能被 JIT 编译成（x86-64）：
 
@@ -375,13 +357,9 @@ Java 的 main 方法有严格的格式要求，必须是`public static void main
 我们可以通过实验验证这些要求的必要性：
 
 *   去掉 public 修饰符：JVM 会报错，因为需要访问权限
-    
 *   去掉 static 修饰符：JVM 会报错，因为需要能够不创建实例就调用
-    
 *   修改返回类型：JVM 会报错，因为需要统一的 void 返回类型
-    
 *   更改方法名：JVM 会报错，因为找不到约定的入口方法
-    
 
 这些规则确保了 JVM 能够以统一的方式启动任何 Java 程序。
 
@@ -419,24 +397,17 @@ mainID = (env)->GetStaticMethodID(env, mainClass, "main", "([Ljava/lang/String;)
 **核心操作：**
 
 *   根据类的全限定名（如`java.lang.String`）定位 class 文件
-    
 *   读取 class 文件的二进制字节流
-    
 *   将字节流转换为方法区的运行时数据结构
-    
 *   在堆内存中生成一个代表该类的`java.lang.Class`对象，作为访问方法区数据的入口
-    
 
 **技术细节：**
 
 加载阶段由类加载器（ClassLoader）具体执行。JVM 内置了三级类加载器：
 
 *   启动类加载器（Bootstrap ClassLoader）：加载 JRE 核心库
-    
 *   扩展类加载器（Extension ClassLoader）：加载扩展库
-    
 *   应用类加载器（Application ClassLoader）：加载用户类路径上的类
-    
 
 如果找不到指定的类文件，JVM 会抛出`NoClassDefFoundError`。值得注意的是，加载阶段并不检查 class 文件的语法和格式是否正确，这些检查会在后续阶段进行。
 
@@ -459,17 +430,16 @@ mainID = (env)->GetStaticMethodID(env, mainClass, "main", "([Ljava/lang/String;)
 **可能抛出的异常：**
 
 *   `VerifyError`
-    
+
     验证失败
-    
+
 *   `ClassFormatError`
-    
+
     类格式错误
-    
+
 *   `UnsupportedClassVersionError`
-    
+
     版本不支持
-    
 
 验证过程中可能需要加载其他相关类，如果发现类层次结构问题（如循环继承），JVM 会抛出`ClassCircularityError`。
 
@@ -480,11 +450,8 @@ mainID = (env)->GetStaticMethodID(env, mainClass, "main", "([Ljava/lang/String;)
 **关键特点：**
 
 *   分配内存：在方法区中为静态变量分配内存空间
-    
 *   设置默认值：为静态变量赋予类型默认值（0、false、null 等）
-    
 *   不执行代码：此阶段不会执行任何 Java 代码或赋值语句
-    
 
 **示例分析：**
 
@@ -505,13 +472,9 @@ public static final int CONST = 456; // 准备阶段后CONST的值就是456
 **解析内容：**
 
 *   类或接口解析：将类名解析为实际类引用
-    
 *   字段解析：将字段符号引用解析为具体字段
-    
 *   方法解析：将方法符号引用解析为具体方法
-    
 *   接口方法解析：将接口方法符号引用解析为具体实现
-    
 
 **技术细节：**
 
@@ -528,24 +491,16 @@ public static final int CONST = 456; // 准备阶段后CONST的值就是456
 JVM 规范严格规定，只有在类首次被 "主动使用" 时才进行初始化。主动使用包括：
 
 *   创建类的实例
-    
 *   访问类的静态变量或静态方法
-    
 *   使用反射调用类方法
-    
 *   初始化子类会触发父类初始化
-    
 *   包含 main 方法的启动类
-    
 
 **初始化内容：**
 
 *   执行静态变量赋值语句
-    
 *   执行静态代码块（static{}）
-    
 *   执行类构造器`<clinit>()`方法
-    
 
 ### 2.6 使用和卸载阶段
 
@@ -560,11 +515,8 @@ JVM 规范严格规定，只有在类首次被 "主动使用" 时才进行初始
 当满足以下条件时，类可以被卸载：
 
 *   该类的所有实例都已被回收
-    
 *   加载该类的 ClassLoader 已被回收
-    
 *   该类对应的 Class 对象没有被任何地方引用
-    
 
 卸载类的过程由 JVM 的垃圾收集器完成，开发者通常不需要关心这个过程。
 
@@ -636,11 +588,8 @@ JVM 提供了三层类加载器，形成了清晰的层次结构：
 **1. 启动类加载器（Bootstrap Class Loader）**
 
 *   实现：由 C++ 编写，是 JVM 自身的一部分
-    
 *   职责：加载 Java 核心库（如 rt.jar）
-    
 *   路径：/jre/lib
-    
 
 ```
 URL[] urls = sun.misc.Launcher.getBootstrapClassPath().getURLs();
@@ -655,18 +604,15 @@ URL[] urls = sun.misc.Launcher.getBootstrapClassPath().getURLs();
 
 ```
 
-它可以看做是 JVM 自带的，我们再代码层面无法直接获取到启动类加载器的引用，所以不允许直接操作它， 如果打印出来就是个 `null`。
+它可以看做是 JVM 自带的，我们再代码层面无法直接获取到启动类加载器的引用，所以不允许直接操作它，如果打印出来就是个 `null`。
 
 举例来说，java.lang.String 是由启动类加载器加载的，所以 String.class.getClassLoader() 就会返回 null
 
 **2. 扩展类加载器（Extension Class Loader）**
 
 *   实现：由 Java 编写，继承自 URLClassLoader
-    
 *   职责：加载 Java 扩展库
-    
 *   路径：/jre/lib/ext
-    
 
 ```
 System.out.println(System.getProperty("java.ext.dirs"));
@@ -681,11 +627,8 @@ System.out.println(System.getProperty("java.ext.dirs"));
 **3. 应用程序类加载器（Application Class Loader）**
 
 *   实现：sun.misc.Launcher$AppClassLoader
-    
 *   职责：加载用户类路径（-classpath 或 - cp 指定的路径）上的类
-    
 *   特点：是默认的系统类加载器
-    
 
 看下 Launcher 源码
 
@@ -727,11 +670,8 @@ public class Launcher {
 自定义类加载器的典型用途包括：
 
 *   从非标准来源加载类（如网络、加密文件等）
-    
 *   实现类的热部署和热替换
-    
 *   实现类的隔离和环境分离
-    
 
 首先我们看 ClassLoader 的核心方法 loadClass 和 findClass（简化版）
 
@@ -885,9 +825,7 @@ JVM 类加载器遵循双亲委派模型（Parent Delegation Model），这是�
 ClassLoader 的核心方法 loadClass 和 findClass
 
 *   想遵守双亲委派：只重写 `findClass`方法。`loadClass`方法的委托逻辑会保证父加载器先尝试加载。
-    
 *   想打破双亲委派：需要重写 `loadClass`方法，实现自己的加载逻辑，绕过对 `parent.loadClass()`的调用
-    
 
 ```
     synchronized (getClassLoadingLock(name)) {
@@ -1151,7 +1089,7 @@ public class HotDeployDemo {
 
 **(1) 自定义类加载器：`HotDeployClassLoader`通过重写 `loadClass`方法打破了双亲委派模型，实现了自行加载类的功能。**
 
-**(2) 类加载逻辑： 对于非 Java 核心类（不以 "java." 开头的类），直接读取字节码文件并调用 `defineClass`方法定义类 对于 Java 核心类，仍然委托给父加载器加载，确保系统稳定性**
+**(2) 类加载逻辑： 对于非 Java 核心类（不以 "java." 开头的类），直接读取字节码文件并调用 `defineClass`方法定义类对于 Java 核心类，仍然委托给父加载器加载，确保系统稳定性**
 
 **(3) 热部署循环：主程序通过循环不断加载最新版本的类，每次迭代都创建新的类加载器实例，确保能够加载到重新编译后的类。**
 
@@ -1414,25 +1352,18 @@ public class AdvancedHotDeploy {
 **1）类库版本冲突**
 
 *   应用 A 需要 `commons-lang 2.4`
-    
 *   应用 B 需要 `commons-lang 3.0`
-    
 *   如果使用同一类加载器，无法同时加载两个版本
-    
 
 **2）类覆盖和安全问题**
 
 *   应用可能包含与容器相同全限定名的类（如`Servlet API`）
-    
 *   恶意应用可能通过替换核心类破坏容器稳定性
-    
 
 **3）资源隔离需求**
 
 *   每个应用应该有独立的静态资源访问范围
-    
 *   应用间应该无法直接访问彼此的类
-    
 
 Tomcat 通过精细的类加载器层次实现隔离：
 
@@ -1487,17 +1418,16 @@ public final class Bootstrap {
 隔离效果：
 
 *   **Web 应用隔离**
-    
+
     ：每个 WebApp 有独立类加载器，互不影响
-    
+
 *   **核心容器保护**
-    
+
     ：Catalina 加载器与 Web 应用加载器隔离
-    
+
 *   **资源共享**
-    
+
     ：Common 加载器存放公共库，避免重复加载
-    
 
 #### 模块级隔离（OSGi 案例）
 
@@ -1517,13 +1447,9 @@ OSGi 实现更细粒度的模块隔离：
 关键特性：
 
 *   每个 Bundle（模块）有独立类加载器
-    
 *   动态解析依赖关系
-    
 *   支持模块热插拔
-    
 *   版本化依赖管理
-    
 
 ## 1、运行时数据区
 
@@ -1546,43 +1472,30 @@ JVM 内存从逻辑上划分为多个独立的数据区域，每个区域承担�
 **程序计数器（Program Counter Register）**
 
 *   作用：记录当前线程执行的字节码行号指示器
-    
 *   特性：线程私有，唯一不会出现 OutOfMemoryError 的区域
-    
 *   场景：线程切换后能恢复到正确的执行位置
-    
 
 **虚拟机栈（VM Stack）**
 
 *   功能：存储栈帧（局部变量表、操作数栈、动态链接、方法出口）
-    
 *   配置：-Xss 设置栈容量（默认 1MB）
-    
 *   异常：StackOverflowError（栈深度溢出）、OutOfMemoryError（扩展失败）
-    
 
 **本地方法栈（Native Method Stack）**
 
 *   用途：为 Native 方法服务
-    
 *   实现：HotSpot 将虚拟机栈与本地方法栈合并
-    
 
 **堆内存（Heap）**
 
 *   特性：所有对象实例和数组的分配区域
-    
 *   配置：-Xmx（最大堆）、-Xms（初始堆）
-    
 *   管理：垃圾回收的主要战场
-    
 
 **方法区（Method Area）**
 
 *   存储：类型信息、常量、静态变量、JIT 代码缓存
-    
 *   演进：JDK8 前为 PermGen，JDK8 + 为 Metaspace
-    
 
 ## 2、堆内存
 
@@ -1606,22 +1519,18 @@ JVM 内存从逻辑上划分为多个独立的数据区域，每个区域承担�
 **新生代（Young Generation）**
 
 *   **Eden 区**
-    
+
     ：新对象诞生地（80% 新生代空间）
-    
+
 *   **Survivor 区**
-    
+
     ：幸存对象暂存区（S0、S1 各占 10%）
-    
 
 **老年代（Tenured Generation）**
 
 *   对象特征：长期存活对象、大对象直接分配
-    
 *   回收策略：Major GC/Full GC
-    
 *   配置参数：-XX:MaxTenuringThreshold=15（晋升阈值）
-    
 
 ## 3、非堆内存
 
@@ -1648,11 +1557,8 @@ JVM 的非堆内存主要包括以下几个核心区域：
 **特点**：
 
 *   使用本地内存（Native Memory）
-    
 *   自动扩展，无固定上限
-    
 *   类卸载时释放对应元数据
-    
 
 **2） 代码缓存（Code Cache）**
 
@@ -1680,7 +1586,6 @@ JVM 的非堆内存主要包括以下几个核心区域：
 *   `-XX:InitialCodeCacheSize=32m`
     
     - 初始大小
-    
 
 **3）线程栈（Thread Stack）**
 
@@ -1723,13 +1628,9 @@ JVM 的非堆内存主要包括以下几个核心区域：
 **包括**：
 
 *   垃圾收集器工作内存（Card Table、Remembered Set 等）
-    
 *   JIT 编译器工作内存
-    
 *   符号表（Symbol Table）
-    
 *   字符串常量池（JDK7 + 在堆中）
-    
 
 ## 4、运行时栈帧结构
 
@@ -1804,11 +1705,8 @@ JVM 的非堆内存主要包括以下几个核心区域：
 **GC 的核心任务**：
 
 *   自动识别内存中的垃圾对象（不再被引用的对象）
-    
 *   回收垃圾对象占用的内存空间
-    
 *   整理内存碎片，提高内存利用率
-    
 
 ```
     A[GC开始] --> B[标记可达对象]
@@ -1846,11 +1744,8 @@ JVM 的非堆内存主要包括以下几个核心区域：
 **缺点**：
 
 *   无法解决循环引用问题
-    
 *   每次引用操作都需要更新计数器，性能开销大
-    
 *   实现复杂，需要处理并发计数的一致性
-    
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDicSCWMCZXkk5uVlibk4ZDmDhWu583gS3MQuAVAM3Bs2BA4aDBshlJR9g/640?from=appmsg&watermark=1#imgIndex=17)
 
@@ -1861,13 +1756,9 @@ JVM 的非堆内存主要包括以下几个核心区域：
 **Java 中的 GC Roots 包括**：
 
 *   虚拟机栈中引用的对象（局部变量）
-    
 *   方法区中类静态属性引用的对象
-    
 *   方法区中常量引用的对象
-    
 *   本地方法栈中 JNI 引用的对象
-    
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDKhuL0BpIUE5YgB0MISLzkvdVhNGBUJkp91arTtUDB1yrkSgAj9KSWQ/640?from=appmsg&watermark=1#imgIndex=18)
 
@@ -1962,11 +1853,8 @@ JVM 通过几条核心规则来管理对象的内存分配，确保内存使用�
 进行 Minor GC 前，JVM 会检查老年代剩余空间：
 
 *   若大于新生代对象总大小，直接进行 Minor GC
-    
 *   否则检查是否允许担保失败（-XX:-HandlePromotionFailure），如果允许，根据历史晋升平均值决定是否冒险进行 Minor GC
-    
 *   若担保失败，会出现`promotion failed`错误，则先进行 Full GC
-    
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpD7ao3gj3np0fpG7vqKzicQwWS64cINfUEZThHNFwIVVaIzJfYvTveNPg/640?from=appmsg&watermark=1#imgIndex=23)
 
@@ -1979,15 +1867,10 @@ JVM 通过几条核心规则来管理对象的内存分配，确保内存使用�
 垃圾回收器主要以下几种：
 
 *   串行垃圾回收器（Serial Garbage Collector）：gc 单线程内存回收、会暂停所有用户线程
-    
 *   并行垃圾回收器（Parallel Garbage Collector）：收集是指多个 GC 线程并行工作，但此时用户线程是暂停的
-    
 *   并发标记扫描垃圾回收器（CMS Garbage Collector）：GC 线程和用户线程并发并发执行
-    
 *   G1 垃圾回收器（G1 Garbage Collector）：通过分区（Region） 和可预测的停顿模型，在吞吐量与延迟之间取得平衡的垃圾收集器
-    
 *   ZGC：基于着色指针和读屏障技术，实现全阶段并发，追求亚毫秒级极致低停顿的垃圾收集器
-    
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDdJPTK2w1Q0Je0FtKxtMuibia0QJ5A7ByUHtUPO8IMq3LTsMv424QmibvQ/640?from=appmsg&watermark=1#imgIndex=24)
 
@@ -1996,15 +1879,10 @@ JVM 通过几条核心规则来管理对象的内存分配，确保内存使用�
 常见垃圾回收器详细内容参考如下：
 
 *   [美团面试：CMS 原理什么？漏标 + 多标 + 浮动垃圾 如何解决？90% 的程序员都答错了！](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247505019&idx=1&sn=9905bb2caad9178a330783a9b90fbdef&scene=21#wechat_redirect)
-    
 *   [美团面试：G1 垃圾回收 底层原理是什么？说说你的调优过程？](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247503490&idx=1&sn=fe8dcd5a67b7bd7b1d5bebecd21a3086&scene=21#wechat_redirect)
-    
 *   [京东面试： 垃圾回收器 CMS、G1 区别是什么？](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247505279&idx=1&sn=c80bb324794677953fed9c86958b93d3&scene=21#wechat_redirect)
-    
 *   [阿里面试：如何选 GC？ZGC 底层原理是什么？染色指针、转发表 是什么 ？90% 的程序员都答错了！](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247505032&idx=1&sn=24bffe9fdff44d710021109fcdc7a9aa&scene=21#wechat_redirect)
-    
 *   [大厂（转转、携程、京东）都用分代 ZGC，卡顿降低 20 倍，吞吐量提升 4 倍。分代 ZGC 这么牛？底层原理是什么？](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247505075&idx=1&sn=dbf6f4ab6cd846f62f287cd2fe9fe33d&scene=21#wechat_redirect)
-    
 
 Java 程序的执行过程是一个从高级语言到机器指令的转换过程。
 
@@ -2046,11 +1924,8 @@ JVM 采用解释执行和编译执行相结合的混合模式，兼顾启动速�
 **工作特点**：
 
 *   每次执行都需要重新解释字节码
-    
 *   无需等待编译时间，立即执行
-    
 *   适合执行频率不高的代码
-    
 
 **2）JIT 编译器（Just-In-Time Compiler）**
 
@@ -2086,11 +1961,8 @@ HotSpot VM 是 Oracle JDK 默认的虚拟机，其名称来源于就是它能够
 **热点检测机制**：
 
 *   方法调用计数器：统计方法被调用的次数
-    
 *   回边计数器：统计循环体执行的次数
-    
 *   默认阈值：Client 模式 1500 次，Server 模式 10000 次
-    
 
 ## 2、编译优化技术
 
@@ -2287,15 +2159,10 @@ JIT 编译器对循环结构进行深度优化，显著提升数值计算和数�
 字节码增强主要应用于以下场景：
 
 *   AOP（面向切面编程）实现
-    
 *   热部署与热修复
-    
 *   性能监控和数据采集
-    
 *   动态代理
-    
 *   Mock 测试
-    
 
 ## 2、静态字节码增强
 
@@ -2331,11 +2198,8 @@ ASM 提供了两套 API 来处理字节码：Core API 和 Tree API，可以类�
 Core API 使用的是**访问者模式**，访问者模式主要用于修改或操作一些数据结构比较稳定的数据，当然字节码文件的结构是由 JVM 固定的，所以很适合利用访问者模式对字节码文件进行修改。在 Core API 中有以下几个关键类：
 
 *   ClassReader：用于读取已经编译好的. class 文件。
-    
 *   ClassWriter：用于重新构建编译后的类，如修改类名、属性以及方法，也可以生成新的类的字节码文件。
-    
 *   各种 Visitor 类：如上所述，CoreAPI 根据字节码从上到下依次处理，对于字节码文件中不同的区域有不同的 Visitor，比如用于访问方法的 MethodVisitor、用于访问类变量的 FieldVisitor、用于访问注解的 AnnotationVisitor 等。为了实现 AOP，重点要使用的是 MethodVisitor。
-    
 
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/xlgvgPaib7WMcQtQfSg5jNicySwCIwcrpDdJovcpXcMZMNQgbY9iaH96tqLBDNgpo3eId6ZGhDL3DEMDffdyAIexw/640?from=appmsg&watermark=1#imgIndex=27)
 
@@ -2401,9 +2265,7 @@ public class Base {
 为了利用 ASM 实现 AOP，需要定义两个类：
 
 *   MyClassVisitor 类，用于对字节码的 Visit 以及修改；
-    
 *   Generator 类，在这个类中定义 ClassReader 和 ClassWriter，其中的逻辑是，classReader 读取字节码，然后交给 MyClassVisitor 类处理，处理完成后由 ClassWriter 写字节码并将旧的字节码替换掉。
-    
 
 Generator 类较简单，我们先看一下它的实现，如下所示，然后重点解释 MyClassVisitor 类。
 
@@ -2529,13 +2391,9 @@ public class MyClassVisitor extends ClassVisitor implements Opcodes {
 利用这个类就可以实现对字节码的修改。关键步骤：
 
 *   首先通过 MyClassVisitor 类中的 visitMethod 方法，判断当前字节码读到哪一个方法了。跳过构造方法 "" 后，将需要被增强的方法交给内部类 MyMethodVisitor 来进行处理。
-    
 *   接下来，进入内部类 MyMethodVisitor 中的 visitCode 方法，它会在 ASM 开始访问某一个方法的 Code 区时被调用，重写 visitCode 方法，将 AOP 中的前置逻辑就放在这里。
-    
 *   MyMethodVisitor 继续读取字节码指令，每当 ASM 访问到无参数指令时，都会调用 MyMethodVisitor 中的 visitInsn 方法。我们判断了当前指令是否为无参数的 “return” 指令，如果是就在它的前面添加一些指令，也就是将 AOP 的后置逻辑放在该方法中。
-    
 *   综上，重写 MyMethodVisitor 中的两个方法，就可以实现 AOP 了，而重写方法时就需要用 ASM 的写法，手动写入或者修改字节码。通过调用 methodVisitor 的 visitXXXXInsn()方法就可以实现字节码的插入，XXXX 对应相应的操作码助记符类型，比如 mv.visitLdcInsn("end")对应的操作码就是 ldc "end"，即将字符串 “end” 压入栈。
-    
 
 完成这两个 Visitor 类后，运行 Generator 中的 main 方法完成对 Base 类的字节码增强，增强后的结果可以在编译后的 Target 文件夹中找到 Base.class 文件进行查看，可以看到反编译后的代码已经改变了（如图 18 左侧所示）。然后写一个测试类 MyTest，在其中 new Base()，并调用 base.process() 方法，可以看到下图右侧所示的 AOP 实现效果：
 
@@ -2558,21 +2416,20 @@ Javassist 提供了更高级的 API，允许开发者以 Java 源代码的形式
 Javassist 的核心类包括：
 
 *   **ClassPool**
-    
+
     Ct 对象的容器，负责管理 CtClass 实例
-    
+
 *   **CtClass**
-    
+
     编译时类信息，代表一个类文件
-    
+
 *   **CtMethod**
-    
+
     类中的方法
-    
+
 *   **CtField**
-    
+
     类中的字段
-    
 
 看一个简单的案例：
 
@@ -2965,17 +2822,17 @@ JVM TI（JVM TOOL INTERFACE，JVM 工具接口）是 JVM 提供的一套对 JVM 
 
 在面试之前，建议大家系统化的刷一波 5000 页《[尼恩 Java 面试宝典 PDF](https://mp.weixin.qq.com/s?__biz=MzkxNzIyMTM1NQ==&mid=2247497474&idx=1&sn=54a7b194a72162e9f13695443eabe186&scene=21#wechat_redirect)》，里边有大量的大厂真题、面试难题、架构难题。
 
-很多小伙伴刷完后， 吊打面试官， 大厂横着走。
+很多小伙伴刷完后，吊打面试官，大厂横着走。
 
-在刷题过程中，如果有啥问题，大家可以来 找 40 岁老架构师尼恩交流。
+在刷题过程中，如果有啥问题，大家可以来找 40 岁老架构师尼恩交流。
 
-另外，如果没有面试机会， 可以找尼恩来改简历、做帮扶。前段时间，**[指导一个小伙 暴涨 200% ，29 岁 / 7 年 / 双非一本  逆天改命。](https://mp.weixin.qq.com/s?__biz=MzIxMzYwODY3OQ==&mid=2247486433&idx=1&sn=0f630e8fc7620b3bf0e054827b48d91e&scene=21#wechat_redirect)**
+另外，如果没有面试机会，可以找尼恩来改简历、做帮扶。前段时间，**[指导一个小伙 暴涨 200% ，29 岁 / 7 年 / 双非一本  逆天改命。](https://mp.weixin.qq.com/s?__biz=MzIxMzYwODY3OQ==&mid=2247486433&idx=1&sn=0f630e8fc7620b3bf0e054827b48d91e&scene=21#wechat_redirect)**
 
-跟着 尼恩  狠狠卷，实现 “offer 自由” 很容易的。
+跟着尼恩狠狠卷，实现 “offer 自由” 很容易的。
 
-很多跟着 尼恩 **卷 硬核技术 的小伙伴 ， offer 拿到手软**， 实现真正的 “offer 自由” 。
+很多跟着尼恩 **卷硬核技术的小伙伴， offer 拿到手软**，实现真正的 “offer 自由” 。
 
-## Java+AI  弯道超车： 跟着尼恩  卷 最新技术， 占据 技术领先地位，  没有危机 
+## Java+AI  弯道超车： 跟着尼恩卷最新技术，占据技术领先地位，没有危机 
 
  [会 AI 的程序员，工资暴涨 50%！](https://mp.weixin.qq.com/s?__biz=MzIxMzYwODY3OQ==&mid=2247486827&idx=1&sn=db3f268c6752ddb074a98c7b13a84011&scene=21#wechat_redirect)
 
@@ -3019,8 +2876,8 @@ java+AI 逆袭 2：[：3 年 程序媛 被裁， 25W-》40W 上岸， 逆涨 60%
 一起成为牛逼的**未来超级架构师**
 
 **几十篇架构笔记、5000 页面试宝典、20 个技术圣经  
-请加尼恩个人微信 免费拿走**
+请加尼恩个人微信免费拿走**
 
-**暗号，请在 公众号后台 发送消息：领电子书**
+**暗号，请在公众号后台发送消息：领电子书**
 
 如有收获，请点击底部的 " 在看 "和" 赞 "，谢谢

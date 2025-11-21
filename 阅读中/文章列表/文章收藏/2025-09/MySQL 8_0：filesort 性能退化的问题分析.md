@@ -1,7 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/qYkyzD79nQuNGe59M2wWgg
 create: 2024-08-16 16:30
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-29
+tags:
+  - Mysql
+  - 框架原理
+summary: "[[MySQL 8.0：filesort 性能退化的问题分析]]"
 ---
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naKPzAv76YOSFTMmyUbbZnameYkhH76AGD3rHeqwT2cvELicmZXFWzXtCx1vaNvfa3Vo8GdLyoRKNEA/640?wx_fmt=jpeg&from=appmsg)

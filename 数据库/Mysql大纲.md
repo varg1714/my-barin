@@ -912,7 +912,8 @@ Mysql 的数据隐藏列中包含以下几个字段：
 
 在执行增/删/改的时候，每操作一次就会产生一条 undo 日志。Undo 日志包含上述的字段内容，根据 `roll_pointer` 就可以产生一条版本链。基于版本链的情况下，当查询操作产生的时候就会构造 ReadView 视图，从版本链中获取数据。
 
-生成 ReadView 视图时会包含以下内容：
+在 Repeatable Read 隔离级别下，ReadView 只在事务中的第一个 SELECT 语句（非锁模式的 SELECT）执行时创建一次。生成 ReadView 视图时会包含以下内容：
+
 - `m_ids`：生成 ReadView 视图时活跃的事务 ID 列表。
 - `creator_trx_id`：生成 ReadView 视图的事务 ID，即当前事务 ID。
 - `max_trx_id`：生成 ReadView 视图时应该分配给下一个事务的 ID。

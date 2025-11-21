@@ -1,7 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/THgHvhQh7VCt22RWdUI0Hg
 create: 2024-09-02 13:53
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-29
+tags:
+  - 计算机原理
+summary: "[[系统架构]]"
 ---
 # 架构师之路：必备技能，1 张大图，1 分钟搞懂 DNS 解析步骤与分层架构（无水印）
 

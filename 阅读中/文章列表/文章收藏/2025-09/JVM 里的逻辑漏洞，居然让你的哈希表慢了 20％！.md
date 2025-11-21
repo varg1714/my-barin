@@ -1,11 +1,16 @@
 ---
 source: https://mp.weixin.qq.com/s/skSOtM-rfVLf-7LDb7F9Hg
 create: 2025-04-17 21:40
-read: false
+read: true
 tags:
   - Java
   - JVM
+  - 框架原理
+knowledge: true
+knowledge-date: 2025-11-03
+summary: "[[JVM 标量替换失败分析]]"
 ---
+
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naIsfJwL4olaBdnAibSaPMEGFcsOOibchdtTYyTbRmibZ7ABg2un4c7goTZJia1XUCibPsVicAE9gSfOsRnw/640?wx_fmt=jpeg&from=appmsg)
 
 阿里妹导读
@@ -14,7 +19,7 @@ tags:
 
 首先来看一段 Java 代码：
 
-```
+```java
 int sumMapElements(ConcurrentHashMap<Integer, Integer> map) {
   int sum = 0;
   Enumeration<Integer> it = map.elements();
@@ -93,9 +98,7 @@ C++ 程序员是这样的，我们 Java 程序员只需要无脑 new 一把梭�
 以文章开头提到的 G1 GC 为例。在你对某个对象的字段进行赋值操作时，例如 obj.field = new_value，G1 会要求 JVM 的 JIT 编译器生成两类 barrier：
 
 *   一类是 pre-write barrier，出现在赋值之前，用来维护 Snapshot-At-The-Beginning（SATB）；
-    
 *   另一类是 post-write barrier，用来更新 Remembered Sets（RSets）。
-    
 
 对于具体的术语，篇幅所限，此处无法展开。读者如有兴趣，可参考这篇文章：
 
@@ -122,9 +125,7 @@ https://www.oracle.com/technical-resources/articles/java/g1gc.html
 倒也不是这样，只是因为：堆和栈在编译器、操作系统这两层抽象中始终是存在的，而一般情况下，堆内存分配要比栈内存分配慢得多：
 
 *   栈是线程自己的资源，而且是线性连续的。而分配栈内存这一操作，只需要一条更新栈指针的指令。
-    
 *   堆是全局资源，并不保证连续，随着程序的不断运行还可能产生大量碎片，在 Java 中还有额外的 GC 开销。如需分配堆内存，要考虑线程同步，要处理碎片，要经过 GC，最后还可能执行 syscall 向系统申请内存。
-    
 
 所以，**在条件允许的时候，JVM 会想尽一切办法把你的对象弄到栈上去**——即便它是你 new 出来的。因为这样更快。
 
@@ -152,7 +153,7 @@ https://www.oracle.com/technical-resources/articles/java/g1gc.html
 
 扯了这么多，回到开头的代码：
 
-```
+```java
 int sumMapElements(ConcurrentHashMap<Integer, Integer> map) {
   int sum = 0;
   Enumeration<Integer> it = map.elements();
@@ -164,11 +165,8 @@ int sumMapElements(ConcurrentHashMap<Integer, Integer> map) {
 ```
 
 1.  map.elements() 创建了一个 Enumeration 对象 it。由于 elements 方法非常简单，它会直接被 HotSpot 内联到 sumMapElements 方法中，所以你可以理解为，it 完全是在当前方法内被 new 出来的。
-    
 2.  sumMapElements 方法先后调用了 hasMoreElements 和 nextElement 方法。实际上这两个方法也会被内联，因此 it 在这两次调用里也没有逃逸。
-    
 3.  最后，sumMapElements 返回了求和的结果，而 it 对象已经完成了它的使命。如果此时发生 GC，it 对象就会被直接删除。因此，it 自始至终都没有逃逸出当前方法。
-    
 
 那么，按照常理推断，it 本应该被标量替换，然后分配到栈上 / 寄存器里。那为什么在使用 PrintEliminateAllocations 输出标量替换的细节时，我们会看到 JVM 实际上没能把它优化掉呢？
 
@@ -189,13 +187,9 @@ C2 是 HotSpot 中负责执行各类复杂分析和优化的 JIT 编译器，前
 接下来，逃逸分析后，C2 会执行一次迭代式全局值标号（Iterative Global Value Numbering，IGVN）优化。听起来很高级，其实你可以理解成以下这几种优化的大杂烩：
 
 1.  **Ideal：**针对程序里的每个 “操作”，首先尝试把它转换为开销更低的等价操作。比如把 −x 乘−y 转换为 x 乘 y，或者那个很经典的，把整数除法变成一串乘法和移位的优化。
-    
 2.  **Value：**接下来，试图在编译的时候直接把这个操作的结果求出来；或者，至少把能求的部分求出来。显然，如果你在程序里写了 return 1 + 1，编译器是不需要在生成的代码里再算一遍 1 + 1 的，它可以直接生成 return 2——这也就是所谓的常量折叠（Constant Folding）优化。
-    
 3.  **Identity：**如果刚刚已经把一个操作干成常量了，就不必再继续了。否则，做最后的努力：检查程序里之前是不是已经进行过一次这个操作，如果是的话，直接复用上次的结果（前提是这个操作没副作用）。
-    
 4.  **Remove：**前面的一通优化结束后，可能程序里原本被别的代码用到的操作，在那部分代码被优化完之后，就没用了。此时可以直接删除这些 “死掉” 的操作——这就叫死代码消除（Dead Code Elimination，DCE）。
-    
 
 IGVN 在 C2 中是一个非常重要的优化：一方面，C2 中所有的操作都要提供方便 IGVN 施展拳脚的 Ideal、Value 和 Identity 接口。注意，**是所有操作**，不只局限于刚刚举例的加减乘除，包括内存操作、控制流操作等等，都可以用 IGVN 干一圈，可优化的空间非常大。
 
@@ -212,9 +206,7 @@ IGVN 在 C2 中是一个非常重要的优化：一方面，C2 中所有的操�
 从上面的优化流程中可以看出，标量替换的失败，可能和两个因素有关：
 
 1.  逃逸分析如果**判断对象逃逸**，就不会处理内存操作，后续优化也无法进行。
-    
 2.  如果对象不逃逸，但 IGVN **没能干掉所有和对象有关的内存操作**，后续的宏消除就没办法删掉堆内存分配。
-    
 
 第一点是否成功很好判断，给 JVM 加个 -XX:+PrintEscapeAnalysis 参数就行：
 
@@ -255,9 +247,7 @@ Print 大法：从入门到精通
 如果不得不对一大坨屎山代码进行 debug，你有两个办法：
 
 1.  用 GDB 之类的调试器，下断点，单步，然后一头扎进屎山的细节里。
-    
 2.  先想好自己要关注屎山里的哪部分逻辑，然后在这个逻辑里加 print，重新编译运行，观察输出。
-    
 
 第一种办法实在是太恶心了，尤其是对于 JVM 这种会用不止一个线程在 VM 代码和运行时动态生成的代码里反复横跳的庞然大物——你很快就会愣在 GDB 的 CLI 里，不知道自己调的到底是个什么东西。
 

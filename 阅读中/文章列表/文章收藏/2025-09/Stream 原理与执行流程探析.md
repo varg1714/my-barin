@@ -1,7 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/UGWoRO5-pFB0p01mc73wLA
 create: 2024-07-29 13:51
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-06
+tags:
+  - Java
+  - 框架原理
+summary: "[[Stream 原理与执行流程]]"
 ---
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naLTicsQR7ga0W0khWaxjSoAwGtUDICpgiaUAMhW8yQHZ8oLlAmvhc3jw726HozKNxj1LDnw1GEtia7cQ/640?wx_fmt=jpeg&from=appmsg)

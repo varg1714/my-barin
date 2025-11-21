@@ -1,7 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/wlh2AHpNLrz9dHxPw9UrkQ
 create: 2024-08-16 16:30
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-10-29
+tags:
+  - ElasticSearch
+summary: "[[ElasticSearch]]"
 ---
 
 ![](https://mmbiz.qpic.cn/mmbiz_jpg/Z6bicxIx5naKoTzV6Pb6MRQcWglvtKDZvFJYBLLDquB36QGuST9YGcbUFHW9OV1J43qHt860sUwK2iazokm6c7bw/640?wx_fmt=jpeg&from=appmsg)
@@ -71,9 +76,7 @@ Elasticsearch(ES) 是一种基于分布式存储的搜索和分析引擎，目�
 分析器是 Elasticsearch 用于进行文本预处理的组件。它的主要作用是将文本转化为可被倒排索引的单词（term）。分析通常由以下几个步骤组成：
 
 *   分词（Tokenization）：将文本拆分成单词，对于英文，以空格为分界线来拆分单词。
-    
 *   标准化（Normalization）：对单词进行规范化，通常包括大小转小写、去除停用词等。
-    
 *   过滤（Filtering）：过滤掉特殊字符，例如移除特定字符、删除数字替换等。
 
 在阿里云 DTS 数据同步工具中，可以选择一系列 ES 内置的分析器，但是 Elasticsearch 的内置分析器对于中文的支持较差，采取了暴力拆分每个中文单字的策略。如果希望对中文进行合适的分词，可以选择第三方分词器，比如 jieba 分词器。
@@ -91,43 +94,41 @@ Elasticsearch(ES) 是一种基于分布式存储的搜索和分析引擎，目�
 万丈高楼平地起，优秀的全文索引能力是由基础的单词查询能力支撑的。
 
 *   Term Query（精确）
-*   最基础的 ES 查询，把输入字符串全部看作一个完整的单词，然后去倒排索引表里面找。
+    最基础的 ES 查询，把输入字符串全部看作一个完整的单词，然后去倒排索引表里面找。
 *   Fuzzy Query（模糊）
-*   带编辑距离的 term 查询。具体实现：给定一个模糊度（编辑距离），ES 会根据这个编辑距离，对原始的单词进行拓展，生成一系列候选的新单词。对每一个编辑距离内的新单词，做 term 查询。
+    带编辑距离的 term 查询。具体实现：给定一个模糊度（编辑距离），ES 会根据这个编辑距离，对原始的单词进行拓展，生成一系列候选的新单词。对每一个编辑距离内的新单词，做 term 查询。
 
 ## 全文级别查询
 
 像使用 match 和 match_phrase 这样的高层查询都属于全文级别查询，全文级别查询是对多个 / 多种单词级别查询的封装。
 
 *   match
-*   match 是自适应的：
-*   如果给定了模糊度参数 fuzziness，match 在单词级别查询上会调用 fuzzy querry；如果未给定此参数，则 match 在单词级别上会走 term query；
+    match 是自适应的。
     
-*   如果 analyzed，match 会对输入进行分词，把输入 "service_123456" 看成 "service" 和 "123456"；如果 not_analyzed，match 走完全匹配，把输入 "service_123456" 看成 "service_123456"。
-*   match 查询的主要步骤：
+    - 如果给定了模糊度参数 fuzziness
+        match 在单词级别查询上会调用 fuzzy querry；如果未给定此参数，则 match 在单词级别上会走 term query。
+    *   如果 analyzed
+        match 会对输入进行分词，把输入 "service_123456" 看成 "service" 和 "123456"。
+    - 如果 not_analyzed
+        match 走完全匹配，把输入 "service_123456" 看成 "service_123456"。
 
-i. 检查字段类型，查看字段是 analyzed 还是 not_analyzed；
+match 查询的主要步骤：
 
-1. 如果 analyzed，说明该字段已经被分析器处理过，match 会对输入进行分词；
-2. 如果 not_analyzed，说明该字段未被分析器处理过，match 走完全匹配；
-
-ii. 分析查询字符串，将输入字符串进行分词，对分出来的每个单词，根据是否设置了模糊度参数 fuzziness，选择走 term query 或者 fuzzy query；
-
-iii. 文档评分计算。
-
-*   match_phrase
-*   在 match 查询的基础上，保证输入的单词之间的顺序不变才会命中，性能相比 match 会差一些。
+1. 检查字段类型，查看字段是 analyzed 还是 not_analyzed；
+    - 如果 analyzed，说明该字段已经被分析器处理过，match 会对输入进行分词；
+    - 如果 not_analyzed，说明该字段未被分析器处理过，match 走完全匹配；
+2. 分析查询字符串，将输入字符串进行分词，对分出来的每个单词，根据是否设置了模糊度参数 fuzziness，选择走 term query 或者 fuzzy query；
+3. 文档评分计算。
+    *   match_phrase
+        在 match 查询的基础上，保证输入的单词之间的顺序不变才会命中，性能相比 match 会差一些。
 
 ## Bool 查询
 
 用于实现复杂的组合查询逻辑，具体有四种：
 
 *   should：或
-    
 *   must：且
-    
 *   must _not：非
-    
 *   filter：可以用于作为查询中的前置过滤条件，must 类似，好处是它不会参与计算相关性分数。
 
 逻辑完备性：足够数量的或且非，可以实现任何逻辑。
@@ -137,15 +138,12 @@ iii. 文档评分计算。
 利用倒排索引，对于输入的单词，考虑每个文档的以下指标：
 
 *   TFIDF
-*   目的：用文档中的一个单词，在一堆文档中区分出该文档；
-    
-*   TFIDF = TF * IDF；
-    
-*   TF（term frequency）：词频。表示单词在该文本中出现的频率（单词在该文本中出现的多不多）；
-    
-*   IDF（inverse document frequency）：反向文档频率。 表示单词在整个文本集合中出现的频率（有多少文本包含了这个词）的倒数，IDF 越大表示该词的重要性越高，反映了单词是否具有 distinguish 其所在文本的能力。
+    *  目的：用文档中的一个单词，在一堆文档中区分出该文档；
+    *   TFIDF = TF * IDF
+    *   TF（term frequency）：词频。表示单词在该文本中出现的频率（单词在该文本中出现的多不多）；
+    *   IDF（inverse document frequency）：反向文档频率。表示单词在整个文本集合中出现的频率（有多少文本包含了这个词）的倒数，IDF 越大表示该词的重要性越高，反映了单词是否具有 distinguish 其所在文本的能力。
 *   字段的长度
-*   字段越短相关度越高；
+    字段越短相关度越高；
 
 综合这两个指标得出每个文档的相关度评分_score。
 
@@ -289,11 +287,11 @@ JOIN service_category sc ON s.service_id = sc.service_id;
 
 ## 参考：
 
-[1] 网易基于 Elasticsearch 构建通用搜索系统的实践 - 分享 - Elastic 中文社区﻿：https://elasticsearch.cn/slides/243#page=20
+[1] 网易基于 Elasticsearch 构建通用搜索系统的实践 - 分享 - Elastic 中文社区﻿：https://elasticsearch.cn/slides/243 #page =20
 
-[2] RDSMySQL 同步方案_检索分析服务 Elasticsearch 版 - 阿里云帮助中心﻿：https://help.aliyun.com/zh/es/use-cases/select-a-synchronization-method
+[2] RDSMySQL 同步方案_检索分析服务 Elasticsearch 版 - 阿里云帮助中心﻿： https://help.aliyun.com/zh/es/use-cases/select-a-synchronization-method
 
-[3] Elasticsearch Guide [8.9] | Elastic﻿：https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
+[3] Elasticsearch Guide [8.9] | Elastic﻿： https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
 
 **移动开发秘籍：云上高效构建 App** 
 

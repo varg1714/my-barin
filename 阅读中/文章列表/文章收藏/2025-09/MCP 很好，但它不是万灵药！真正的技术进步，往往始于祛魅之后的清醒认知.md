@@ -6,7 +6,7 @@ knowledge: true
 tags:
   - 大模型
 knowledge-date: 2025-09-07
-summary: "[[阅读中/阅读总结/文章收藏/2025-09/MCP 很好，但它不是万灵药！真正的技术进步，往往始于祛魅之后的清醒认知|MCP 很好，但它不是万灵药！真正的技术进步，往往始于祛魅之后的清醒认知]]"
+summary: "[[MCP初探：AI的通用工具协议及其现实挑战|MCP初探：AI的通用工具协议及其现实挑战]]"
 ---
 ![](https://mmbiz.qpic.cn/sz_mmbiz_gif/j3gficicyOvasVeMDmWoZ2zyN8iaSc6XWYj79H3xfgvsqK9TDxOBlcUa6W0EE5KBdxacd2Ql6QBmuhBJKIUS4PSZQ/640?wx_fmt=gif&from=appmsg)
 

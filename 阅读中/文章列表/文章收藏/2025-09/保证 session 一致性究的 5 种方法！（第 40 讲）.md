@@ -1,10 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/inFhwTpbRySRxbIo0jFVDQ
 create: 2025-04-17 21:40
-read: false
+read: true
 tags:
   - 分布式
   - 网络
+knowledge: true
+knowledge-date: 2025-11-04
+summary: "[[Session 一致性方案]]"
 ---
 《架构师之路：架构设计中的 100 个知识点》
 

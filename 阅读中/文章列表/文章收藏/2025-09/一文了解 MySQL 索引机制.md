@@ -1,7 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/rF3zP99Bqw7PzVXfqfzF0w
 create: 2024-08-20 15:07
-read: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-16
+tags:
+  - Mysql
+  - 计算机原理
+summary: "[[Mysql大纲]]"
 ---
 
 

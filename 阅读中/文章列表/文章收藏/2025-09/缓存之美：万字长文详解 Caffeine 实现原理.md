@@ -1,11 +1,16 @@
 ---
 source: https://mp.weixin.qq.com/s/ppsrcOK00T8OoS9fPpeD8w
 create: 2025-04-17 21:44
-read: false
+read: true
 tags:
   - Java
   - 数据结构
+  - 框架原理
+knowledge: true
+knowledge-date: 2025-11-05
+summary: "[[Caffeine 实现分析]]"
 ---
+
 ![](https://mmbiz.qpic.cn/mmbiz_gif/RQv8vncPm1WFF2JbgQSO2h5nYPib8uzbNpeF9oBJ9xore4v3GLTxibUgQSibqhepJwMibrnjK9HI1WUEr4Vd15uSoA/640?from=appmsg&wx_fmt=gif)
 
 本文将以 “总 - 分 - 总” 的结构对配置固定大小元素驱逐策略的 Caffeine 缓存进行介绍，首先会讲解它的实现原理，在大家对它有一个概念之后再深入具体源码的细节之中，再帮助理解它的设计理念，从中能学习到用于统计元素访问频率的 Count-Min Sketch 数据结构、理解内存屏障和如何避免缓存伪共享问题、MPSC 多线程设计模式、高性能缓存的设计思想和多线程间的协调方案等等，文章最后会对全文内容进行总结，希望大家能有所收获的同时，在未来面对本地缓存选型时也有完整理论依据支撑。
@@ -18,7 +23,7 @@ Caffeine 缓存原理图如下：
 
 接下来的源码分析以如下测试用例为例：先分析构造方法，了解缓存初始化过程中创建的重要数据结构和关键字段，然后再深入添加元素的方法（put），该方法相对复杂，也是 Caffeine 缓存的核心，理解了这部分内容，文章剩余的内容理解起来会非常容易，接着分析获取元素的方法（getIfPresent），最后再回到核心的维护方法 `maintenance` 中，这样便基本理解了 Caffeine 缓存的运行原理，需要注意的是，因为我们并未指定缓存元素的过期时间，所以与此相关的内容如时间过期策略和时间轮等内容不会专门介绍。
 
-```
+```java
 public class TestReadSourceCode {
 
     @Test
@@ -38,15 +43,11 @@ public class TestReadSourceCode {
 }
 ```
 
-**constructor**
+## **constructor**
 
-  
+Caffeine 的实现类区分了 `BoundedLocalManualCache` 和 `UnboundedLocalManualCache`，见名知意它们分别为 “有边界” 的和 “无边界” 的缓存。`Caffeine#isBounded` 方法诠释了 “边界” 的含义：
 
-  
-
-## Caffeine 的实现类区分了 `BoundedLocalManualCache` 和 `UnboundedLocalManualCache`，见名知意它们分别为 “有边界” 的和 “无边界” 的缓存。`Caffeine#isBounded` 方法诠释了 “边界” 的含义：
-
-```
+```java
 public final class Caffeine<K, V> {
 
     static final int UNSET_INT = -1;
@@ -76,7 +77,7 @@ public final class Caffeine<K, V> {
 
 也就是说，当为缓存指定了上述的驱逐或过期策略会定义为有边界的 `BoundedLocalManualCache` 缓存，它会限制缓存的大小，防止内存溢出，否则为无边界的 `UnboundedLocalManualCache` 类型，它没有大小限制，直到内存耗尽。我们以创建配置了固定大小的缓存为例，它对应的类型便是 `BoundedLocalManualCache`，在执行构造方法时，有以下逻辑：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef
         implements LocalCache<K, V> {
     // ...
@@ -99,7 +100,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef
 
 `BoundedLocalCache` 为抽象类，缓存对象的实际类型都是它的子类。它在创建时使用了反射并遵循简单工厂的编码风格：
 
-```
+```java
 interface LocalCacheFactory {
     static <K, V> BoundedLocalCache<K, V> newBoundedLocalCache(Caffeine<K, V> builder,
                                                                @Nullable AsyncCacheLoader<? super K, V> cacheLoader, boolean async) {
@@ -118,7 +119,7 @@ interface LocalCacheFactory {
 
 `getClassName` 方法非常有意思，它会根据缓存配置的属性动态拼接出实际缓存类名：
 
-```
+```java
 interface LocalCacheFactory {
 
     static String getClassName(Caffeine<?, ?> builder) {
@@ -175,7 +176,7 @@ interface LocalCacheFactory {
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1XhHcDPyPGMl0M4Ah1uf0yyRiaq7xdD7gXjiaBzMw9xE0VedyjKhTWYibO5fRg2elS5nGeiblT3zsbN0A/640?wx_fmt=png&from=appmsg)
 
-根据代码逻辑，它的命名遵循如下格式 `S|W S|I [L] [S] [MW|MS] [A] [W] [R]` 其中 `[]` 表示选填，`|` 表示某配置不同选择的分隔符，结合注释能清楚的了解各个位置字母简称表达的含义。如此定义实现类使用了 多级继承，尽可能多地复用代码。
+根据代码逻辑，它的命名遵循如下格式 `S|W S|I [L] [S] [MW|MS] [A] [W] [R]` 其中 `[]` 表示选填，`|` 表示某配置不同选择的分隔符，结合注释能清楚的了解各个位置字母简称表达的含义。如此定义实现类使用了多级继承，尽可能多地复用代码。
 
 以我们测试用例中创建的缓存类型为例，它对应的实现类为 `SSMS`，表示 key 和 value 均为强引用，并配置了非权重的最大缓存大小限制，类图关系如下：
 
@@ -185,7 +186,7 @@ interface LocalCacheFactory {
 
 执行 `SSMS` 的构造方法会有以下逻辑：
 
-```
+```java
 // 1
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef
         implements LocalCache<K, V> {
@@ -323,7 +324,7 @@ class SSMS<K, V> extends SS<K, V> {
 
 在步骤 1 中定义了三个区的初始化大小为 1%|19%|80%，这样配置的性能相对较好。此外，我们还需要解释一下 `weightedSize()` 方法，它用于访问 `long weightedSize` 变量。根据其命名有 “权重大小” 的含义，在默认不指定权重计算对象 `Weigher` 的情况下，`Weigher` 默认为 `SingletonWeigher.INSTANCE` 表示每个元素的权重大小为 1，如下：
 
-```
+```java
 enum SingletonWeigher implements Weigher<Object, Object> {
     INSTANCE;
 
@@ -336,9 +337,9 @@ enum SingletonWeigher implements Weigher<Object, Object> {
 
 这样 `weightedSize` 表示的便是当前缓存中元素数量。如果自定义了 `Weigher` 那么 `weightedSize` 表示的便是缓存中总权重大小，每个元素的权重则可能会不同。因为在示例中我们并没有指定 `Weigher`，所以在此处可以将 `weightedSize` 理解为当前缓存大小。
 
-上文中我们提到缓存的定义遵循大写字母缩写的命名规则，实际上节点类的定义也采用了这种方式，在创建节点工厂 `NodeFactory.newFactory(builder, isAsync)`的逻辑中，它会执行如下逻辑，根据缓存的类型来确定它的节点类型，命名遵循 `P|F S|W|D A|AW|W| [R] [MW|MS]` 的规则，同样使用了反射机制和简单工厂的编码风格，如下：
+上文中我们提到缓存的定义遵循大写字母缩写的命名规则，实际上节点类的定义也采用了这种方式，在创建节点工厂 `NodeFactory.newFactory(builder, isAsync)` 的逻辑中，它会执行如下逻辑，根据缓存的类型来确定它的节点类型，命名遵循 `P|F S|W|D A|AW|W| [R] [MW|MS]` 的规则，同样使用了反射机制和简单工厂的编码风格，如下：
 
-```
+```java
 interface NodeFactory<K, V> {
     // ...
 
@@ -412,7 +413,7 @@ interface NodeFactory<K, V> {
 
 `SSMS` 类型缓存对应的节点类型为 `PSMS`。
 
-#### **FrequencySketch**
+### FrequencySketch
 
 接下来，我们需要具体介绍下 `FrequencySketch`，它在上述构造方法的步骤 3 中被创建。这个类的实现采用了 Count-Min Sketch 数据结构，它维护了一个 `long[] table` 一维数组，每个元素有 64 位，每 4 位作为一个计数器（这也就限定了最大频率为 15），那么数组中每个槽位便是 16 个计数器。通过哈希函数取 4 个独立的计数值，将其中的最小值作为元素的访问频率。`table` 的初始大小为缓存最大容量最接近的 2 的 n 次幂，并在计算哈希值时使用 `blockMask` 掩码来使哈希结果均匀分布，保证了获取元素访问频率的正确率为 93.75%，达到空间与时间的平衡。它的实现原理和布隆过滤器类似，牺牲了部分准确性，但减少了占用内存的大小。如下图所示为计算元素 e 的访问频率：
 
@@ -420,7 +421,7 @@ interface NodeFactory<K, V> {
 
 以下为 `FrequencySketch` 的源码，关注注释即可，并不复杂：
 
-```
+```java
 final class FrequencySketch<E> {
 
     static final long RESET_MASK = 0x7777777777777777L;
@@ -570,13 +571,9 @@ put
 
 **
 
-  
-
-  
-
 接下来继续了解向缓存中添加元素的流程，本节内容比较多，理解起来也相对复杂，结合文章内容的同时，也需要多去深入查看 Caffeine 源码才能有更好的理解，以下为 `put` 方法的源码：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     // 默认入参 onlyIfAbsent 为 false，表示向缓存中添加相同的 key 会对 value 进行替换 
@@ -589,7 +586,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 它会执行到如下具体逻辑中，关注注释信息：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     static final int WRITE_BUFFER_RETRIES = 100;
@@ -671,7 +668,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 注意添加节点成功的逻辑，它会执行 `afterWrite` 写后操作方法，添加 `AddTask` 任务到 `writeBuffer` 中：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     // 写重试最多 100 次
@@ -703,7 +700,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 `writeBuffer` 的类型为 `MpscGrowableArrayQueue`，在这里我们详细的介绍下它。
 
-#### **WriteBuffer**
+### WriteBuffer
 
 根据它的命名 GrowableArrayQueue 可知它是一个容量可以增长的双端队列，前缀 MPSC 表达的含义是 “多生产者，单消费者”，也就是说可以有多个线程向其中添加元素，但只有一个线程能从其中获取元素。那么它是如何实现 MPSC 的呢？接下来我们就根据源码详细了解一下。首先先来看一下它的类继承关系图及简要说明：
 
@@ -713,7 +710,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 以 `BaseMpscLinkedArrayQueuePad1` 为例：
 
-```
+```java
 abstract class BaseMpscLinkedArrayQueuePad1<E> extends AbstractQueue<E> {
     byte p000, p001, p002, p003, p004, p005, p006, p007;
     byte p008, p009, p010, p011, p012, p013, p014, p015;
@@ -733,11 +730,11 @@ abstract class BaseMpscLinkedArrayQueuePad1<E> extends AbstractQueue<E> {
 }
 ```
 
-这个类除了定义了 120 字节的字段外，看上去没有做其他任何事情，实际上它为 性能提升 默默做出了贡献，避免了内存伪共享。CPU 中缓存行（Cache Line）的大小通常是 64 字节，在类中定义 120 字节来占位，这样便能将上下继承关系间的字段间隔开，保证被多个线程访问的关键字段距离至少跨越一个缓存行，分布在不同的缓存行中。这样在不同的线程访问 `BaseMpscLinkedArrayQueueProducerFields` 和 `BaseMpscLinkedArrayQueueConsumerFields` 中字段时互不影响，详细了解原理可参考博客园 - CPU Cache 与缓存行（https://www.cnblogs.com/zhongqifeng/p/14765576.html）。
+这个类除了定义了 120 字节的字段外，看上去没有做其他任何事情，实际上它为性能提升默默做出了贡献，避免了内存伪共享。CPU 中缓存行（Cache Line）的大小通常是 64 字节，在类中定义 120 字节来占位，这样便能将上下继承关系间的字段间隔开，保证被多个线程访问的关键字段距离至少跨越一个缓存行，分布在不同的缓存行中。这样在不同的线程访问 `BaseMpscLinkedArrayQueueProducerFields` 和 `BaseMpscLinkedArrayQueueConsumerFields` 中字段时互不影响，详细了解原理可参考博客园 - CPU Cache 与缓存行（ https://www.cnblogs.com/zhongqifeng/p/14765576.html ）。
 
 接下来我们看看其他抽象类的作用。`BaseMpscLinkedArrayQueueProducerFields` 定义生产者相关字段：
 
-```
+```java
 abstract class BaseMpscLinkedArrayQueueProducerFields<E> extends BaseMpscLinkedArrayQueuePad1<E> {
     // 生产者操作索引（并不对应缓冲区 producerBuffer 中索引位置）
     protected long producerIndex;
@@ -746,7 +743,7 @@ abstract class BaseMpscLinkedArrayQueueProducerFields<E> extends BaseMpscLinkedA
 
 `BaseMpscLinkedArrayQueueConsumerFields` 负责定义消费者相关字段：
 
-```
+```java
 abstract class BaseMpscLinkedArrayQueueConsumerFields<E> extends BaseMpscLinkedArrayQueuePad2<E> {
     // 掩码值，用于计算消费者实际的索引位置
     protected long consumerMask;
@@ -759,7 +756,7 @@ abstract class BaseMpscLinkedArrayQueueConsumerFields<E> extends BaseMpscLinkedA
 
 `BaseMpscLinkedArrayQueueColdProducerFields` 中定义字段如下，该类的命名包含 Cold，表示其中字段被修改的次数会比较少：
 
-```
+```java
 abstract class BaseMpscLinkedArrayQueueColdProducerFields<E> extends BaseMpscLinkedArrayQueuePad3<E> {
     // 生产者可以操作的最大索引上限
     protected volatile long producerLimit;
@@ -772,7 +769,7 @@ abstract class BaseMpscLinkedArrayQueueColdProducerFields<E> extends BaseMpscLin
 
 现在关键字段我们已经介绍完了，接下来看一下创建 `MpscGrowableArrayQueue` 的逻辑，执行它的构造方法时会为我们刚刚提到的字段进行赋值：
 
-```
+```java
 class MpscGrowableArrayQueue<E> extends MpscChunkedArrayQueue<E> {
 
     MpscGrowableArrayQueue(int initialCapacity, int maxCapacity) {
@@ -838,7 +835,7 @@ abstract class BaseMpscLinkedArrayQueue<E> extends BaseMpscLinkedArrayQueueColdP
 
 现在 `MpscGrowableArrayQueue` 的构建已经看完了，了解了其中关键字段的赋值，现在我们就需要看它是如何实现 MPSC 的。“多生产者” 也就意味着会有多个线程向其中添加元素，既然是多线程就需要重点关注它是如何在多线程间完成协同的。添加操作对应了 `BaseMpscLinkedArrayQueue#offer` 方法，它的实现如下：
 
-```
+```java
 abstract class BaseMpscLinkedArrayQueue<E> extends BaseMpscLinkedArrayQueueColdProducerFields<E> {
 
     private static final Object JUMP = new Object();
@@ -971,9 +968,9 @@ abstract class BaseMpscLinkedArrayQueue<E> extends BaseMpscLinkedArrayQueueColdP
 }
 ```
 
-可见，在这个过程中它并没有限制操作线程数量，也没有使用加锁的同步机制。它通过保证 可见性，并使用 自旋锁结合 CAS 操作 更新生产者索引值，因为该操作是原子的，同时只有一个线程能更新获取索引值成功，更新失败的线程会自旋重试，这样便允许多线程同时添加元素，可见性保证和 CAS 操作源码如下：
+可见，在这个过程中它并没有限制操作线程数量，也没有使用加锁的同步机制。它通过保证可见性，并使用自旋锁结合 CAS 操作更新生产者索引值，因为该操作是原子的，同时只有一个线程能更新获取索引值成功，更新失败的线程会自旋重试，这样便允许多线程同时添加元素，可见性保证和 CAS 操作源码如下：
 
-```
+```java
 abstract class BaseMpscLinkedArrayQueue<E> extends BaseMpscLinkedArrayQueueColdProducerFields<E> {
 
     static final VarHandle P_INDEX = pIndexLookup.findVarHandle(
@@ -991,9 +988,9 @@ abstract class BaseMpscLinkedArrayQueue<E> extends BaseMpscLinkedArrayQueueColdP
 }
 ```
 
-保证可见性（内存操作对其他线程可见）的原理是 内存屏障，除了保证可见性以外，内存屏障还能够 防止重排序（确保在内存屏障前后的内存操作不会被重排序，从而保证程序的正确性）。到这里，生产者添加元素的逻辑我们已经分析完了，接下来我们需要继续看一下消费者获取元素的逻辑，它对应了 `BaseMpscLinkedArrayQueue#poll` 方法，同样地，在这过程中需要关注 “在这个方法中有没有限制单一线程执行”，以此实现单消费者呢：
+保证可见性（内存操作对其他线程可见）的原理是内存屏障，除了保证可见性以外，内存屏障还能够防止重排序（确保在内存屏障前后的内存操作不会被重排序，从而保证程序的正确性）。到这里，生产者添加元素的逻辑我们已经分析完了，接下来我们需要继续看一下消费者获取元素的逻辑，它对应了 `BaseMpscLinkedArrayQueue#poll` 方法，同样地，在这过程中需要关注 “在这个方法中有没有限制单一线程执行”，以此实现单消费者呢：
 
-```
+```java
 abstract class BaseMpscLinkedArrayQueue<E> extends BaseMpscLinkedArrayQueueColdProducerFields<E> {
 
     private static final Object JUMP = new Object();
@@ -1089,13 +1086,13 @@ This implementation is correct for single consumer thread use only.
 
 所以调用该方法时开发者本身需要保证单线程调用而并不是在实现中控制。
 
-到这里 `MpscGrowableArrayQueue` 中核心的逻辑已经讲解完了，现在我们回过头来再看一下队列扩容前后生产者和消费者是如何协同的？在扩容前，`consumerBuffer` 和 `producerBuffer` 引用的是同一个缓冲区对象。如果发生扩容，那么生产者会创建一个新的缓冲区，并将 `producerBuffer` 引用指向它，此时它做了一个 非常巧妙 的操作，将 新缓冲区依然链接到旧缓冲区 上，并将触发扩容的元素对应的旧缓冲区的索引处标记为 JUMP，表示这及之后的元素已经都在新缓冲区中。此时，消费者依然会在旧缓冲区中慢慢地消费，直到遇到 JUMP 标志位，消费者就知道需要到新缓冲区中取获取元素了。因为之前生产者在扩容时对新旧缓冲区进行链接，所以消费者能够通过旧缓冲区获取到新缓冲区的引用，并变更 `consumerBuffer` 的引用和 `consumerMask` 掩码值，接下来的消费过程便和扩容前没有差别了。
+到这里 `MpscGrowableArrayQueue` 中核心的逻辑已经讲解完了，现在我们回过头来再看一下队列扩容前后生产者和消费者是如何协同的？在扩容前，`consumerBuffer` 和 `producerBuffer` 引用的是同一个缓冲区对象。如果发生扩容，那么生产者会创建一个新的缓冲区，并将 `producerBuffer` 引用指向它，此时它做了一个非常巧妙的操作，将新缓冲区依然链接到旧缓冲区上，并将触发扩容的元素对应的旧缓冲区的索引处标记为 JUMP，表示这及之后的元素已经都在新缓冲区中。此时，消费者依然会在旧缓冲区中慢慢地消费，直到遇到 JUMP 标志位，消费者就知道需要到新缓冲区中取获取元素了。因为之前生产者在扩容时对新旧缓冲区进行链接，所以消费者能够通过旧缓冲区获取到新缓冲区的引用，并变更 `consumerBuffer` 的引用和 `consumerMask` 掩码值，接下来的消费过程便和扩容前没有差别了。
 
-#### **scheduleAfterWrite**
+### scheduleAfterWrite
 
 现在我们再回到 `put` 方法的逻辑中，如果向 `WriterBuffer` 中添加元素成功，则会调用 `scheduleAfterWrite` 方法，调度任务的执行：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final ReentrantLock evictionLock = new ReentrantLock();
@@ -1172,7 +1169,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 写后调度处理任务（`scheduleAfterWrite`）会根据状态选择性执行 `scheduleDrainBuffers` 方法，执行该方法时通过同步锁 `evictionLock` 保证同时只有一个线程能提交 `PerformCleanupTask` 任务。这个任务在创建缓存时已经被初始化完成了，每次提交任务都会被复用，接下来我们看一下这个任务的具体实现：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     // 可重用的任务，用于执行 maintenance 方法，避免了使用 ForkJoinPool 来包装
@@ -1212,7 +1209,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 它的实现非常简单，其中 `reference` 字段在调用构造方法时被赋值，引用的是缓存对象本身。当任务被执行时，调用的是 `BoundedLocalCache#performCleanUp` 方法：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final ReentrantLock evictionLock = new ReentrantLock();
@@ -1266,7 +1263,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 注意在执行 `performCleanUp` 方法时，也需要获取到同步锁 `evictionLock`，那么任务的提交和任务的执行也是互斥的。这个执行的核心逻辑在 `maintenance` “维护” 方法中，注意这个方法被标记了注解 `@GuardedBy("evictionLock")`，源码中还有多个方法也标记了该注解，执行这些方法时都要获取同步锁，这也是在提醒我们这些方法同时只有由一条线程被执行。因为目前关注的是 `put` 方法，所以重点先看维护方法中 `drainWriteBuffer` 方法处理写缓冲区中任务的逻辑：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     static final int NCPU = Runtime.getRuntime().availableProcessors();
@@ -1291,9 +1288,9 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 }
 ```
 
-执行逻辑非常简单，在获取到同步锁之后，在 `WriteBuffer` 中获取要被执行的任务并执行。在这里我们能发现 “SC 单消费者” 的实现使用 同步锁的机制保证同时只能有一个消费者消费缓冲区中的任务。在上文中我们已经知道，调用 `put` 方法时向缓冲区 `WriteBuffer` 中添加的任务为 `AddTask`，下面我们看一下该任务的实现：
+执行逻辑非常简单，在获取到同步锁之后，在 `WriteBuffer` 中获取要被执行的任务并执行。在这里我们能发现 “SC 单消费者” 的实现使用同步锁的机制保证同时只能有一个消费者消费缓冲区中的任务。在上文中我们已经知道，调用 `put` 方法时向缓冲区 `WriteBuffer` 中添加的任务为 `AddTask`，下面我们看一下该任务的实现：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     static final long MAXIMUM_CAPACITY = Long.MAX_VALUE - Integer.MAX_VALUE;
@@ -1401,7 +1398,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 根据注释很容易理解该方法的作用，因为我们目前对缓存只定义了固定容量的驱逐策略，所以我们需要再看一下 `evictEntry` 方法：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final ConcurrentHashMap<Object, Node<K, V>> data;
@@ -1527,7 +1524,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 现在我们已经将 `put` 方法中向缓存中添加元素的逻辑介绍完了，接下来需要关注 `put` 方法中对已存在的相同 key 值元素的处理逻辑：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     static final int MAX_PUT_SPIN_WAIT_ATTEMPTS = 1024 - 1;
@@ -1665,7 +1662,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 对于已有元素的变更，会对节点添加同步锁，更新它的权重等一系列变量，如果超过 1s 的时间容忍范围，则会添加 `UpdateTask` 更新任务，至于处理读后操作 `afterRead` 在读方法中再去介绍。接下来我们需要重新再看一下 `afterWrite` 方法，其中有部分我们在上文中没有介绍的逻辑：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final ReentrantLock evictionLock;
@@ -1754,7 +1751,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 写后操作除了在添加任务到缓冲区成功后会执行维护方法，添加失败（证明写入操作非常频繁）依然会尝试同步执行维护方法和发起异步维护，用于保证缓存中的任务能够被及时执行，使缓存中元素都处于 “预期” 状态中。接下来我们在看一下 `UpdateTask` 更新任务的逻辑：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final class UpdateTask implements Runnable {
@@ -1908,13 +1905,9 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 **getIfPresent**
 
-  
-
-  
-
 现在我们对 `put` 方法有了基本了解，现在我们继续深入 `getIfPresent` 方法：
 
-```
+```java
 public class TestReadSourceCode {
 
     @Test
@@ -1936,7 +1929,7 @@ public class TestReadSourceCode {
 
 对应源码如下，关注注释信息：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final ConcurrentHashMap<Object, Node<K, V>> data;
@@ -1990,7 +1983,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 `getIfPresent` 方法中，部分内容我们已经在上文中介绍过，比如 `scheduleDrainBuffers` 方法。最后一步 `afterRead` 方法是我们本次关注的重点，从命名来看它表示 “读后操作” 接下来看看它的具体流程：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final Buffer<Node<K, V>> readBuffer;
@@ -2038,11 +2031,11 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 该方法非常简单，都是熟悉的内容，只有数据结构 `ReadBuffer` 还没深入了解过，它也是在 Caffeine 的构造方法中完成初始化的。
 
-#### **ReadBuffer**
+### ReadBuffer
 
 以下为 `ReadBuffer` 在 Caffeine 缓存中完成初始化的逻辑：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef
         implements LocalCache<K, V> {
 
@@ -2062,7 +2055,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef
 
 `Buffer.disabled()` 会创建如下枚举来表示 `DisabledBuffer`:
 
-```
+```java
 enum DisabledBuffer implements Buffer<Object> {
     INSTANCE;
 
@@ -2096,14 +2089,14 @@ enum DisabledBuffer implements Buffer<Object> {
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1XhHcDPyPGMl0M4Ah1uf0yyYLHKM1JrljMtLkU9M8smMNBKMzeYC4BGRKuv4t9IUfLTEMMMWtSaUg/640?wx_fmt=png&from=appmsg)
 
-在 `Buffer` 接口的注释声明中，能获取很多有效信息：它同样也是 多生产者单消费者（MPSC） 缓冲区，上文我们在介绍 `WriteBuffer` 时，它的单消费者实现方式是加同步锁，`ReadBuffer` 的实现单消费者的方式一样，因为它们都是在维护方法 `maintenance` 中加同步锁对元素进行消费。不同的是，如果 `ReadBuffer` 缓冲区满了或者发生争抢则会拒绝添加新元素，而且它不像队列或栈，不保证 FIFO 或 LIFO。
+在 `Buffer` 接口的注释声明中，能获取很多有效信息：它同样也是多生产者单消费者（MPSC） 缓冲区，上文我们在介绍 `WriteBuffer` 时，它的单消费者实现方式是加同步锁，`ReadBuffer` 的实现单消费者的方式一样，因为它们都是在维护方法 `maintenance` 中加同步锁对元素进行消费。不同的是，如果 `ReadBuffer` 缓冲区满了或者发生争抢则会拒绝添加新元素，而且它不像队列或栈，不保证 FIFO 或 LIFO。
 
 A multiple-producer / single-consumer buffer that rejects new elements if it is full or fails spuriously due to contention. Unlike a queue and stack, a buffer does not guarantee an ordering of elements in either FIFO or LIFO order.  
 Beware that it is the responsibility of the caller to ensure that a consumer has exclusive read access to the buffer. This implementation does not include fail-fast behavior to guard against incorrect consumer usage.
 
 在类关系图中，抽象类 `StripedBuffer` 的实现最值得学习，它采用了分段设计（Striped）和 CAS 操作实现高效并发写入。分段是将缓冲区分成多个 “段”，根据线程的探针值将它们哈希到不同的 “段”，减少竞争，接下来我们看一下它具体的实现逻辑，首先是 `StripedBuffer#offer` 方法：
 
-```
+```java
 abstract class StripedBuffer<E> implements Buffer<E> {
 
     volatile Buffer<E> @Nullable[] table;
@@ -2141,7 +2134,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
 
 在 `StripedBuffer` 中我们能发现定义了 `volatile Buffer<E> @Nullable[] table` 是数组的形式，这便对应了它 “分段” 的思想，将元素保存在多个缓冲区中。通过线程探针值哈希获取对应的缓冲区，逻辑并不复杂。`expandOrRetry` 方法我们稍后再介绍，我们先假设线程哈希到的具体缓冲区 `Buffer<E> buffer` 对象已经被创建，那么它会执行 `buffer.offer(e)` 方法。`Buffer<E> buffer` 对应的实现类为定义在 `BoundedBuffer` 的静态内部类 `RingBuffer`，它也实现了 `Buffer` 接口，源码如下：
 
-```
+```java
 final class BoundedBuffer<E> extends StripedBuffer<E> {
 
     static final int BUFFER_SIZE = 16;
@@ -2250,7 +2243,7 @@ Handles cases of updates involving initialization, resizing, creating new Buffer
 
 具体源码如下：
 
-```
+```java
 abstract class StripedBuffer<E> implements Buffer<E> {
     // 最大尝试 3 次
     static final int ATTEMPTS = 3;
@@ -2367,7 +2360,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
 
 根据注释信息了解该方法的逻辑并不难，接下来我们再看一下它的消费方法 `drainTo`，非常简单：
 
-```
+```java
 abstract class StripedBuffer<E> implements Buffer<E> {
     volatile Buffer<E> @Nullable[] table;
 
@@ -2393,13 +2386,9 @@ abstract class StripedBuffer<E> implements Buffer<E> {
 
 **maintenance**
 
-  
-
-  
-
 维护方法 `maintenance` 如下所示，第 2 步中处理写缓冲区任务的逻辑已在上文中介绍过，接下来我们会关注第 1 步的处理读缓冲区任务，第 4 步驱逐策略和第 5 步的 “增值（climb）” 操作。
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     @GuardedBy("evictionLock")
@@ -2437,11 +2426,11 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 }
 ```
 
-#### **drainReadBuffer**
+### drainReadBuffer
 
 首先我们来看处理读缓冲区的逻辑，源码如下：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final Buffer<Node<K, V>> readBuffer;
@@ -2460,7 +2449,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 它会执行到 `StripedBuffer#drainTo` 方法，并且入参了 `Consumer<Node<K, V>> accessPolicy` 消费者。前者会遍历所有缓冲区中对象进行消费；后者在 caffeine 构造方法中完成初始化：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     final Buffer<Node<K, V>> readBuffer;
@@ -2478,7 +2467,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 `onAccess` 方法在上文中也提到过，具体逻辑我们在这里再补充下：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     @GuardedBy("evictionLock")
@@ -2526,7 +2515,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 If the protected space exceeds its maximum, the LRU items are demoted to the probation space.  
 This is deferred to the adaption phase at the end of the maintenance cycle.
 
-#### **evictEntries**
+### evictEntries
 
 `evictEntries` 方法注释这么描述：如果缓存超过最大值则将元素驱逐。
 
@@ -2534,7 +2523,7 @@ Evicts entries if the cache exceeds the maximum
 
 它的主方法逻辑非常简单：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     @GuardedBy("evictionLock")
@@ -2552,7 +2541,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 首先，先来看从窗口区 “驱逐” 的方法 `evictFromWindow`:
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     @GuardedBy("evictionLock")
@@ -2593,7 +2582,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 }
 ```
 
-该方法会根据窗口区最大权重限制 将节点由窗口区移动到试用区，直到窗口区内元素小于最大值限制，并不是直接调用 `evictEntry` 方法真正地将元素驱逐。如果已经在窗口区中将元素移动到试用区，那么接下来会以窗口区头节点会作为入参执行 `evictFromMain` 方法，它有非常详细的注释内容：
+该方法会根据窗口区最大权重限制将节点由窗口区移动到试用区，直到窗口区内元素小于最大值限制，并不是直接调用 `evictEntry` 方法真正地将元素驱逐。如果已经在窗口区中将元素移动到试用区，那么接下来会以窗口区头节点会作为入参执行 `evictFromMain` 方法，它有非常详细的注释内容：
 
 如果缓存超过最大容量限制，则将元素从主空间中移除。主空间通过频率草图决定从窗口区来的元素是被驱逐还是被保留，以便将使用频率最低的元素移除。
 
@@ -2605,7 +2594,7 @@ The window space's candidates were previously promoted to the probation space at
 
 接下来我们看下源码的具体实现：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     public static final int WINDOW = 0;
@@ -2760,11 +2749,11 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/RQv8vncPm1XhHcDPyPGMl0M4Ah1uf0yyzaXibBp5zZ5BDpgxwnGrNZCo9eFYpOaZjorJGib3YP41tRybyLyEnaKA/640?wx_fmt=png&from=appmsg)
 
-#### **climb**
+### climb
 
 现在我们来到了维护方法的最后一个步骤 `climb` 方法，看看它是如何为缓存 “增值（climb）” 的，源码如下：
 
-```
+```java
 abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implements LocalCache<K, V> {
 
     static final double HILL_CLIMBER_RESTART_THRESHOLD = 0.05d;
@@ -2989,10 +2978,6 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 **技术选型**
 
-  
-
-  
-
 现在我们已经对 Caffeine 缓存有了一定的了解，那么究竟什么时候适合选择使用它呢？那就要根据它的特点来了：首先，它是线程安全的，适合在多线程环境下使用；其次它的性能很好，使用了 TinyLFU 算法并采用了高性能缓存的设计；再就是它提供了多种缓存管理机制，除了基于最大容量的驱逐策略，还支持基于时间、软 / 虚引用等驱逐策略。所以它适合在高并发环境并且需要高性能、支持多种缓存管理策略的场景下使用。
 
 如果要在多种缓存中选取，可以以如下表格为参考：
@@ -3001,20 +2986,9 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 
 **巨人的肩膀**
 
-  
-
-  
-
-*   Github - caffeine（https://github.com/ben-manes/caffeine/wiki/Design）
-    
-*   并发编程网 - 现代化的缓存设计方案（http://ifeve.com/design-of-a-modern-cache/）
-    
-*   博客园 - CPU Cache 与缓存行（https://www.cnblogs.com/zhongqifeng/p/14765576.html）
-    
-
-  
-
-  
+*   Github - caffeine（ https://github.com/ben-manes/caffeine/wiki/Design ）
+*   并发编程网 - 现代化的缓存设计方案（ http://ifeve.com/design-of-a-modern-cache/ ）
+*   博客园 - CPU Cache 与缓存行（ https://www.cnblogs.com/zhongqifeng/p/14765576.html ）
 
 * * *
 
@@ -3027,7 +3001,5 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef implemen
 [京东广告基于 Apache Doris 的冷热数据分层实践](https://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247500211&idx=1&sn=04962158a4dda4b55015cc5d63dca782&scene=21#wechat_redirect)  
 
 [物流 KA 商家业务监控能力建设与实践](https://mp.weixin.qq.com/s?__biz=MzU1MzE2NzIzMg==&mid=2247500107&idx=1&sn=b669b15b2e2b6878660c84f970f76c5d&scene=21#wechat_redirect)
-
-  
 
 **关注我们**
