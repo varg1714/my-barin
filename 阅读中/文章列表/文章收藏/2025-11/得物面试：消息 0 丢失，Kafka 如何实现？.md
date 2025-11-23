@@ -6,7 +6,7 @@ knowledge: true
 knowledge-date: 2025-11-20
 tags:
   - 消息队列
-summary: "[[Rocket 与 Kafka的区别]]"
+summary: "[[消息队列进阶-常见消息队列的核心原理]]"
 ---
 FSAC 未来超级架构师
 

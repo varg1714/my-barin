@@ -1,8 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/cPMI0oEW3iHK-0l149X87g
 create: 2025-11-11 22:28
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-23
+tags:
+  - 系统运维
+summary: "[[阅读中/阅读总结/文章收藏/2025-11/得物 TiDB 升级实践|得物 TiDB 升级实践]]"
 ---
 ![](http://mmbiz.qpic.cn/mmbiz_gif/AAQtmjCc74DZeqm2Rc4qc7ocVLZVd8FOASKicbMfKsaziasqIDXGPt8yR8anxPO3NCF4a4DkYCACam4oNAOBmSbA/640?wx_fmt=gif&wxfrom=5&wx_lazy=1#imgIndex=0)
 

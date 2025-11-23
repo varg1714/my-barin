@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/TT_NpT3xV9Yhmva73E85Hg
 create: 2025-11-18 20:56
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-23
+tags:
+  - 消息队列
+  - 分布式
+summary: "[[消息队列进阶-常见消息队列的核心原理]]"
 ---
 # 
 

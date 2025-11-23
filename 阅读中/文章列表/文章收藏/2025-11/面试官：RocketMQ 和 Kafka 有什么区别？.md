@@ -6,7 +6,7 @@ knowledge: true
 knowledge-date: 2025-11-18
 tags:
   - 消息队列
-summary: "[[Rocket 与 Kafka的区别]]"
+summary: "[[消息队列进阶-常见消息队列的核心原理]]"
 ---
 ![](https://mmbiz.qpic.cn/sz_mmbiz_png/J0g14CUwaZdAribHzlibOfhwicEh7luZaAgD5E4VQrJecJkBKfTvLXWYjGKzdZOWYK40eks5yL3NeUlmXrhePNV7g/640?wx_fmt=other&from=appmsg&wxfrom=5&wx_lazy=1&wx_co=1&tp=webp#imgIndex=0)
 

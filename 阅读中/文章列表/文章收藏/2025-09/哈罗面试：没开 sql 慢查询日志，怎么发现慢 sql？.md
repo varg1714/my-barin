@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/yecb_gpRU0i6vnENK2U0rA
 create: 2025-09-11 21:11
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-23
+tags:
+  - Mysql
+  - 系统运维
+summary: "[[Mysql 慢日志追踪]]"
 ---
 FSAC 未来超级架构师
 

@@ -1,8 +1,12 @@
 ---
 source: https://mp.weixin.qq.com/s/LWrh-H7FLa5tZSAapUqPlQ
 create: 2025-11-18 21:00
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-21
+tags:
+  - 消息队列
+summary: "[[消息队列进阶-常见消息队列的核心原理]]"
 ---
 ![](https://mmbiz.qpic.cn/mmbiz_gif/yvBJb5IiafvmiaBnXvbGDru5fwoNCGwhCdc2xA5ahKkfBePMIjkboicYBKINVBY43ZVG1CibXJORibIAzkhpAke0PhQ/640?wx_fmt=gif&wxfrom=5&wx_lazy=1#imgIndex=0)
 
