@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/wCbg-CTcg_Xt5KB3dLYNpA
 create: 2025-11-23 22:30
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-24
+tags:
+  - Redis
+  - 系统运维
+summary: "[[得物自建 Redis 运维经验]]"
 ---
 ![](http://mmbiz.qpic.cn/mmbiz_gif/AAQtmjCc74DZeqm2Rc4qc7ocVLZVd8FOASKicbMfKsaziasqIDXGPt8yR8anxPO3NCF4a4DkYCACam4oNAOBmSbA/640?wx_fmt=gif&wxfrom=5&wx_lazy=1#imgIndex=0)
 

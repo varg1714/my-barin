@@ -1,3 +1,15 @@
+---
+source:
+  - https://pdai.tech/md/spring/spring-x-framework-ioc-source-2.html
+create: 2025-11-26
+read: true
+knowledge: true
+knowledge-date: 2025-11-26
+tags:
+  - Spring
+  - 框架原理
+summary: "[[Spring IOC实现原理详解之IOC初始化流程]]"
+---
 > 上文，我们看了IOC设计要点和设计结构；紧接着这篇，我们可以看下源码的实现了：Spring如何实现将资源配置（以xml配置为例）通过加载，解析，生成BeanDefination并注册到IoC容器中的。@pdai
 
 - [Spring进阶- Spring IOC实现原理详解之IOC初始化流程](#spring%E8%BF%9B%E9%98%B6--spring-ioc%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%AF%A6%E8%A7%A3%E4%B9%8Bioc%E5%88%9D%E5%A7%8B%E5%8C%96%E6%B5%81%E7%A8%8B)

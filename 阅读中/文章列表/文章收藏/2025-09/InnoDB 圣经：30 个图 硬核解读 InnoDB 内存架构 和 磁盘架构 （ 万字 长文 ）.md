@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/cTo35wu9PBkRRrrm5QU-sQ
 create: 2025-09-11 21:14
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-25
+tags:
+  - 数据库
+  - Mysql
+summary: "[[Mysql的存储结构]]"
 ---
 FSAC 未来超级架构师
 
@@ -552,8 +557,7 @@ InnoDB 就想出个招：不麻烦人手动建，自己观察哪些查询频繁�
 
 不是随便什么查询都会触发 AHI，得满足几个条件：
 
-*   必须是**等值查询**（比如 `=、IN、<=>`）；
-    
+*   必须是**等值查询**（比如 `\=、IN、<=>`）；
 *   同一索引页（B + 树里的一个叶子节点）被频繁访问，且查询模式固定（比如总是查 `WHERE col = ?`）；
     
 *   访问次数达到阈值（InnoDB 内部判断，不用我们管）。

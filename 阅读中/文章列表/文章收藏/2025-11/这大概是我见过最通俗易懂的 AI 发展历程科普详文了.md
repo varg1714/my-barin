@@ -1,8 +1,13 @@
 ---
 source: https://mp.weixin.qq.com/s/hFejZCXex_nw0Nrg-egP0g
 create: 2025-11-23 22:28
-read: false
-knowledge: false
+read: true
+knowledge: true
+knowledge-date: 2025-11-24
+tags:
+  - 大模型
+  - 入门概念
+summary: "[[AI 发展历程]]"
 ---
 作者： 丁亮亮 / smallniding 
 
