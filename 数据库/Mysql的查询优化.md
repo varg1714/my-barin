@@ -1085,6 +1085,8 @@ SELECT * FROM  (
         select_type 为 `DEPENDENT SUBQUERY` 的查询可能会被执行多次。
     -  `MATERIALIZED`
         当查询优化器在执行包含子查询的语句时，选择将子查询物化之后与外层查询进行连接查询时，该子查询对应的 `select_type` 属性就是 `MATERIALIZED`。
+        
+        Materialized 可以理解为一次性的、带索引的临时缓存表。其和 SUBQUERY 的区别在于是否进行临时的物化存储（例如物化过程中可能构建临时索引用于辅助查询等）。
 - 派生表查询 `DERIVED`
     对于采用物化的方式执行的包含派生表的查询，该派生表对应的子查询的 `select_type` 就是 `DERIVED`。
 - `UNCACHEABLE SUBQUERY`
